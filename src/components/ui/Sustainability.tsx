@@ -1,74 +1,78 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { FaSeedling, FaFeatherAlt, FaHandHoldingHeart } from "react-icons/fa";
 
 export default function Sustainability() {
   return (
-    <section className="relative bg-gradient-to-br from-zinc-50 via-white to-zinc-100 text-black overflow-hidden">
-      <div className="max-w-7xl mx-auto grid md:grid-cols-2">
-        {/* Image Side */}
-        <motion.div
-          initial={{ opacity: 0, x: -60 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.9, ease: "easeOut" }}
-          viewport={{ once: true }}
-          className="relative"
-        >
-          <img
-            src="/imgs/f-1.jpg"
-            alt="Sustainable beauty concept"
-            className="w-full h-full object-cover brightness-[0.95]"
-          />
-          {/* Soft overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-white/40 via-transparent to-transparent" />
-        </motion.div>
+    <section className="bg-[#faf9f7] text-zinc-900 py-28 relative overflow-hidden">
+      {/* Soft background accent */}
+      <div className="absolute inset-0 bg-gradient-to-r from-green-100/20 via-transparent to-pink-50/30 pointer-events-none" />
 
-        {/* Text Side */}
+      <div className="max-w-7xl mx-auto px-6 lg:px-12 grid md:grid-cols-2 gap-16 items-center relative z-10">
+        {/* Text Content */}
         <motion.div
-          initial={{ opacity: 0, x: 60 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.9, ease: "easeOut" }}
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
           viewport={{ once: true }}
-          className="flex flex-col justify-center p-12 lg:p-20 space-y-6 relative"
+          className="space-y-8"
         >
-          <p className="text-gray-500 uppercase tracking-[0.25em] text-xs">
-            Conscious Beauty
+          <p className="uppercase tracking-[0.3em] text-sm text-gray-500">
+            Sustainable Luxury
           </p>
 
-          <h2 className="text-4xl md:text-5xl font-serif font-bold leading-tight">
-            Our Path to Pure Sustainability
+          <h2 className="text-6xl md:text-7xl font-serif leading-[1.1] font-bold">
+            Designed for Earth.  
+            <span className="block text-gray-500 italic">Made for You.</span>
           </h2>
 
-          <div className="w-16 h-[2px] bg-primary my-4" />
-
-          <p className="text-lg text-gray-700 leading-relaxed">
-            Every Wunkat creation begins with a simple promise — to nurture your
-            beauty while honoring the earth that inspires it. From ethically
-            sourced botanicals to refillable glass jars, we’re redefining luxury
-            through sustainability.
+          <p className="text-lg md:text-xl text-gray-700 leading-relaxed max-w-lg">
+            Every drop, every ingredient, every touch — crafted in harmony with
+            the planet. Our commitment to sustainability is more than a promise;
+            it’s our foundation.
           </p>
 
-          <p className="text-gray-500 text-sm pt-2">
-            Designed for modern elegance. Crafted with conscious intention.
-          </p>
+          <div className="flex flex-col sm:flex-row gap-8 pt-6">
+            <div className="flex items-start gap-3">
+              <FaSeedling className="text-3xl text-green-700" />
+              <div>
+                <h4 className="font-semibold text-lg">Plant-Based</h4>
+                <p className="text-gray-600 text-sm">
+                  Ethically sourced natural botanicals.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <FaFeatherAlt className="text-3xl text-amber-700" />
+              <div>
+                <h4 className="font-semibold text-lg">Light & Gentle</h4>
+                <p className="text-gray-600 text-sm">
+                  Designed for every skin type and tone.
+                </p>
+              </div>
+            </div>
+          </div>
 
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.98 }}
-            className="group inline-flex items-center gap-2 w-fit mt-6 bg-black text-white px-6 py-3 rounded-full hover:bg-primary hover:text-black transition-colors duration-300"
-          >
-            Learn More
-            <ArrowRight
-              size={18}
-              className="group-hover:translate-x-1 transition-transform duration-300"
-            />
-          </motion.button>
+          <button className="mt-10 bg-black text-white px-10 py-4 rounded-full text-lg hover:bg-zinc-800 transition">
+            Explore Our Ethos
+          </button>
+        </motion.div>
+
+        {/* Image */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1 }}
+          viewport={{ once: true }}
+        >
+          <img
+            src="/imgs/f-3.jpg"
+            alt="Sustainability Beauty Concept"
+            className="w-full h-[600px] object-cover rounded-3xl shadow-2xl"
+          />
         </motion.div>
       </div>
-
-      {/* Soft background glow */}
-      <div className="absolute -bottom-40 left-0 w-[500px] h-[500px] bg-primary/20 blur-3xl rounded-full opacity-40" />
     </section>
   );
 }

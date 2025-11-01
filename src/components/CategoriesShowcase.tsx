@@ -14,7 +14,7 @@ const categories = [
   },
   {
     name: "Face",
-    image: "/imgs/f-3.jpg",
+    image: "/imgs/f-2.jpg",
   },
 ];
 
