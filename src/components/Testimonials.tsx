@@ -45,7 +45,7 @@ export default function Testimonials() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="text-4xl md:text-5xl font-serif font-bold text-white mb-4">
+          <h2 className="text-4xl md:text-5xl font-serif font-bold text-primary mb-4">
             What Our Clients Love
           </h2>
           <p className="text-gray-400 text-lg mb-16">
