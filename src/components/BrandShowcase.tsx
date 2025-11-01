@@ -1,11 +1,19 @@
 "use client";
 
+import {
+  SiDior,
+  SiNike,
+  SiAdidas,
+} from "react-icons/si";
+import { FaCrown, FaGem } from "react-icons/fa";
+
 const brands = [
-  "/brand-dior.svg",
-  "/brand-fenty.svg",
-  "/brand-rarebeauty.svg",
-  "/brand-mac.svg",
-  "/brand-nars.svg",
+  { name: "Dior", icon: SiDior },
+  { name: "Adidas Beauty", icon: SiAdidas },
+  { name: "Nike Cosmetics", icon: SiNike },
+  // Elegant placeholders for unavailable designer brands
+  { name: "Gucci", icon: FaCrown },
+  { name: "Chanel", icon: FaGem },
 ];
 
 export default function BrandShowcase() {
@@ -15,14 +23,16 @@ export default function BrandShowcase() {
         <p className="uppercase text-xs text-muted-foreground tracking-wider mb-6">
           Trusted by top beauty brands
         </p>
-        <div className="flex flex-wrap justify-center items-center gap-10 opacity-70">
-          {brands.map((brand, i) => (
-            <img
+
+        <div className="flex flex-wrap justify-center items-center gap-10 opacity-80">
+          {brands.map(({ name, icon: Icon }, i) => (
+            <div
               key={i}
-              src={brand}
-              alt="brand logo"
-              className="h-10 object-contain grayscale hover:grayscale-0 transition"
-            />
+              className="flex flex-col items-center gap-2 hover:opacity-100 transition-opacity"
+            >
+              <Icon className="text-4xl text-primary" />
+              <span className="text-sm text-muted-foreground">{name}</span>
+            </div>
           ))}
         </div>
       </div>

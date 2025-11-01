@@ -53,18 +53,18 @@ const mockOrders = [
 ]
 
 export default function AdminPage() {
-  const { user } = useAuth()
   const [activeTab, setActiveTab] = useState("overview")
 
   return (
-    <ProtectedRoute>
+    // <ProtectedRoute>
       <main className="min-h-screen bg-background">
         <Header />
 
         <div className="max-w-7xl mx-auto px-4 py-12">
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
-            <p className="text-muted-foreground">Welcome back, {user?.name}. Manage your store here.</p>
+            {/* <p className="text-muted-foreground">Welcome back, {user?.name}. Manage your store here.</p> */}
+            <p className="text-muted-foreground">Welcome back, Damian X. Manage your store here.</p>
           </div>
 
           {/* Tabs */}
@@ -259,6 +259,6 @@ export default function AdminPage() {
 
         <Footer />
       </main>
-    </ProtectedRoute>
+    // </ProtectedRoute>
   )
 }

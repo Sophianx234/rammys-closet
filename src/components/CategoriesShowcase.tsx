@@ -1,43 +1,66 @@
 "use client";
 
 import { Card } from "./ui/card";
+import { motion } from "framer-motion";
 
 const categories = [
-  { name: "Lips", image: "/category-lips.jpg" },
-  { name: "Eyes", image: "/category-eyes.jpg" },
-  { name: "Face", image: "/category-face.jpg" },
+  {
+    name: "Lips",
+    image: "/imgs/l-5.jpg",
+  },
+  {
+    name: "Eyes",
+    image: "/imgs/e-1.jpg",
+  },
+  {
+    name: "Face",
+    image: "/imgs/f-3.jpg",
+  },
 ];
 
 export default function CategoriesShowcase() {
   return (
-    <section className="py-16 md:py-24 bg-background border-t border-border">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">
+    <section className="relative py-20 bg-gradient-to-b from-background via-secondary/10 to-background overflow-hidden">
+      {/* subtle gradient glow */}
+      <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+        <h2 className="text-4xl md:text-5xl font-serif font-bold mb-4 text-primary">
           Shop by Category
         </h2>
-        <p className="text-muted-foreground mb-12">
-          Discover products tailored for every beauty need
+        <p className="text-muted-foreground mb-16 max-w-lg mx-auto">
+          Explore timeless collections crafted to enhance your natural beauty.
         </p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          {categories.map((cat) => (
-            <Card
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+          {categories.map((cat, i) => (
+            <motion.div
               key={cat.name}
-              className="overflow-hidden group cursor-pointer hover:border-primary transition-all"
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 200, damping: 15 }}
             >
-              <div className="relative h-64 overflow-hidden">
+              <Card className="relative h-80 overflow-hidden rounded-2xl shadow-md border-none group bg-background/30 backdrop-blur-md">
+                {/* Image */}
                 <img
                   src={cat.image}
                   alt={cat.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="absolute inset-0 w-full h-full object-cover rounded-2xl group-hover:scale-110 transition-transform duration-700 ease-out"
                 />
-                <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                  <span className="text-white text-lg font-semibold uppercase tracking-widest">
+
+                {/* Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent rounded-2xl" />
+
+                {/* Text */}
+                <div className="absolute bottom-6 left-0 right-0 text-center px-4">
+                  <h3 className="text-2xl font-semibold text-white tracking-wide drop-shadow-md uppercase">
                     {cat.name}
-                  </span>
+                  </h3>
+                  <p className="text-sm text-gray-200 mt-1 opacity-80">
+                    Discover {cat.name.toLowerCase()} products
+                  </p>
                 </div>
-              </div>
-            </Card>
+              </Card>
+            </motion.div>
           ))}
         </div>
       </div>
