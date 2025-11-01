@@ -3,13 +3,19 @@ import Hero from "@/components/hero"
 import FeaturedProducts from "@/components/featured-products"
 import Newsletter from "@/components/newsletter"
 import Footer from "@/components/footer"
+import BrandShowcase from "@/components/BrandShowcase"
+import Testimonials from "@/components/Testimonials"
+import CategoriesShowcase from "@/components/CategoriesShowcase"
 
 export default function HomePage() {
   return (
     <main>
       <Header />
       <Hero />
+      <CategoriesShowcase />
       <FeaturedProducts />
+      <BrandShowcase />
+      <Testimonials />
       <Newsletter />
       <Footer />
     </main>

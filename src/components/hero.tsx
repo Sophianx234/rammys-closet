@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function Hero() {
   return (
-    <section className="relative bg-gradient-to-b from-secondary to-background py-24 md:py-40 overflow-hidden">
+    <section className="relative  bg-gradient-to-b from-secondary  to-background  overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           {/* Content */}
@@ -40,11 +40,11 @@ export default function Hero() {
           </div>
 
           {/* Image Placeholder */}
-          <div className="relative h-96 md:h-full bg-gradient-to-br from-primary/10 to-transparent rounded-lg overflow-hidden flex items-center justify-center">
+          <div className="relative h-96 md:h-full bg-gradient-to-br from-primary/10 to-transparent  overflow-hidden flex items-center justify-center">
             <img
-              src="/luxury-cosmetics-beauty-products.jpg"
+              src="/imgs/c-6.jpg"
               alt="Luxury cosmetics collection"
-              className="w-full h-full object-cover"
+              className="w-full h-full  object-cover"
             />
           </div>
         </div>

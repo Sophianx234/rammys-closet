@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card"
 import { useCart } from "@/components/cart-context"
 import Link from "next/link"
 import { useState, useEffect } from "react"
-import { CheckCircle, ArrowLeft } from "lucide-react"
+import { CheckCircle, ArrowLeft, AlertCircle } from "lucide-react"
 
 export default function CheckoutPage() {
   const { items, total, clearCart } = useCart()
@@ -26,10 +26,10 @@ export default function CheckoutPage() {
   })
   const [isProcessing, setIsProcessing] = useState(false)
   const [orderNumber, setOrderNumber] = useState("")
+  const [error, setError] = useState<string>("")
 
   useEffect(() => {
     if (items.length === 0 && currentStep === "shipping") {
-      // Redirect to cart if no items
       window.location.href = "/cart"
     }
   }, [items, currentStep])
@@ -40,31 +40,99 @@ export default function CheckoutPage() {
       ...prev,
       [name]: value,
     }))
+    setError("")
   }
 
   const handleShippingSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (formData.firstName && formData.email && formData.address && formData.city) {
       setCurrentStep("payment")
+      setError("")
+    } else {
+      setError("Please fill in all required fields")
     }
   }
 
   const handlePaymentSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsProcessing(true)
+    setError("")
 
-    // Initialize Paystack Payment
-    // This is a mock implementation - in production, you'd use the actual Paystack API
-    const reference = `ORD-${Date.now()}`
-    setOrderNumber(reference)
+    try {
+      const reference = `ORD-${Date.now()}`
 
-    // Simulate payment processing
-    setTimeout(() => {
+      // Initialize Paystack payment
+      const initResponse = await fetch("/api/paystack/initialize", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          amount: finalTotal,
+          reference,
+        }),
+      })
+
+      const initData = await initResponse.json()
+
+      if (!initResponse.ok) {
+        throw new Error(initData.error || "Failed to initialize payment")
+      }
+
+      // Redirect to Paystack payment page
+      if (initData.authorization_url) {
+        // Store order data in localStorage before redirecting
+        localStorage.setItem(
+          "pendingOrder",
+          JSON.stringify({
+            reference,
+            formData,
+            items,
+            total: finalTotal,
+          }),
+        )
+        window.location.href = initData.authorization_url
+      }
+    } catch (err) {
+      console.error("[v0] Payment error:", err)
+      setError(err instanceof Error ? err.message : "Payment failed. Please try again.")
       setIsProcessing(false)
-      setCurrentStep("success")
-      clearCart()
-    }, 2000)
+    }
   }
+
+  useEffect(() => {
+    const verifyPayment = async () => {
+      const urlParams = new URLSearchParams(window.location.search)
+      const reference = urlParams.get("reference")
+
+      if (reference) {
+        try {
+          const verifyResponse = await fetch(`/api/paystack/verify?reference=${reference}`)
+          const verifyData = await verifyResponse.json()
+
+          if (verifyResponse.ok && verifyData.status === "success") {
+            const pendingOrder = localStorage.getItem("pendingOrder")
+            if (pendingOrder) {
+              const orderData = JSON.parse(pendingOrder)
+              setOrderNumber(orderData.reference)
+              setFormData(orderData.formData)
+              setCurrentStep("success")
+              clearCart()
+              localStorage.removeItem("pendingOrder")
+            }
+          } else {
+            setError("Payment verification failed. Please contact support.")
+          }
+        } catch (err) {
+          console.error("[v0] Verification error:", err)
+          setError("Could not verify payment. Please check your email for confirmation.")
+        }
+      }
+    }
+
+    verifyPayment()
+  }, [clearCart])
 
   const subtotal = total
   const shipping = items.length > 0 ? 500 : 0
@@ -86,7 +154,7 @@ export default function CheckoutPage() {
             <CheckCircle size={64} className="mx-auto text-primary" />
             <div>
               <h2 className="text-2xl font-serif font-bold mb-2">Thank You!</h2>
-              <p className="text-muted-foreground">Your order has been confirmed</p>
+              <p className="text-muted-foreground">Your payment has been received and your order is confirmed</p>
             </div>
 
             <div className="bg-secondary p-4 rounded-lg space-y-2 text-left">
@@ -105,7 +173,8 @@ export default function CheckoutPage() {
 
             <div className="space-y-3 pt-6 border-t border-border">
               <p className="text-sm text-muted-foreground">
-                You will receive an order confirmation email shortly. Check your inbox for tracking details.
+                A confirmation email has been sent to <strong>{formData.email}</strong>. You will receive tracking
+                information shortly.
               </p>
               <Link href="/shop">
                 <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
@@ -164,6 +233,12 @@ export default function CheckoutPage() {
             {currentStep === "shipping" && (
               <Card className="bg-card border-border p-6 space-y-6">
                 <h2 className="text-xl font-semibold">Shipping Information</h2>
+                {error && (
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 flex gap-3">
+                    <AlertCircle size={20} className="text-red-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-red-500 text-sm">{error}</p>
+                  </div>
+                )}
                 <form onSubmit={handleShippingSubmit} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <input
@@ -265,6 +340,13 @@ export default function CheckoutPage() {
                   <h2 className="text-xl font-semibold">Payment Method</h2>
                 </div>
 
+                {error && (
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 flex gap-3">
+                    <AlertCircle size={20} className="text-red-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-red-500 text-sm">{error}</p>
+                  </div>
+                )}
+
                 <form onSubmit={handlePaymentSubmit} className="space-y-6">
                   <div className="bg-secondary p-4 rounded-lg border-2 border-primary">
                     <div className="flex items-center gap-3 mb-4">
@@ -272,44 +354,9 @@ export default function CheckoutPage() {
                       <span className="font-semibold">Secure payment powered by Paystack</span>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Your payment information is encrypted and secure. Paystack accepts all major payment methods.
+                      You will be redirected to Paystack to complete your payment securely. All major payment methods
+                      are accepted.
                     </p>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-semibold block mb-2">Card Number</label>
-                      <input
-                        type="text"
-                        placeholder="4242 4242 4242 4242"
-                        className="w-full bg-background border border-border rounded-lg px-4 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
-                        maxLength={19}
-                        required
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-semibold block mb-2">Expiry Date</label>
-                        <input
-                          type="text"
-                          placeholder="MM/YY"
-                          className="w-full bg-background border border-border rounded-lg px-4 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
-                          maxLength={5}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="text-sm font-semibold block mb-2">CVV</label>
-                        <input
-                          type="text"
-                          placeholder="123"
-                          className="w-full bg-background border border-border rounded-lg px-4 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
-                          maxLength={4}
-                          required
-                        />
-                      </div>
-                    </div>
                   </div>
 
                   <div className="bg-secondary p-4 rounded-lg text-sm space-y-2">
@@ -337,13 +384,9 @@ export default function CheckoutPage() {
                     disabled={isProcessing}
                     className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3"
                   >
-                    {isProcessing ? "Processing..." : `Pay ₦${finalTotal.toLocaleString()}`}
+                    {isProcessing ? "Processing..." : `Proceed to Pay ₦${finalTotal.toLocaleString()}`}
                   </Button>
                 </form>
-
-                <p className="text-xs text-center text-muted-foreground">
-                  This is a demo checkout. No real payments will be processed.
-                </p>
               </Card>
             )}
           </div>
