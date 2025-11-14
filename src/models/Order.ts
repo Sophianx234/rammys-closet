@@ -1,5 +1,17 @@
-// models/Order.ts
 import mongoose, { Schema, Document, Model } from "mongoose";
+
+// --- Custom Order Statuses (Lowercase Version) ---
+export type OrderStatus =
+  | "processing"
+  | "on_hold"
+  | "awaiting_pick"
+  | "packing"
+  | "ready_for_dispatch"
+  | "dispatched"
+  | "arrived"
+  | "delivery_attempted"
+  | "delivered"
+  | "cancelled";
 
 export interface IOrderItem {
   product: mongoose.Types.ObjectId;
@@ -13,14 +25,14 @@ export interface IOrder extends Document {
   totalAmount: number;
   paymentStatus: "pending" | "paid" | "failed";
   paymentReference?: string;
-  shippingAddress: {
+  deliveryAddress: {
     street?: string;
     city?: string;
     state?: string;
     country?: string;
     postalCode?: string;
   };
-  orderStatus: "processing" | "shipped" | "delivered" | "cancelled";
+  orderStatus: OrderStatus;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -28,30 +40,50 @@ export interface IOrder extends Document {
 const orderSchema = new Schema<IOrder>(
   {
     user: { type: Schema.Types.ObjectId, ref: "User", required: true },
+
     items: [
       {
-        product: { type: Schema.Types.ObjectId, ref: "Product", required: true },
+        product: {
+          type: Schema.Types.ObjectId,
+          ref: "Product",
+          required: true,
+        },
         quantity: { type: Number, required: true },
         price: { type: Number, required: true },
       },
     ],
+
     totalAmount: { type: Number, required: true },
+
     paymentStatus: {
       type: String,
       enum: ["pending", "paid", "failed"],
       default: "pending",
     },
+
     paymentReference: String,
-    shippingAddress: {
+
+    deliveryAddress: {
       street: String,
       city: String,
       state: String,
       country: String,
       postalCode: String,
     },
+
     orderStatus: {
       type: String,
-      enum: ["processing", "shipped", "delivered", "cancelled"],
+      enum: [
+        "processing",
+        "on_hold",
+        "awaiting_pick",
+        "packing",
+        "ready_for_dispatch",
+        "dispatched",
+        "arrived",
+        "delivered",
+        "cancelled",
+      ],
       default: "processing",
     },
   },

@@ -131,30 +131,8 @@ const mockProducts = [
     variants: [],
   },
 ];
-// --- END MOCK DATA ---
 
 
-/**
- * @typedef {Object} Product
- * @property {number} id
- * @property {string} name
- * @property {number} price
- * @property {number} stock
- * @property {number} rating
- * @property {number} reviewsCount
- * @property {boolean} inStock
- * @property {boolean} isFeatured
- * @property {string} category
- * @property {string} image
- * @property {string} description
- * @property {Array<{name: string, options: string[]}>} [variants]
- */
-
-
-/**
- * Product Card Component
- * @param {{ product: Product, index: number }} props
- */
 function ProductCard({ product, index }) {
     const stockClass =
       product.stock > 10
@@ -170,7 +148,7 @@ function ProductCard({ product, index }) {
         transition={{ duration: 0.3, delay: index * 0.05 }}
         className="h-full"
       >
-        <Card className="bg-card border border-neutral-800 hover:border-rose-700/50 transition-all duration-300 shadow-xl overflow-hidden dark:bg-neutral-900/50 dark:text-gray-50 h-full flex flex-col">
+        <div className="bg-card rounded-lg pb-5 border border-neutral-800 hover:border-rose-700/50 transition-all duration-300 shadow-xl overflow-hidden dark:bg-neutral-900/50 dark:text-gray-50 h-full flex flex-col">
           
           {/* IMAGE SECTION */}
           <div className="relative w-full h-56 bg-neutral-950">
@@ -182,7 +160,10 @@ function ProductCard({ product, index }) {
             />
   
             {/* Action Buttons Overlay */}
-            <div className="absolute inset-0 bg-black/20 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+            <div className="absolute inset-0 bg-black/20 opacity-0 hover:opacity-100 transition-opacity justify-end flex pt-3 gap-3">
+            <div></div>
+            <div>
+
                 <Button size="icon" variant="ghost" className="bg-black/40 hover:bg-black/60 border border-white/20 text-white hover:text-rose-400" title="View Details">
                     <Eye className="w-4 h-4" />
                 </Button>
@@ -192,6 +173,7 @@ function ProductCard({ product, index }) {
                 <Button size="icon" variant="ghost" className="bg-black/40 hover:bg-black/60 border border-white/20 text-white hover:text-red-400" title="Delete Product">
                     <Trash2 className="w-4 h-4" />
                 </Button>
+            </div>
             </div>
 
 
@@ -252,7 +234,7 @@ function ProductCard({ product, index }) {
                 </Badge>
             </div>
           </CardContent>
-        </Card>
+        </div>
       </motion.div>
     );
   }
@@ -267,16 +249,13 @@ export default function ProductsTab() {
   const [sortBy, setSortBy] = useState("latest");
 
   return (
-    <div className="min-h-screen bg-neutral-950 p-6 sm:p-10 dark:text-gray-50">
+    <div className="min-h-screen  p-6 sm:p-10 dark:text-gray-50">
         <section className="space-y-8 max-w-7xl mx-auto">
         
         {/* ## 🚀 Catalog Overview Header */}
         <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-            <h1 className="text-3xl font-extrabold text-gray-50 tracking-tight">Product Catalog Management</h1>
-            <p className="text-sm text-gray-400 mt-1">
-                Explore and manage all items in your store's inventory.
-            </p>
+           
             </div>
 
             <div className="flex items-center gap-3">
