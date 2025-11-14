@@ -16,19 +16,21 @@ const categorySchema = z.object({
   name: z.string().min(2, "Category name must be at least 2 characters"),
   slug: z.string().min(2, "Slug is required"),
   description: z.string().optional(),
-  image: z.string().optional(),
 });
 
+type CategoryForm = z.infer<typeof categorySchema> & { image?: string; imageFile?: File | null };
+
 export default function AddCategoryPage() {
-  const [category, setCategory] = useState({
+  const [category, setCategory] = useState<CategoryForm>({
     name: "",
     slug: "",
     description: "",
     image: "",
+    imageFile: null,
   });
   const [loading, setLoading] = useState(false);
 
-  // ✅ Auto-generate slug from name
+  // Auto-generate slug from name
   const handleNameChange = (value: string) => {
     const slug = value
       .toLowerCase()
@@ -37,12 +39,12 @@ export default function AddCategoryPage() {
     setCategory({ ...category, name: value, slug });
   };
 
-  // ✅ Dropzone setup
+  // Dropzone setup
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
     const file = acceptedFiles[0];
     const previewUrl = URL.createObjectURL(file);
-    setCategory((prev) => ({ ...prev, image: previewUrl }));
+    setCategory((prev) => ({ ...prev, image: previewUrl, imageFile: file }));
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -51,20 +53,26 @@ export default function AddCategoryPage() {
     maxFiles: 1,
   });
 
-  // ✅ Submit handler
+  // Submit handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const validated = categorySchema.parse(category);
       setLoading(true);
 
-      const res = await fetch("/api/categories", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(validated),
-      });
+      // Create FormData
+      const formData = new FormData();
+      formData.append("name", validated.name);
+      formData.append("slug", validated.slug);
+      if (validated.description) formData.append("description", validated.description);
+      if (category.imageFile) formData.append("image", category.imageFile);
 
-      if (!res.ok) throw new Error("Failed to save category");
+      const res = await fetch("/api/admin/categories", { method: "POST", body: formData });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData?.error || "Failed to save category");
+      }
 
       Swal.fire({
         title: "✅ Success!",
@@ -77,7 +85,7 @@ export default function AddCategoryPage() {
         timerProgressBar: true,
       });
 
-      setCategory({ name: "", slug: "", description: "", image: "" });
+      setCategory({ name: "", slug: "", description: "", image: "", imageFile: null });
     } catch (err: any) {
       if (err instanceof z.ZodError) {
         Swal.fire("Validation Error", err.errors[0]?.message || "Invalid input", "warning");
@@ -90,13 +98,9 @@ export default function AddCategoryPage() {
   };
 
   return (
-    <motion.section
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-8"
-    >
+    <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
       <h2 className="text-2xl font-semibold text-gray-100 flex items-center gap-2">
-        <FaTag className="text-rose-400" /> Add New Category
+        <FaTag className="text-primary" /> Add New Category
       </h2>
 
       <Card className="p-6 bg-neutral-800 border border-neutral-700 rounded-xl shadow-md">
@@ -177,7 +181,7 @@ export default function AddCategoryPage() {
                 />
                 <button
                   type="button"
-                  onClick={() => setCategory((p) => ({ ...p, image: "" }))}
+                  onClick={() => setCategory((p) => ({ ...p, image: "", imageFile: null }))}
                   className="absolute top-2 right-2 bg-black/60 hover:bg-red-600 text-white text-xs rounded-full p-1 transition"
                 >
                   <FaTrash />
@@ -187,11 +191,7 @@ export default function AddCategoryPage() {
           </div>
 
           {/* Submit Button */}
-          <Button
-            type="submit"
-            className="bg-rose-500 hover:bg-rose-600 text-white flex items-center gap-2"
-            disabled={loading}
-          >
+          <Button type="submit" className="bg-primary text-white flex items-center gap-2" disabled={loading}>
             <FaSave />
             {loading ? "Saving..." : "Add Category"}
           </Button>

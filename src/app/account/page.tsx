@@ -1,21 +1,23 @@
-"use client"
+"use client";
 
-import Header from "@/components/header"
-import Footer from "@/components/footer"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { useState } from "react"
-import { User, MapPin, Heart, LogOut, Settings } from "lucide-react"
-import Link from "next/link"
+import Header from "@/components/header";
+import Footer from "@/components/footer";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { User, MapPin, Heart, LogOut, Settings } from "lucide-react";
+import Link from "next/link";
 
 export default function AccountPage() {
-  const [activeTab, setActiveTab] = useState<"overview" | "orders" | "wishlist" | "settings">("overview")
+  const [activeTab, setActiveTab] = useState<
+    "overview" | "orders" | "wishlist" | "settings"
+  >("overview");
   const [user, setUser] = useState({
     name: "Jessica Anderson",
     email: "jessica@example.com",
     phone: "+234 (123) 456-7890",
     joinDate: "January 2024",
-  })
+  });
 
   // Mock data
   const orders = [
@@ -40,7 +42,7 @@ export default function AccountPage() {
       status: "Delivered",
       items: 1,
     },
-  ]
+  ];
 
   const wishlist = [
     {
@@ -55,7 +57,7 @@ export default function AccountPage() {
       price: 3500,
       image: "/eyeshadow-palette-luxury-cosmetics.jpg",
     },
-  ]
+  ];
 
   const addresses = [
     {
@@ -70,7 +72,7 @@ export default function AccountPage() {
       address: "456 Victoria Island, Lagos",
       isDefault: false,
     },
-  ]
+  ];
 
   return (
     <main>
@@ -79,7 +81,9 @@ export default function AccountPage() {
       {/* Page Header */}
       <section className="bg-secondary border-b border-border py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl md:text-4xl font-serif font-bold">My Account</h1>
+          <h1 className="text-3xl md:text-4xl font-serif font-bold">
+            My Account
+          </h1>
         </div>
       </section>
 
@@ -102,7 +106,9 @@ export default function AccountPage() {
               <button
                 onClick={() => setActiveTab("overview")}
                 className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
-                  activeTab === "overview" ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                  activeTab === "overview"
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-secondary"
                 }`}
               >
                 <span className="flex items-center gap-2">
@@ -114,7 +120,9 @@ export default function AccountPage() {
               <button
                 onClick={() => setActiveTab("orders")}
                 className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
-                  activeTab === "orders" ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                  activeTab === "orders"
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-secondary"
                 }`}
               >
                 <span className="flex items-center gap-2">
@@ -126,7 +134,9 @@ export default function AccountPage() {
               <button
                 onClick={() => setActiveTab("wishlist")}
                 className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
-                  activeTab === "wishlist" ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                  activeTab === "wishlist"
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-secondary"
                 }`}
               >
                 <span className="flex items-center gap-2">
@@ -138,7 +148,9 @@ export default function AccountPage() {
               <button
                 onClick={() => setActiveTab("settings")}
                 className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
-                  activeTab === "settings" ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                  activeTab === "settings"
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-secondary"
                 }`}
               >
                 <span className="flex items-center gap-2">
@@ -149,7 +161,10 @@ export default function AccountPage() {
 
               <hr className="border-border" />
 
-              <Button variant="outline" className="w-full flex items-center justify-center gap-2 bg-transparent">
+              <Button
+                variant="outline"
+                className="w-full flex items-center justify-center gap-2 bg-transparent"
+              >
                 <LogOut size={18} />
                 Sign Out
               </Button>
@@ -161,30 +176,42 @@ export default function AccountPage() {
             {activeTab === "overview" && (
               <div className="space-y-6">
                 <Card className="bg-card border-border p-6">
-                  <h2 className="text-xl font-semibold mb-4">Account Information</h2>
+                  <h2 className="text-xl font-semibold mb-4">
+                    Account Information
+                  </h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-muted-foreground">Full Name</p>
                       <p className="font-semibold">{user.name}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Email Address</p>
+                      <p className="text-sm text-muted-foreground">
+                        Email Address
+                      </p>
                       <p className="font-semibold">{user.email}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Phone Number</p>
+                      <p className="text-sm text-muted-foreground">
+                        Phone Number
+                      </p>
                       <p className="font-semibold">{user.phone}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Member Since</p>
+                      <p className="text-sm text-muted-foreground">
+                        Member Since
+                      </p>
                       <p className="font-semibold">{user.joinDate}</p>
                     </div>
                   </div>
-                  <Button className="mt-6 bg-primary hover:bg-primary/90 text-primary-foreground">Edit Profile</Button>
+                  <Button className="mt-6 bg-primary hover:bg-primary/90 text-primary-foreground">
+                    Edit Profile
+                  </Button>
                 </Card>
 
                 <Card className="bg-card border-border p-6">
-                  <h2 className="text-xl font-semibold mb-4">Saved Addresses</h2>
+                  <h2 className="text-xl font-semibold mb-4">
+                    Saved Addresses
+                  </h2>
                   <div className="space-y-3">
                     {addresses.map((addr) => (
                       <div
@@ -193,33 +220,55 @@ export default function AccountPage() {
                       >
                         <div>
                           <p className="font-semibold text-sm">{addr.type}</p>
-                          <p className="text-sm text-muted-foreground">{addr.address}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {addr.address}
+                          </p>
                           {addr.isDefault && (
-                            <span className="text-xs font-semibold text-primary mt-1 block">Default Address</span>
+                            <span className="text-xs font-semibold text-primary mt-1 block">
+                              Default Address
+                            </span>
                           )}
                         </div>
-                        <button className="text-primary hover:text-primary/80 text-sm font-semibold">Edit</button>
+                        <button className="text-primary hover:text-primary/80 text-sm font-semibold">
+                          Edit
+                        </button>
                       </div>
                     ))}
                   </div>
-                  <Button variant="outline" className="mt-4 w-full bg-transparent">
+                  <Button
+                    variant="outline"
+                    className="mt-4 w-full bg-transparent"
+                  >
                     Add New Address
                   </Button>
                 </Card>
 
                 <Card className="bg-card border-border p-6">
-                  <h2 className="text-xl font-semibold mb-4">Account Preferences</h2>
+                  <h2 className="text-xl font-semibold mb-4">
+                    Account Preferences
+                  </h2>
                   <div className="space-y-4">
                     <label className="flex items-center gap-3 cursor-pointer">
-                      <input type="checkbox" defaultChecked className="w-4 h-4 cursor-pointer" />
+                      <input
+                        type="checkbox"
+                        defaultChecked
+                        className="w-4 h-4 cursor-pointer"
+                      />
                       <span className="text-sm">Receive marketing emails</span>
                     </label>
                     <label className="flex items-center gap-3 cursor-pointer">
-                      <input type="checkbox" defaultChecked className="w-4 h-4 cursor-pointer" />
+                      <input
+                        type="checkbox"
+                        defaultChecked
+                        className="w-4 h-4 cursor-pointer"
+                      />
                       <span className="text-sm">Order notifications</span>
                     </label>
                     <label className="flex items-center gap-3 cursor-pointer">
-                      <input type="checkbox" className="w-4 h-4 cursor-pointer" />
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 cursor-pointer"
+                      />
                       <span className="text-sm">New product announcements</span>
                     </label>
                   </div>
@@ -235,13 +284,19 @@ export default function AccountPage() {
                     <div className="flex items-center justify-between mb-4">
                       <div>
                         <p className="font-semibold">{order.id}</p>
-                        <p className="text-sm text-muted-foreground">{order.date}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {order.date}
+                        </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-primary">₦{order.total.toLocaleString()}</p>
+                        <p className="font-semibold text-primary">
+                          ₵{order.total.toLocaleString()}
+                        </p>
                         <span
                           className={`text-xs font-semibold ${
-                            order.status === "Delivered" ? "text-green-500" : "text-blue-500"
+                            order.status === "Delivered"
+                              ? "text-green-500"
+                              : "text-blue-500"
                           }`}
                         >
                           {order.status}
@@ -249,7 +304,9 @@ export default function AccountPage() {
                       </div>
                     </div>
                     <div className="flex items-center justify-between pt-4 border-t border-border">
-                      <span className="text-sm text-muted-foreground">{order.items} items</span>
+                      <span className="text-sm text-muted-foreground">
+                        {order.items} items
+                      </span>
                       <Button variant="outline" size="sm">
                         View Order
                       </Button>
@@ -277,11 +334,18 @@ export default function AccountPage() {
                           />
                         </div>
                         <div className="p-4 space-y-3">
-                          <h3 className="font-semibold text-sm line-clamp-2">{item.name}</h3>
+                          <h3 className="font-semibold text-sm line-clamp-2">
+                            {item.name}
+                          </h3>
                           <div className="flex items-center justify-between pt-2 border-t border-border">
-                            <span className="text-primary font-semibold">₦{item.price.toLocaleString()}</span>
+                            <span className="text-primary font-semibold">
+                              ₵{item.price.toLocaleString()}
+                            </span>
                             <Link href={`/product/${item.id}`}>
-                              <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                              <Button
+                                size="sm"
+                                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                              >
                                 Add to Cart
                               </Button>
                             </Link>
@@ -292,8 +356,13 @@ export default function AccountPage() {
                   </div>
                 ) : (
                   <div className="text-center py-12">
-                    <Heart size={48} className="mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">Your wishlist is empty</p>
+                    <Heart
+                      size={48}
+                      className="mx-auto text-muted-foreground mb-4"
+                    />
+                    <p className="text-muted-foreground">
+                      Your wishlist is empty
+                    </p>
                   </div>
                 )}
               </div>
@@ -302,7 +371,9 @@ export default function AccountPage() {
             {activeTab === "settings" && (
               <div className="space-y-6">
                 <Card className="bg-card border-border p-6">
-                  <h2 className="text-xl font-semibold mb-4">Change Password</h2>
+                  <h2 className="text-xl font-semibold mb-4">
+                    Change Password
+                  </h2>
                   <div className="space-y-4">
                     <input
                       type="password"
@@ -319,16 +390,24 @@ export default function AccountPage() {
                       placeholder="Confirm Password"
                       className="w-full bg-background border border-border rounded-lg px-4 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
                     />
-                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">Update Password</Button>
+                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                      Update Password
+                    </Button>
                   </div>
                 </Card>
 
                 <Card className="bg-card border-border p-6 border-red-500">
-                  <h2 className="text-xl font-semibold text-red-500 mb-4">Danger Zone</h2>
+                  <h2 className="text-xl font-semibold text-red-500 mb-4">
+                    Danger Zone
+                  </h2>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Deleting your account will permanently remove all your data. This action cannot be undone.
+                    Deleting your account will permanently remove all your data.
+                    This action cannot be undone.
                   </p>
-                  <Button variant="outline" className="border-red-500 text-red-500 hover:bg-red-500/10 bg-transparent">
+                  <Button
+                    variant="outline"
+                    className="border-red-500 text-red-500 hover:bg-red-500/10 bg-transparent"
+                  >
                     Delete Account
                   </Button>
                 </Card>
@@ -340,5 +419,5 @@ export default function AccountPage() {
 
       <Footer />
     </main>
-  )
+  );
 }

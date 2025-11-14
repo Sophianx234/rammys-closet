@@ -59,11 +59,11 @@ export default function Bestsellers() {
           className="mb-12"
         >
           <h2 className="text-4xl text-primary md:text-5xl font-serif font-bold mb-4">
-          Bestsellers
-        </h2>
-        <p className="text-gray-400 mb-12">
-          Discover our most loved beauty essentials, crafted for elegance.
-        </p>
+            Bestsellers
+          </h2>
+          <p className="text-gray-400 mb-12">
+            Discover our most loved beauty essentials, crafted for elegance.
+          </p>
         </motion.div>
 
         {/* Product Grid */}
@@ -76,53 +76,53 @@ export default function Bestsellers() {
               viewport={{ once: true }}
               transition={{ delay: i * 0.1, duration: 0.6 }}
             >
-            <Card
-              key={product.id}
-              className="bg-card border-border overflow-hidden hover:border-primary transition-colors group"
-            >
-              <div className="relative overflow-hidden bg-secondary h-64">
-                <img
-                  src={product.image || "/placeholder.svg"}
-                  alt={product.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                <button
-                  onClick={() => toggleFavorite(product.id)}
-                  className="absolute top-3 right-3 p-2 bg-background/80 backdrop-blur rounded-full hover:bg-background transition-colors"
-                >
-                  <Heart
-                    size={18}
-                    className={
-                      favorites.includes(product.id)
-                        ? "fill-primary text-primary"
-                        : ""
-                    }
+              <Card
+                key={product.id}
+                className="bg-card border-border overflow-hidden hover:border-primary transition-colors group"
+              >
+                <div className="relative overflow-hidden bg-secondary h-64">
+                  <img
+                    src={product.image || "/placeholder.svg"}
+                    alt={product.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
-                </button>
-              </div>
-
-              <div className="p-4 space-y-3">
-                <p className="text-xs text-left text-muted-foreground uppercase tracking-wider">
-                  {product.category}
-                </p>
-                <h3 className="font-semibold text-left text-sm line-clamp-2">
-                  {product.name}
-                </h3>
-                <div className="flex items-center justify-between pt-2 border-t border-border">
-                  <span className="text-primary font-semibold">
-                    ₦{product.price.toLocaleString()}
-                  </span>
-                  <Link href={`/product/${product.id}`}>
-                    <Button
-                      size="sm"
-                      className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                    >
-                      View
-                    </Button>
-                  </Link>
+                  <button
+                    onClick={() => toggleFavorite(product.id)}
+                    className="absolute top-3 right-3 p-2 bg-background/80 backdrop-blur rounded-full hover:bg-background transition-colors"
+                  >
+                    <Heart
+                      size={18}
+                      className={
+                        favorites.includes(product.id)
+                          ? "fill-primary text-primary"
+                          : ""
+                      }
+                    />
+                  </button>
                 </div>
-              </div>
-            </Card>
+
+                <div className="p-4 space-y-3">
+                  <p className="text-xs text-left text-muted-foreground uppercase tracking-wider">
+                    {product.category}
+                  </p>
+                  <h3 className="font-semibold text-left text-sm line-clamp-2">
+                    {product.name}
+                  </h3>
+                  <div className="flex items-center justify-between pt-2 border-t border-border">
+                    <span className="text-primary font-semibold">
+                      ₵{product.price.toLocaleString()}
+                    </span>
+                    <Link href={`/product/${product.id}`}>
+                      <Button
+                        size="sm"
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                      >
+                        View
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </Card>
             </motion.div>
           ))}
         </div>

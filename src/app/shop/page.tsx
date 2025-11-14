@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import Header from "@/components/header"
-import Footer from "@/components/footer"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Heart, ChevronDown } from "lucide-react"
-import { useState } from "react"
-import Link from "next/link"
+import Header from "@/components/header";
+import Footer from "@/components/footer";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Heart, ChevronDown } from "lucide-react";
+import { useState } from "react";
+import Link from "next/link";
 
 const allProducts = [
   {
@@ -81,33 +81,37 @@ const allProducts = [
     reviews: 20,
     image: "/luxury-cosmetics-beauty-products.jpg",
   },
-]
+];
 
 export default function ShopPage() {
-  const [favorites, setFavorites] = useState<number[]>([])
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [sortBy, setSortBy] = useState("featured")
+  const [favorites, setFavorites] = useState<number[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState("featured");
 
-  const categories = ["Face", "Eyes", "Lips"]
+  const categories = ["Face", "Eyes", "Lips"];
 
-  const filteredProducts = selectedCategory ? allProducts.filter((p) => p.category === selectedCategory) : allProducts
+  const filteredProducts = selectedCategory
+    ? allProducts.filter((p) => p.category === selectedCategory)
+    : allProducts;
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     switch (sortBy) {
       case "price-low":
-        return a.price - b.price
+        return a.price - b.price;
       case "price-high":
-        return b.price - a.price
+        return b.price - a.price;
       case "rating":
-        return b.rating - a.rating
+        return b.rating - a.rating;
       default:
-        return 0
+        return 0;
     }
-  })
+  });
 
   const toggleFavorite = (id: number) => {
-    setFavorites((prev) => (prev.includes(id) ? prev.filter((fav) => fav !== id) : [...prev, id]))
-  }
+    setFavorites((prev) =>
+      prev.includes(id) ? prev.filter((fav) => fav !== id) : [...prev, id]
+    );
+  };
 
   return (
     <main>
@@ -116,8 +120,12 @@ export default function ShopPage() {
       {/* Page Header */}
       <section className="bg-secondary border-b border-border py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl md:text-4xl font-serif font-bold">Shop Our Collection</h1>
-          <p className="text-muted-foreground mt-2">Discover our curated selection of premium cosmetics</p>
+          <h1 className="text-3xl md:text-4xl font-serif font-bold">
+            Shop Our Collection
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Discover our curated selection of premium cosmetics
+          </p>
         </div>
       </section>
 
@@ -134,7 +142,9 @@ export default function ShopPage() {
                   <button
                     onClick={() => setSelectedCategory(null)}
                     className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${
-                      selectedCategory === null ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                      selectedCategory === null
+                        ? "bg-primary text-primary-foreground"
+                        : "hover:bg-secondary"
                     }`}
                   >
                     All Products
@@ -144,7 +154,9 @@ export default function ShopPage() {
                       key={cat}
                       onClick={() => setSelectedCategory(cat)}
                       className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${
-                        selectedCategory === cat ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                        selectedCategory === cat
+                          ? "bg-primary text-primary-foreground"
+                          : "hover:bg-secondary"
                       }`}
                     >
                       {cat}
@@ -158,20 +170,24 @@ export default function ShopPage() {
                 <h3 className="font-semibold text-lg mb-4">Price Range</h3>
                 <div className="space-y-2 text-sm text-muted-foreground">
                   <div className="flex justify-between items-center p-2 hover:bg-secondary rounded cursor-pointer">
-                    <span>Under ₦2,000</span>
+                    <span>Under ₵2,000</span>
                   </div>
                   <div className="flex justify-between items-center p-2 hover:bg-secondary rounded cursor-pointer">
-                    <span>₦2,000 - ₦3,000</span>
+                    <span>₵2,000 - ₵3,000</span>
                   </div>
                   <div className="flex justify-between items-center p-2 hover:bg-secondary rounded cursor-pointer">
-                    <span>₦3,000+</span>
+                    <span>₵3,000+</span>
                   </div>
                 </div>
               </div>
 
               {/* Clear Filters */}
               {selectedCategory && (
-                <Button onClick={() => setSelectedCategory(null)} variant="outline" className="w-full">
+                <Button
+                  onClick={() => setSelectedCategory(null)}
+                  variant="outline"
+                  className="w-full"
+                >
                   Clear Filters
                 </Button>
               )}
@@ -182,7 +198,9 @@ export default function ShopPage() {
           <div className="lg:col-span-3">
             {/* Sort */}
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-border">
-              <p className="text-sm text-muted-foreground">Showing {sortedProducts.length} products</p>
+              <p className="text-sm text-muted-foreground">
+                Showing {sortedProducts.length} products
+              </p>
               <div className="relative">
                 <select
                   value={sortBy}
@@ -218,24 +236,44 @@ export default function ShopPage() {
                       onClick={() => toggleFavorite(product.id)}
                       className="absolute top-3 right-3 p-2 bg-background/80 backdrop-blur rounded-full hover:bg-background transition-colors"
                     >
-                      <Heart size={18} className={favorites.includes(product.id) ? "fill-primary text-primary" : ""} />
+                      <Heart
+                        size={18}
+                        className={
+                          favorites.includes(product.id)
+                            ? "fill-primary text-primary"
+                            : ""
+                        }
+                      />
                     </button>
                   </div>
 
                   <div className="p-4 space-y-3">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider">{product.category}</p>
-                    <h3 className="font-semibold text-sm line-clamp-2">{product.name}</h3>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider">
+                      {product.category}
+                    </p>
+                    <h3 className="font-semibold text-sm line-clamp-2">
+                      {product.name}
+                    </h3>
 
                     {/* Rating */}
                     <div className="flex items-center gap-1 text-xs">
-                      <span className="text-primary font-semibold">{product.rating}</span>
-                      <span className="text-muted-foreground">({product.reviews})</span>
+                      <span className="text-primary font-semibold">
+                        {product.rating}
+                      </span>
+                      <span className="text-muted-foreground">
+                        ({product.reviews})
+                      </span>
                     </div>
 
                     <div className="flex items-center justify-between pt-2 border-t border-border">
-                      <span className="text-primary font-semibold">₦{product.price.toLocaleString()}</span>
+                      <span className="text-primary font-semibold">
+                        ₵{product.price.toLocaleString()}
+                      </span>
                       <Link href={`/product/${product.id}`}>
-                        <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                        <Button
+                          size="sm"
+                          className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                        >
                           View
                         </Button>
                       </Link>
@@ -250,5 +288,5 @@ export default function ShopPage() {
 
       <Footer />
     </main>
-  )
+  );
 }

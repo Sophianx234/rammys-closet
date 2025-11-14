@@ -1,19 +1,21 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import Header from "@/components/header"
-import Footer from "@/components/footer"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { useCart } from "@/components/cart-context"
-import Link from "next/link"
-import { useState, useEffect } from "react"
-import { CheckCircle, ArrowLeft, AlertCircle } from "lucide-react"
+import Header from "@/components/header";
+import Footer from "@/components/footer";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { useCart } from "@/components/cart-context";
+import Link from "next/link";
+import { useState, useEffect } from "react";
+import { CheckCircle, ArrowLeft, AlertCircle } from "lucide-react";
 
 export default function CheckoutPage() {
-  const { items, total, clearCart } = useCart()
-  const [currentStep, setCurrentStep] = useState<"shipping" | "payment" | "success">("shipping")
+  const { items, total, clearCart } = useCart();
+  const [currentStep, setCurrentStep] = useState<
+    "shipping" | "payment" | "success"
+  >("shipping");
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -23,43 +25,48 @@ export default function CheckoutPage() {
     city: "",
     state: "",
     zipCode: "",
-  })
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [orderNumber, setOrderNumber] = useState("")
-  const [error, setError] = useState<string>("")
+  });
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [orderNumber, setOrderNumber] = useState("");
+  const [error, setError] = useState<string>("");
 
   useEffect(() => {
     if (items.length === 0 && currentStep === "shipping") {
-      window.location.href = "/cart"
+      window.location.href = "/cart";
     }
-  }, [items, currentStep])
+  }, [items, currentStep]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
-    }))
-    setError("")
-  }
+    }));
+    setError("");
+  };
 
   const handleShippingSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (formData.firstName && formData.email && formData.address && formData.city) {
-      setCurrentStep("payment")
-      setError("")
+    e.preventDefault();
+    if (
+      formData.firstName &&
+      formData.email &&
+      formData.address &&
+      formData.city
+    ) {
+      setCurrentStep("payment");
+      setError("");
     } else {
-      setError("Please fill in all required fields")
+      setError("Please fill in all required fields");
     }
-  }
+  };
 
   const handlePaymentSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsProcessing(true)
-    setError("")
+    e.preventDefault();
+    setIsProcessing(true);
+    setError("");
 
     try {
-      const reference = `ORD-${Date.now()}`
+      const reference = `ORD-${Date.now()}`;
 
       // Initialize Paystack payment
       const initResponse = await fetch("/api/paystack/initialize", {
@@ -72,12 +79,12 @@ export default function CheckoutPage() {
           amount: finalTotal,
           reference,
         }),
-      })
+      });
 
-      const initData = await initResponse.json()
+      const initData = await initResponse.json();
 
       if (!initResponse.ok) {
-        throw new Error(initData.error || "Failed to initialize payment")
+        throw new Error(initData.error || "Failed to initialize payment");
       }
 
       // Redirect to Paystack payment page
@@ -90,54 +97,60 @@ export default function CheckoutPage() {
             formData,
             items,
             total: finalTotal,
-          }),
-        )
-        window.location.href = initData.authorization_url
+          })
+        );
+        window.location.href = initData.authorization_url;
       }
     } catch (err) {
-      console.error("[v0] Payment error:", err)
-      setError(err instanceof Error ? err.message : "Payment failed. Please try again.")
-      setIsProcessing(false)
+      console.error("[v0] Payment error:", err);
+      setError(
+        err instanceof Error ? err.message : "Payment failed. Please try again."
+      );
+      setIsProcessing(false);
     }
-  }
+  };
 
   useEffect(() => {
     const verifyPayment = async () => {
-      const urlParams = new URLSearchParams(window.location.search)
-      const reference = urlParams.get("reference")
+      const urlParams = new URLSearchParams(window.location.search);
+      const reference = urlParams.get("reference");
 
       if (reference) {
         try {
-          const verifyResponse = await fetch(`/api/paystack/verify?reference=${reference}`)
-          const verifyData = await verifyResponse.json()
+          const verifyResponse = await fetch(
+            `/api/paystack/verify?reference=${reference}`
+          );
+          const verifyData = await verifyResponse.json();
 
           if (verifyResponse.ok && verifyData.status === "success") {
-            const pendingOrder = localStorage.getItem("pendingOrder")
+            const pendingOrder = localStorage.getItem("pendingOrder");
             if (pendingOrder) {
-              const orderData = JSON.parse(pendingOrder)
-              setOrderNumber(orderData.reference)
-              setFormData(orderData.formData)
-              setCurrentStep("success")
-              clearCart()
-              localStorage.removeItem("pendingOrder")
+              const orderData = JSON.parse(pendingOrder);
+              setOrderNumber(orderData.reference);
+              setFormData(orderData.formData);
+              setCurrentStep("success");
+              clearCart();
+              localStorage.removeItem("pendingOrder");
             }
           } else {
-            setError("Payment verification failed. Please contact support.")
+            setError("Payment verification failed. Please contact support.");
           }
         } catch (err) {
-          console.error("[v0] Verification error:", err)
-          setError("Could not verify payment. Please check your email for confirmation.")
+          console.error("[v0] Verification error:", err);
+          setError(
+            "Could not verify payment. Please check your email for confirmation."
+          );
         }
       }
-    }
+    };
 
-    verifyPayment()
-  }, [clearCart])
+    verifyPayment();
+  }, [clearCart]);
 
-  const subtotal = total
-  const shipping = items.length > 0 ? 500 : 0
-  const tax = Math.round(subtotal * 0.1)
-  const finalTotal = subtotal + shipping + tax
+  const subtotal = total;
+  const shipping = items.length > 0 ? 500 : 0;
+  const tax = Math.round(subtotal * 0.1);
+  const finalTotal = subtotal + shipping + tax;
 
   if (currentStep === "success") {
     return (
@@ -145,7 +158,9 @@ export default function CheckoutPage() {
         <Header />
         <section className="bg-secondary border-b border-border py-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h1 className="text-3xl md:text-4xl font-serif font-bold">Order Confirmed</h1>
+            <h1 className="text-3xl md:text-4xl font-serif font-bold">
+              Order Confirmed
+            </h1>
           </div>
         </section>
 
@@ -154,7 +169,9 @@ export default function CheckoutPage() {
             <CheckCircle size={64} className="mx-auto text-primary" />
             <div>
               <h2 className="text-2xl font-serif font-bold mb-2">Thank You!</h2>
-              <p className="text-muted-foreground">Your payment has been received and your order is confirmed</p>
+              <p className="text-muted-foreground">
+                Your payment has been received and your order is confirmed
+              </p>
             </div>
 
             <div className="bg-secondary p-4 rounded-lg space-y-2 text-left">
@@ -167,13 +184,14 @@ export default function CheckoutPage() {
               <div className="space-y-1 text-sm text-muted-foreground">
                 <p>Email: {formData.email}</p>
                 <p>Items: {items.length}</p>
-                <p>Total: ₦{finalTotal.toLocaleString()}</p>
+                <p>Total: ₵{finalTotal.toLocaleString()}</p>
               </div>
             </div>
 
             <div className="space-y-3 pt-6 border-t border-border">
               <p className="text-sm text-muted-foreground">
-                A confirmation email has been sent to <strong>{formData.email}</strong>. You will receive tracking
+                A confirmation email has been sent to{" "}
+                <strong>{formData.email}</strong>. You will receive tracking
                 information shortly.
               </p>
               <Link href="/shop">
@@ -186,7 +204,7 @@ export default function CheckoutPage() {
         </div>
         <Footer />
       </main>
-    )
+    );
   }
 
   return (
@@ -195,7 +213,9 @@ export default function CheckoutPage() {
 
       <section className="bg-secondary border-b border-border py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl md:text-4xl font-serif font-bold">Checkout</h1>
+          <h1 className="text-3xl md:text-4xl font-serif font-bold">
+            Checkout
+          </h1>
         </div>
       </section>
 
@@ -203,23 +223,47 @@ export default function CheckoutPage() {
         {/* Step Indicator */}
         <div className="flex items-center justify-center gap-4 mb-8">
           <div
-            className={`flex items-center gap-2 ${currentStep === "shipping" || currentStep === "payment" || currentStep === "success" ? "text-primary" : "text-muted-foreground"}`}
+            className={`flex items-center gap-2 ${
+              currentStep === "shipping" ||
+              currentStep === "payment" ||
+              currentStep === "success"
+                ? "text-primary"
+                : "text-muted-foreground"
+            }`}
           >
             <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep === "shipping" || currentStep === "payment" || currentStep === "success" ? "bg-primary text-primary-foreground" : "bg-secondary"}`}
+              className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                currentStep === "shipping" ||
+                currentStep === "payment" ||
+                currentStep === "success"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary"
+              }`}
             >
               1
             </div>
             <span className="text-sm font-semibold">Shipping</span>
           </div>
           <div
-            className={`h-0.5 w-12 ${currentStep === "payment" || currentStep === "success" ? "bg-primary" : "bg-border"}`}
+            className={`h-0.5 w-12 ${
+              currentStep === "payment" || currentStep === "success"
+                ? "bg-primary"
+                : "bg-border"
+            }`}
           />
           <div
-            className={`flex items-center gap-2 ${currentStep === "payment" || currentStep === "success" ? "text-primary" : "text-muted-foreground"}`}
+            className={`flex items-center gap-2 ${
+              currentStep === "payment" || currentStep === "success"
+                ? "text-primary"
+                : "text-muted-foreground"
+            }`}
           >
             <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep === "payment" || currentStep === "success" ? "bg-primary text-primary-foreground" : "bg-secondary"}`}
+              className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                currentStep === "payment" || currentStep === "success"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary"
+              }`}
             >
               2
             </div>
@@ -235,7 +279,10 @@ export default function CheckoutPage() {
                 <h2 className="text-xl font-semibold">Shipping Information</h2>
                 {error && (
                   <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 flex gap-3">
-                    <AlertCircle size={20} className="text-red-500 flex-shrink-0 mt-0.5" />
+                    <AlertCircle
+                      size={20}
+                      className="text-red-500 flex-shrink-0 mt-0.5"
+                    />
                     <p className="text-red-500 text-sm">{error}</p>
                   </div>
                 )}
@@ -321,7 +368,10 @@ export default function CheckoutPage() {
                     />
                   </div>
 
-                  <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3">
+                  <Button
+                    type="submit"
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3"
+                  >
                     Continue to Payment
                   </Button>
                 </form>
@@ -342,7 +392,10 @@ export default function CheckoutPage() {
 
                 {error && (
                   <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 flex gap-3">
-                    <AlertCircle size={20} className="text-red-500 flex-shrink-0 mt-0.5" />
+                    <AlertCircle
+                      size={20}
+                      className="text-red-500 flex-shrink-0 mt-0.5"
+                    />
                     <p className="text-red-500 text-sm">{error}</p>
                   </div>
                 )}
@@ -350,12 +403,18 @@ export default function CheckoutPage() {
                 <form onSubmit={handlePaymentSubmit} className="space-y-6">
                   <div className="bg-secondary p-4 rounded-lg border-2 border-primary">
                     <div className="flex items-center gap-3 mb-4">
-                      <img src="/paystack-logo.png" alt="Paystack" className="w-12 h-8 object-contain" />
-                      <span className="font-semibold">Secure payment powered by Paystack</span>
+                      <img
+                        src="/paystack-logo.png"
+                        alt="Paystack"
+                        className="w-12 h-8 object-contain"
+                      />
+                      <span className="font-semibold">
+                        Secure payment powered by Paystack
+                      </span>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      You will be redirected to Paystack to complete your payment securely. All major payment methods
-                      are accepted.
+                      You will be redirected to Paystack to complete your
+                      payment securely. All major payment methods are accepted.
                     </p>
                   </div>
 
@@ -363,19 +422,21 @@ export default function CheckoutPage() {
                     <p className="font-semibold">Order Summary</p>
                     <div className="flex justify-between text-muted-foreground">
                       <span>Subtotal</span>
-                      <span>₦{subtotal.toLocaleString()}</span>
+                      <span>₵{subtotal.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-muted-foreground">
                       <span>Shipping</span>
-                      <span>₦{shipping.toLocaleString()}</span>
+                      <span>₵{shipping.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-muted-foreground">
                       <span>Tax</span>
-                      <span>₦{tax.toLocaleString()}</span>
+                      <span>₵{tax.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between font-semibold pt-2 border-t border-border">
                       <span>Total</span>
-                      <span className="text-primary">₦{finalTotal.toLocaleString()}</span>
+                      <span className="text-primary">
+                        ₵{finalTotal.toLocaleString()}
+                      </span>
                     </div>
                   </div>
 
@@ -384,7 +445,9 @@ export default function CheckoutPage() {
                     disabled={isProcessing}
                     className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3"
                   >
-                    {isProcessing ? "Processing..." : `Proceed to Pay ₦${finalTotal.toLocaleString()}`}
+                    {isProcessing
+                      ? "Processing..."
+                      : `Proceed to Pay ₵${finalTotal.toLocaleString()}`}
                   </Button>
                 </form>
               </Card>
@@ -402,7 +465,9 @@ export default function CheckoutPage() {
                     <span className="text-muted-foreground">
                       {item.name} x {item.quantity}
                     </span>
-                    <span>₦{(item.price * item.quantity).toLocaleString()}</span>
+                    <span>
+                      ₵{(item.price * item.quantity).toLocaleString()}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -410,21 +475,23 @@ export default function CheckoutPage() {
               <div className="space-y-3 py-4 border-b border-border">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Subtotal</span>
-                  <span>₦{subtotal.toLocaleString()}</span>
+                  <span>₵{subtotal.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Shipping</span>
-                  <span>₦{shipping.toLocaleString()}</span>
+                  <span>₵{shipping.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Tax</span>
-                  <span>₦{tax.toLocaleString()}</span>
+                  <span>₵{tax.toLocaleString()}</span>
                 </div>
               </div>
 
               <div className="flex justify-between items-center pt-2">
                 <span className="font-semibold">Total</span>
-                <span className="text-xl font-bold text-primary">₦{finalTotal.toLocaleString()}</span>
+                <span className="text-xl font-bold text-primary">
+                  ₵{finalTotal.toLocaleString()}
+                </span>
               </div>
 
               <Link href="/cart">
@@ -439,5 +506,5 @@ export default function CheckoutPage() {
 
       <Footer />
     </main>
-  )
+  );
 }

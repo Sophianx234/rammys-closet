@@ -1,62 +1,85 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Heart, Share2, Check } from "lucide-react"
-import { useState } from "react"
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Heart, Share2, Check } from "lucide-react";
+import { useState } from "react";
 
 export function ProductClient({ product }: { product: any }) {
-  const [isFavorite, setIsFavorite] = useState(false)
-  const [quantity, setQuantity] = useState(1)
-  const [addedToCart, setAddedToCart] = useState(false)
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [addedToCart, setAddedToCart] = useState(false);
 
   const handleAddToCart = () => {
-    const cart = JSON.parse(localStorage.getItem("cart") || "[]")
-    const existingItem = cart.find((item: any) => item.id === product.id)
+    const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    const existingItem = cart.find((item: any) => item.id === product.id);
 
     if (existingItem) {
-      existingItem.quantity += quantity
+      existingItem.quantity += quantity;
     } else {
-      cart.push({ ...product, quantity })
+      cart.push({ ...product, quantity });
     }
 
-    localStorage.setItem("cart", JSON.stringify(cart))
-    setAddedToCart(true)
-    setTimeout(() => setAddedToCart(false), 2000)
-  }
+    localStorage.setItem("cart", JSON.stringify(cart));
+    setAddedToCart(true);
+    setTimeout(() => setAddedToCart(false), 2000);
+  };
 
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-primary text-sm font-semibold uppercase tracking-wider mb-2">{product.category}</p>
-        <h1 className="text-3xl md:text-4xl font-serif font-bold mb-4">{product.name}</h1>
+        <p className="text-primary text-sm font-semibold uppercase tracking-wider mb-2">
+          {product.category}
+        </p>
+        <h1 className="text-3xl md:text-4xl font-serif font-bold mb-4">
+          {product.name}
+        </h1>
 
         {/* Rating */}
         <div className="flex items-center gap-3 mb-4">
           <div className="flex items-center gap-1">
-            <span className="text-primary font-semibold text-lg">{product.rating}</span>
+            <span className="text-primary font-semibold text-lg">
+              {product.rating}
+            </span>
             <div className="flex gap-0.5">
               {[...Array(5)].map((_, i) => (
-                <span key={i} className={i < Math.floor(product.rating) ? "text-primary" : "text-muted-foreground"}>
+                <span
+                  key={i}
+                  className={
+                    i < Math.floor(product.rating)
+                      ? "text-primary"
+                      : "text-muted-foreground"
+                  }
+                >
                   ★
                 </span>
               ))}
             </div>
           </div>
-          <span className="text-muted-foreground text-sm">{product.reviews} reviews</span>
+          <span className="text-muted-foreground text-sm">
+            {product.reviews} reviews
+          </span>
         </div>
 
         {/* Price */}
         <div className="flex items-baseline gap-3 pt-4 border-t border-border">
-          <span className="text-3xl font-bold text-primary">₦{product.price.toLocaleString()}</span>
-          <span className={`text-sm font-semibold ${product.inStock ? "text-green-500" : "text-red-500"}`}>
+          <span className="text-3xl font-bold text-primary">
+            ₵{product.price.toLocaleString()}
+          </span>
+          <span
+            className={`text-sm font-semibold ${
+              product.inStock ? "text-green-500" : "text-red-500"
+            }`}
+          >
             {product.inStock ? "In Stock" : "Out of Stock"}
           </span>
         </div>
       </div>
 
       {/* Description */}
-      <p className="text-muted-foreground leading-relaxed">{product.description}</p>
+      <p className="text-muted-foreground leading-relaxed">
+        {product.description}
+      </p>
 
       {/* Features */}
       <div>
@@ -81,7 +104,9 @@ export function ProductClient({ product }: { product: any }) {
             >
               −
             </button>
-            <span className="px-4 py-2 border-l border-r border-border">{quantity}</span>
+            <span className="px-4 py-2 border-l border-r border-border">
+              {quantity}
+            </span>
             <button
               onClick={() => setQuantity(quantity + 1)}
               className="px-4 py-2 hover:bg-secondary transition-colors"
@@ -89,7 +114,9 @@ export function ProductClient({ product }: { product: any }) {
               +
             </button>
           </div>
-          <span className="text-sm text-muted-foreground">{product.quantity} available</span>
+          <span className="text-sm text-muted-foreground">
+            {product.quantity} available
+          </span>
         </div>
 
         {/* Add to Cart Button */}
@@ -115,10 +142,17 @@ export function ProductClient({ product }: { product: any }) {
             variant="outline"
             className="flex-1 flex items-center justify-center gap-2"
           >
-            <Heart size={18} className={isFavorite ? "fill-primary text-primary" : ""} />
+            <Heart
+              size={18}
+              className={isFavorite ? "fill-primary text-primary" : ""}
+            />
             Wishlist
           </Button>
-          <Button variant="outline" size="icon" className="flex-1 bg-transparent">
+          <Button
+            variant="outline"
+            size="icon"
+            className="flex-1 bg-transparent"
+          >
             <Share2 size={18} />
           </Button>
         </div>
@@ -128,16 +162,19 @@ export function ProductClient({ product }: { product: any }) {
       <Card className="bg-secondary border-border p-4">
         <div className="space-y-2 text-sm">
           <p>
-            <span className="font-semibold">SKU:</span> RC-{product.id.toString().padStart(3, "0")}
+            <span className="font-semibold">SKU:</span> RC-
+            {product.id.toString().padStart(3, "0")}
           </p>
           <p>
-            <span className="font-semibold">Availability:</span> Ships within 2-3 business days
+            <span className="font-semibold">Availability:</span> Ships within
+            2-3 business days
           </p>
           <p>
-            <span className="font-semibold">Returns:</span> 30-day money-back guarantee
+            <span className="font-semibold">Returns:</span> 30-day money-back
+            guarantee
           </p>
         </div>
       </Card>
     </div>
-  )
+  );
 }

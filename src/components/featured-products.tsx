@@ -97,7 +97,7 @@ export default function FeaturedProducts() {
                 </h3>
                 <div className="flex items-center justify-between pt-2 border-t border-border">
                   <span className="text-primary font-semibold">
-                    ₦{product.price.toLocaleString()}
+                    ₵{product.price.toLocaleString()}
                   </span>
                   <Link href={`/product/${product.id}`}>
                     <Button

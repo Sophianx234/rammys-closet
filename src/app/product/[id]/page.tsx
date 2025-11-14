@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import Header from "@/components/header"
-import Footer from "@/components/footer"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Heart, Share2, Check } from "lucide-react"
-import { useState, useEffect } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
+import Header from "@/components/header";
+import Footer from "@/components/footer";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Heart, Share2, Check } from "lucide-react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 // Product database (in real app, fetch from backend)
 const products: Record<string, any> = {
@@ -74,22 +74,26 @@ const products: Record<string, any> = {
     inStock: true,
     quantity: 25,
   },
-}
+};
 
-export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
-  const router = useRouter()
-  const [id, setId] = useState<string | null>(null)
-  const [isFavorite, setIsFavorite] = useState(false)
-  const [quantity, setQuantity] = useState(1)
-  const [addedToCart, setAddedToCart] = useState(false)
+export default function ProductPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const router = useRouter();
+  const [id, setId] = useState<string | null>(null);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [addedToCart, setAddedToCart] = useState(false);
 
   useEffect(() => {
-    params.then((p) => setId(p.id))
-  }, [params])
+    params.then((p) => setId(p.id));
+  }, [params]);
 
-  if (!id) return null
+  if (!id) return null;
 
-  const product = products[id]
+  const product = products[id];
 
   if (!product) {
     return (
@@ -103,24 +107,24 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
         </div>
         <Footer />
       </main>
-    )
+    );
   }
 
   const handleAddToCart = () => {
     // Store cart data (would normally use context or server action)
-    const cart = JSON.parse(localStorage.getItem("cart") || "[]")
-    const existingItem = cart.find((item: any) => item.id === product.id)
+    const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    const existingItem = cart.find((item: any) => item.id === product.id);
 
     if (existingItem) {
-      existingItem.quantity += quantity
+      existingItem.quantity += quantity;
     } else {
-      cart.push({ ...product, quantity })
+      cart.push({ ...product, quantity });
     }
 
-    localStorage.setItem("cart", JSON.stringify(cart))
-    setAddedToCart(true)
-    setTimeout(() => setAddedToCart(false), 2000)
-  }
+    localStorage.setItem("cart", JSON.stringify(cart));
+    setAddedToCart(true);
+    setTimeout(() => setAddedToCart(false), 2000);
+  };
 
   return (
     <main>
@@ -160,38 +164,58 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           {/* Product Details */}
           <div className="space-y-6">
             <div>
-              <p className="text-primary text-sm font-semibold uppercase tracking-wider mb-2">{product.category}</p>
-              <h1 className="text-3xl md:text-4xl font-serif font-bold mb-4">{product.name}</h1>
+              <p className="text-primary text-sm font-semibold uppercase tracking-wider mb-2">
+                {product.category}
+              </p>
+              <h1 className="text-3xl md:text-4xl font-serif font-bold mb-4">
+                {product.name}
+              </h1>
 
               {/* Rating */}
               <div className="flex items-center gap-3 mb-4">
                 <div className="flex items-center gap-1">
-                  <span className="text-primary font-semibold text-lg">{product.rating}</span>
+                  <span className="text-primary font-semibold text-lg">
+                    {product.rating}
+                  </span>
                   <div className="flex gap-0.5">
                     {[...Array(5)].map((_, i) => (
                       <span
                         key={i}
-                        className={i < Math.floor(product.rating) ? "text-primary" : "text-muted-foreground"}
+                        className={
+                          i < Math.floor(product.rating)
+                            ? "text-primary"
+                            : "text-muted-foreground"
+                        }
                       >
                         ★
                       </span>
                     ))}
                   </div>
                 </div>
-                <span className="text-muted-foreground text-sm">{product.reviews} reviews</span>
+                <span className="text-muted-foreground text-sm">
+                  {product.reviews} reviews
+                </span>
               </div>
 
               {/* Price */}
               <div className="flex items-baseline gap-3 pt-4 border-t border-border">
-                <span className="text-3xl font-bold text-primary">₦{product.price.toLocaleString()}</span>
-                <span className={`text-sm font-semibold ${product.inStock ? "text-green-500" : "text-red-500"}`}>
+                <span className="text-3xl font-bold text-primary">
+                  ₵{product.price.toLocaleString()}
+                </span>
+                <span
+                  className={`text-sm font-semibold ${
+                    product.inStock ? "text-green-500" : "text-red-500"
+                  }`}
+                >
                   {product.inStock ? "In Stock" : "Out of Stock"}
                 </span>
               </div>
             </div>
 
             {/* Description */}
-            <p className="text-muted-foreground leading-relaxed">{product.description}</p>
+            <p className="text-muted-foreground leading-relaxed">
+              {product.description}
+            </p>
 
             {/* Features */}
             <div>
@@ -199,8 +223,13 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
               <ul className="space-y-2">
                 {product.features.map((feature: string, index: number) => (
                   <li key={index} className="flex items-start gap-3">
-                    <Check size={18} className="mt-0.5 text-primary flex-shrink-0" />
-                    <span className="text-sm text-muted-foreground">{feature}</span>
+                    <Check
+                      size={18}
+                      className="mt-0.5 text-primary flex-shrink-0"
+                    />
+                    <span className="text-sm text-muted-foreground">
+                      {feature}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -216,7 +245,9 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                   >
                     −
                   </button>
-                  <span className="px-4 py-2 border-l border-r border-border">{quantity}</span>
+                  <span className="px-4 py-2 border-l border-r border-border">
+                    {quantity}
+                  </span>
                   <button
                     onClick={() => setQuantity(quantity + 1)}
                     className="px-4 py-2 hover:bg-secondary transition-colors"
@@ -224,7 +255,9 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                     +
                   </button>
                 </div>
-                <span className="text-sm text-muted-foreground">{product.quantity} available</span>
+                <span className="text-sm text-muted-foreground">
+                  {product.quantity} available
+                </span>
               </div>
 
               {/* Add to Cart Button */}
@@ -250,10 +283,17 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                   variant="outline"
                   className="flex-1 flex items-center justify-center gap-2"
                 >
-                  <Heart size={18} className={isFavorite ? "fill-primary text-primary" : ""} />
+                  <Heart
+                    size={18}
+                    className={isFavorite ? "fill-primary text-primary" : ""}
+                  />
                   Wishlist
                 </Button>
-                <Button variant="outline" size="icon" className="flex-1 bg-transparent">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="flex-1 bg-transparent"
+                >
                   <Share2 size={18} />
                 </Button>
               </div>
@@ -263,13 +303,16 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             <Card className="bg-secondary border-border p-4">
               <div className="space-y-2 text-sm">
                 <p>
-                  <span className="font-semibold">SKU:</span> RC-{product.id.toString().padStart(3, "0")}
+                  <span className="font-semibold">SKU:</span> RC-
+                  {product.id.toString().padStart(3, "0")}
                 </p>
                 <p>
-                  <span className="font-semibold">Availability:</span> Ships within 2-3 business days
+                  <span className="font-semibold">Availability:</span> Ships
+                  within 2-3 business days
                 </p>
                 <p>
-                  <span className="font-semibold">Returns:</span> 30-day money-back guarantee
+                  <span className="font-semibold">Returns:</span> 30-day
+                  money-back guarantee
                 </p>
               </div>
             </Card>
@@ -280,7 +323,9 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
       {/* Related Products */}
       <section className="bg-secondary border-y border-border py-12 md:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl md:text-3xl font-serif font-bold mb-8">You Might Also Like</h2>
+          <h2 className="text-2xl md:text-3xl font-serif font-bold mb-8">
+            You Might Also Like
+          </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {Object.values(products)
               .filter((p: any) => p.id !== product.id)
@@ -298,11 +343,18 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                     />
                   </div>
                   <div className="p-4 space-y-3">
-                    <h3 className="font-semibold text-sm line-clamp-2">{relatedProduct.name}</h3>
+                    <h3 className="font-semibold text-sm line-clamp-2">
+                      {relatedProduct.name}
+                    </h3>
                     <div className="flex items-center justify-between pt-2 border-t border-border">
-                      <span className="text-primary font-semibold">₦{relatedProduct.price.toLocaleString()}</span>
+                      <span className="text-primary font-semibold">
+                        ₵{relatedProduct.price.toLocaleString()}
+                      </span>
                       <Link href={`/product/${relatedProduct.id}`}>
-                        <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                        <Button
+                          size="sm"
+                          className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                        >
                           View
                         </Button>
                       </Link>
@@ -316,5 +368,5 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
       <Footer />
     </main>
-  )
+  );
 }

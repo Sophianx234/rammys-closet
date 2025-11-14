@@ -29,20 +29,99 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Table, TableHeader, TableHead, TableRow, TableCell, TableBody } from "@/components/ui/table";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Table,
+  TableHeader,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+} from "@/components/ui/table";
 
 /* ---------------- MOCK DATA ---------------- */
 
 const mockOrders = [
-  { id: "RM-001", customer: "Sarah M.", total: 45000, qty: 3, status: "delivered", payment: "paid", shipping: "Lagos, NG", date: "2025-10-18" },
-  { id: "RM-002", customer: "Jennifer K.", total: 28500, qty: 2, status: "shipped", payment: "paid", shipping: "Abuja, NG", date: "2025-10-20" },
-  { id: "RM-003", customer: "Amanda T.", total: 62000, qty: 5, status: "processing", payment: "pending", shipping: "Kano, NG", date: "2025-10-25" },
-  { id: "RM-004", customer: "Michael B.", total: 18900, qty: 1, status: "delivered", payment: "paid", shipping: "Ibadan, NG", date: "2025-10-25" },
-  { id: "RM-005", customer: "Jessica F.", total: 75200, qty: 4, status: "processing", payment: "paid", shipping: "Port Harcourt, NG", date: "2025-10-26" },
-  { id: "RM-006", customer: "David E.", total: 9500, qty: 1, status: "cancelled", payment: "failed", shipping: "Enugu, NG", date: "2025-10-27" },
+  {
+    id: "RM-001",
+    customer: "Sarah M.",
+    total: 45000,
+    qty: 3,
+    status: "delivered",
+    payment: "paid",
+    shipping: "Lagos, NG",
+    date: "2025-10-18",
+  },
+  {
+    id: "RM-002",
+    customer: "Jennifer K.",
+    total: 28500,
+    qty: 2,
+    status: "shipped",
+    payment: "paid",
+    shipping: "Abuja, NG",
+    date: "2025-10-20",
+  },
+  {
+    id: "RM-003",
+    customer: "Amanda T.",
+    total: 62000,
+    qty: 5,
+    status: "processing",
+    payment: "pending",
+    shipping: "Kano, NG",
+    date: "2025-10-25",
+  },
+  {
+    id: "RM-004",
+    customer: "Michael B.",
+    total: 18900,
+    qty: 1,
+    status: "delivered",
+    payment: "paid",
+    shipping: "Ibadan, NG",
+    date: "2025-10-25",
+  },
+  {
+    id: "RM-005",
+    customer: "Jessica F.",
+    total: 75200,
+    qty: 4,
+    status: "processing",
+    payment: "paid",
+    shipping: "Port Harcourt, NG",
+    date: "2025-10-26",
+  },
+  {
+    id: "RM-006",
+    customer: "David E.",
+    total: 9500,
+    qty: 1,
+    status: "cancelled",
+    payment: "failed",
+    shipping: "Enugu, NG",
+    date: "2025-10-27",
+  },
 ];
 
 /* ---------------- HELPERS ---------------- */
@@ -68,13 +147,17 @@ export default function OrdersTab() {
   const [page, setPage] = useState(1);
 
   /* FILTERING */
-  const filtered = orders.filter(o =>
-    o.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    o.id.toLowerCase().includes(searchTerm.toLowerCase())
+  const filtered = orders.filter(
+    (o) =>
+      o.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      o.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const totalPages = Math.ceil(filtered.length / ordersPerPage);
-  const visible = filtered.slice((page - 1) * ordersPerPage, page * ordersPerPage);
+  const visible = filtered.slice(
+    (page - 1) * ordersPerPage,
+    page * ordersPerPage
+  );
 
   /* OPEN MODAL */
   const viewOrder = (order) => {
@@ -84,17 +167,15 @@ export default function OrdersTab() {
 
   /* STATUS CHANGE */
   const updateStatus = (id, newStatus) => {
-    setOrders(prev =>
-      prev.map(o => (o.id === id ? { ...o, status: newStatus } : o))
+    setOrders((prev) =>
+      prev.map((o) => (o.id === id ? { ...o, status: newStatus } : o))
     );
   };
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
-
       {/* HEADER TOOLS */}
       <div className="flex flex-col md:flex-row items-center gap-4 justify-between">
-
         <div className="relative w-full md:w-72">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -159,10 +240,15 @@ export default function OrdersTab() {
                     <TableCell>{o.id}</TableCell>
                     <TableCell>{o.customer}</TableCell>
                     <TableCell>{o.qty}</TableCell>
-                    <TableCell className="font-semibold">₦{o.total.toLocaleString()}</TableCell>
+                    <TableCell className="font-semibold">
+                      ₵{o.total.toLocaleString()}
+                    </TableCell>
 
                     <TableCell>
-                      <Badge variant={P.variant} className="flex items-center gap-1">
+                      <Badge
+                        variant={P.variant}
+                        className="flex items-center gap-1"
+                      >
                         <Icon className="w-3 h-3" />
                         {P.label}
                       </Badge>
@@ -183,8 +269,12 @@ export default function OrdersTab() {
                           <SelectValue placeholder={o.status} />
                         </SelectTrigger>
                         <SelectContent>
-                          {statusOptions.map(s => (
-                            <SelectItem key={s} value={s} className="capitalize">
+                          {statusOptions.map((s) => (
+                            <SelectItem
+                              key={s}
+                              value={s}
+                              className="capitalize"
+                            >
                               {s}
                             </SelectItem>
                           ))}
@@ -216,7 +306,6 @@ export default function OrdersTab() {
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
-
                   </motion.tr>
                 );
               })}
@@ -267,18 +356,22 @@ export default function OrdersTab() {
 
           {selectedOrder && (
             <div className="space-y-6">
-
               <div className="grid grid-cols-2 gap-4">
                 <Detail label="Order ID" value={selectedOrder.id} />
                 <Detail label="Customer" value={selectedOrder.customer} />
                 <Detail label="Quantity" value={selectedOrder.qty} />
-                <Detail label="Amount" value={`₦${selectedOrder.total.toLocaleString()}`} />
+                <Detail
+                  label="Amount"
+                  value={`₵${selectedOrder.total.toLocaleString()}`}
+                />
                 <Detail label="Payment" value={selectedOrder.payment} />
                 <Detail label="Status" value={selectedOrder.status} />
                 <Detail label="Address" value={selectedOrder.shipping} />
-                <Detail label="Date" value={new Date(selectedOrder.date).toLocaleDateString()} />
+                <Detail
+                  label="Date"
+                  value={new Date(selectedOrder.date).toLocaleDateString()}
+                />
               </div>
-
             </div>
           )}
 
@@ -287,10 +380,8 @@ export default function OrdersTab() {
               Close
             </Button>
           </DialogFooter>
-
         </DialogContent>
       </Dialog>
-
     </div>
   );
 }
