@@ -24,7 +24,7 @@ import { ProductCard } from "./product-card";
 import Link from "next/link";
 
 interface IProduct {
-  id: string | number;
+  _id: string | number;
   name: string;
   slug: string;
   price: number;
@@ -198,7 +198,7 @@ const filteredProducts = products
         ) : sortedProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
             {sortedProducts.map((product, i) => (
-              <ProductCard key={product.id} product={product} index={i} />
+              <ProductCard key={product._id} product={product} index={i} />
             ))}
           </div>
         ) : (

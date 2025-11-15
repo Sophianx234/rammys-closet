@@ -11,7 +11,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 
-// Icons
 import {
   FaBoxOpen,
   FaMoneyBillWave,
@@ -61,12 +60,11 @@ export default function AddProductPage() {
     isFeatured: false,
   });
 
-  // FIXED: Separate previews
   const [previews, setPreviews] = useState<string[]>([]);
-
   const [newFeature, setNewFeature] = useState("");
   const [variantName, setVariantName] = useState("");
   const [variantOptions, setVariantOptions] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     (async () => {
@@ -80,7 +78,6 @@ export default function AddProductPage() {
     })();
   }, []);
 
-  // Dropzone updated
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (!acceptedFiles.length) return;
 
@@ -132,6 +129,7 @@ export default function AddProductPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({}); // reset errors
 
     try {
       const validated = productSchema.parse({
@@ -144,7 +142,6 @@ export default function AddProductPage() {
       setLoading(true);
 
       const form = new FormData();
-
       form.append("name", validated.name);
       form.append("description", validated.description);
       form.append("price", String(validated.price));
@@ -161,9 +158,7 @@ export default function AddProductPage() {
         );
       });
 
-      validated.images.forEach((file) => {
-        form.append("images", file);
-      });
+      validated.images.forEach((file) => form.append("images", file));
 
       const res = await fetch("/api/admin/products", {
         method: "POST",
@@ -185,19 +180,22 @@ export default function AddProductPage() {
       setProduct({
         name: "",
         description: "",
-        price: 0,
-        stock: 0,
+        price: 1,
+        stock: 1,
         images: [],
         features: [],
         category: "",
         variants: [],
         isFeatured: false,
       });
-
       setPreviews([]);
     } catch (err: any) {
       if (err instanceof z.ZodError) {
-        Swal.fire("Validation Error", err.errors[0]?.message, "warning");
+        const fieldErrors: Record<string, string> = {};
+        err.errors.forEach((e) => {
+          if (e.path[0]) fieldErrors[e.path[0] as string] = e.message;
+        });
+        setErrors(fieldErrors);
       } else {
         Swal.fire("Error", err.message, "error");
       }
@@ -213,7 +211,7 @@ export default function AddProductPage() {
       className="space-y-8"
     >
       <h2 className="text-2xl font-semibold text-gray-100 flex items-center gap-2">
-        <FaBoxOpen className="text-rose-400" /> Add New Product
+        <FaBoxOpen className="text-primary" /> Add New Product
       </h2>
 
       <Card className="p-6 bg-neutral-800 border border-neutral-700 rounded-xl shadow-md">
@@ -232,6 +230,9 @@ export default function AddProductPage() {
                 }
                 placeholder="Luxury Lipstick - Crimson"
               />
+              {errors.name && (
+                <p className="text-primary text-xs mt-1">{errors.name}</p>
+              )}
             </div>
 
             <div>
@@ -246,6 +247,9 @@ export default function AddProductPage() {
                   setProduct({ ...product, price: Number(e.target.value) })
                 }
               />
+              {errors.price && (
+                <p className="text-primary text-xs mt-1">{errors.price}</p>
+              )}
             </div>
           </div>
 
@@ -263,6 +267,9 @@ export default function AddProductPage() {
                   setProduct({ ...product, stock: Number(e.target.value) })
                 }
               />
+              {errors.stock && (
+                <p className="text-primary text-xs mt-1">{errors.stock}</p>
+              )}
             </div>
 
             <div>
@@ -283,6 +290,9 @@ export default function AddProductPage() {
                   </option>
                 ))}
               </select>
+              {errors.category && (
+                <p className="text-primary text-xs mt-1">{errors.category}</p>
+              )}
             </div>
           </div>
 
@@ -298,6 +308,9 @@ export default function AddProductPage() {
               }
               placeholder="Enter detailed product description..."
             />
+            {errors.description && (
+              <p className="text-primary text-xs mt-1">{errors.description}</p>
+            )}
           </div>
 
           {/* Image Upload */}
@@ -310,7 +323,7 @@ export default function AddProductPage() {
               {...getRootProps()}
               className={`p-6 border-2 border-dashed rounded-lg text-center cursor-pointer transition ${
                 isDragActive
-                  ? "border-rose-500 bg-rose-500/10"
+                  ? "border-primary bg-neutral-900/50"
                   : "border-neutral-600 bg-neutral-900/30"
               }`}
             >
@@ -319,6 +332,10 @@ export default function AddProductPage() {
                 Drag & drop product images here, or click to browse (max 5)
               </p>
             </div>
+
+            {errors.images && (
+              <p className="text-primary text-xs mt-1">{errors.images}</p>
+            )}
 
             {previews.length > 0 && (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-4">
@@ -352,6 +369,9 @@ export default function AddProductPage() {
             <label className="text-gray-300 flex items-center gap-2">
               <FaStar /> Features
             </label>
+            <p className="text-gray-400 text-xs mb-2">
+              Features describe the key qualities or benefits of the product.
+            </p>
 
             <div className="flex gap-2 mb-2">
               <Input
@@ -381,6 +401,10 @@ export default function AddProductPage() {
             <label className="text-gray-300 flex items-center gap-2">
               <FaSlidersH /> Variants
             </label>
+            <p className="text-gray-400 text-xs mb-2">
+              Variants allow customers to choose different options such as size
+              or color.
+            </p>
 
             <div className="flex gap-2 mb-2 flex-wrap">
               <Input
@@ -411,23 +435,30 @@ export default function AddProductPage() {
           </div>
 
           {/* Featured */}
-          <div className="flex items-center gap-2">
-            <Checkbox
-              checked={product.isFeatured}
-              onCheckedChange={(checked) =>
-                setProduct({ ...product, isFeatured: Boolean(checked) })
-              }
-            />
-            <span className="text-gray-300 flex items-center gap-2">
-              <FaThumbtack /> Mark as Featured
-            </span>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={product.isFeatured}
+                onCheckedChange={(checked) =>
+                  setProduct({ ...product, isFeatured: Boolean(checked) })
+                }
+              />
+              <span className="text-gray-300 flex items-center gap-2">
+                <FaThumbtack /> Mark as Featured
+              </span>
+            </div>
+            {product.isFeatured && (
+              <p className="text-gray-400 text-xs">
+                This product will appear in the Featured section on the homepage.
+              </p>
+            )}
           </div>
 
           {/* Submit */}
           <Button
             type="submit"
             disabled={loading}
-            className="bg-primary text-white flex items-center gap-2"
+            className="bg-primary text-black flex items-center gap-2"
           >
             <FaSave /> {loading ? "Adding Product..." : "Add Product"}
           </Button>

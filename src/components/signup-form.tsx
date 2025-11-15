@@ -1,20 +1,64 @@
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+"use client";
+
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   Field,
   FieldDescription,
   FieldGroup,
   FieldLabel,
   FieldSeparator,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const router = useRouter()
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    try {
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if(res.ok) router.push('/signup/profile')
+
+      if (!res.ok) {
+        setError(data.message || "Something went wrong");
+        setLoading(false);
+        return;
+      }
+
+      form.reset();
+    } catch (err) {
+      console.error(err);
+      setError("Internal server error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <form className={cn("flex flex-col gap-6", className)} {...props}>
+    <form
+      className={cn("flex flex-col gap-6", className)}
+      {...props}
+      onSubmit={handleSubmit}
+    >
       <FieldGroup>
         {/* Header */}
         <div className="flex flex-col items-center gap-1 text-center">
@@ -33,6 +77,7 @@ export function SignupForm({
           </FieldLabel>
           <Input
             id="name"
+            name="name"
             type="text"
             placeholder="John Doe"
             required
@@ -47,14 +92,14 @@ export function SignupForm({
           </FieldLabel>
           <Input
             id="email"
+            name="email"
             type="email"
             placeholder="m@example.com"
             required
             className="bg-secondary text-foreground border border-border placeholder-muted-foreground focus:ring-primary"
           />
           <FieldDescription className="text-muted-foreground">
-            We&apos;ll use this to contact you. We will not share your email
-            with anyone else.
+            We'll use this to contact you. We will not share your email.
           </FieldDescription>
         </Field>
 
@@ -65,6 +110,7 @@ export function SignupForm({
           </FieldLabel>
           <Input
             id="password"
+            name="password"
             type="password"
             required
             className="bg-secondary text-foreground border border-border placeholder-muted-foreground focus:ring-primary"
@@ -81,6 +127,7 @@ export function SignupForm({
           </FieldLabel>
           <Input
             id="confirm-password"
+            name="confirmPassword"
             type="password"
             required
             className="bg-secondary text-foreground border border-border placeholder-muted-foreground focus:ring-primary"
@@ -90,13 +137,16 @@ export function SignupForm({
           </FieldDescription>
         </Field>
 
+        {error && <p className="text-red-500 text-sm">{error}</p>}
+
         {/* Submit */}
         <Field>
           <Button
             type="submit"
             className="bg-primary hover:bg-primary/90 text-primary-foreground"
+            disabled={loading}
           >
-            Create Account
+            {loading ? "Creating..." : "Create Account"}
           </Button>
         </Field>
 
@@ -109,7 +159,7 @@ export function SignupForm({
           <Button
             variant="outline"
             type="button"
-            className="flex items-center hover:bg-black hover:border-primary hover:text-white gap-2    "
+            className="flex items-center hover:bg-black hover:border-primary hover:text-white gap-2"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -132,5 +182,5 @@ export function SignupForm({
         </Field>
       </FieldGroup>
     </form>
-  )
+  );
 }

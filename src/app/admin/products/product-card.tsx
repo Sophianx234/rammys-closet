@@ -142,7 +142,7 @@ export function ProductCard({ product, index }) {
                   className="text-xs text-gray-400 bg-neutral-800/70 border-none"
                 >
                   <Tag className="w-3 h-3 mr-1" />{" "}
-                  {product.category.name || "Uncategorized"}
+                  {product.category?.name || "Uncategorized"}
                 </Badge>
 
                 {product.rating > 0 && (

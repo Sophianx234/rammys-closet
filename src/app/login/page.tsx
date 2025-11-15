@@ -11,9 +11,9 @@ import { Input } from "@/components/ui/input"
 
 export default function LoginPage() {
   return (
-    <div className="grid min-h-svh relative bg-gradient-to-b from-secondary to-background overflow-hidden lg:grid-cols-2">
+    <div className="grid h-dvh overflow-hidden relative bg-gradient-to-b from-secondary to-background  lg:grid-cols-2">
       {/* Left Section */}
-      <div className="flex flex-col gap-4 p-6 md:p-10">
+      <div className="flex flex-col overflow-y-scroll scrollbar-hide gap-4 p-6 md:p-10">
         {/* Logo */}
         <div className="flex justify-center gap-2 md:justify-start">
           <a href="#" className="flex items-center gap-2 font-medium">

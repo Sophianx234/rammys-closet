@@ -10,7 +10,7 @@ export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
-  role: "customer" | "admin";
+  role: "customer" | "admin"| 'dispatcher';
   address?: {
     street?: string;
     city?: string;

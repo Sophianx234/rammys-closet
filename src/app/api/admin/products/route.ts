@@ -21,9 +21,9 @@ export async function GET() {
       { error: err.message || "Failed to fetch products" },
       { status: 500 }
     );
+
   }
 }
-
 
 export async function POST(req: NextRequest) {
   try {
