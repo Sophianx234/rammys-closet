@@ -2,14 +2,14 @@
 
 import Header from "@/components/header";
 import Footer from "@/components/footer";
-import { useWishlist } from "@/components/wishlist-context";
 import { Button } from "@/components/ui/button";
 import { Heart, ShoppingCart, Trash2 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { useDashStore } from "@/lib/store";
 
 export default function WishlistPage() {
-  const { items, removeFromWishlist } = useWishlist();
+  const { items } = useDashStore();
 
   return (
     <main className="min-h-screen bg-background">
@@ -17,7 +17,7 @@ export default function WishlistPage() {
       <div className="max-w-5xl mx-auto px-4 py-12">
         <h1 className="text-3xl font-bold mb-8">My Wishlist</h1>
 
-        {items.length > 0 ? (
+        {items?.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {items.map((item) => (
               <div

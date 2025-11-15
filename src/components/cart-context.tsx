@@ -1,5 +1,7 @@
 "use client"
 
+import { useDashStore } from "@/lib/store"
+import { IUser } from "@/models/User"
 import type React from "react"
 
 import { createContext, useContext, useEffect, useState } from "react"
@@ -26,6 +28,20 @@ const CartContext = createContext<CartContextType | undefined>(undefined)
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
   const [isLoaded, setIsLoaded] = useState(false)
+   const {setUser} = useDashStore()
+       useEffect(()=>{
+      const getMe = async()=>{
+        const res = await fetch('/api/auth/me')
+        const data = await res.json()
+        if(res.ok ){
+          setUser(data.user as IUser)
+          console.log('user', data.user)
+          
+          
+    }
+  }
+      getMe()
+    },[]) 
 
   // Load cart from localStorage on mount
   useEffect(() => {

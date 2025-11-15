@@ -10,6 +10,7 @@ export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
+  profile?: string;
   role: "customer" | "admin"| 'dispatcher';
   address?: {
     street?: string;
@@ -30,6 +31,7 @@ const userSchema = new Schema<IUser>(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
+    profile: String,
     role: { type: String, enum: ["customer", "admin"], default: "customer" },
     address: {
       street: String,
