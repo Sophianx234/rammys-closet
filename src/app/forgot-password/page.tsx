@@ -1,91 +1,127 @@
-"use client"
+"use client";
 
-import type React from "react"
-
-import { useState } from "react"
-import Link from "next/link"
-import Header from "@/components/header"
-import Footer from "@/components/footer"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Mail } from "lucide-react"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { GalleryVerticalEnd } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState("")
-  const [submitted, setSubmitted] = useState(false)
-  const [error, setError] = useState("")
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+    setLoading(true);
 
-    if (!email) {
-      setError("Please enter your email")
-      return
+    try {
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.message || "Failed to send reset email.");
+      } else {
+        setSuccess("Password reset link sent! Check your email.");
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Something went wrong. Try again.");
+    } finally {
+      setLoading(false);
     }
-
-    // Mock verification - in production, send reset email
-    setSubmitted(true)
-  }
+  };
 
   return (
-    <main className="min-h-screen bg-background">
-      <Header />
-      <div className="flex items-center justify-center py-20 px-4">
-        <div className="w-full max-w-md">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">Reset Password</h1>
-            <p className="text-muted-foreground">We'll send you instructions to reset your password</p>
-          </div>
+    <div className="grid h-dvh overflow-hidden relative bg-gradient-to-b from-secondary to-background lg:grid-cols-2">
+      {/* Left Section */}
+      <div className="flex flex-col overflow-y-scroll scrollbar-hide gap-4 p-6 md:p-10">
+        {/* Logo */}
+        <div className="flex justify-center gap-2 md:justify-start">
+          <a href="/" className="flex items-center gap-2 font-medium">
+            <div className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md">
+              <GalleryVerticalEnd className="size-4" />
+            </div>
+            <span className="text-primary">Rammys Closet</span>
+          </a>
+        </div>
 
-          {!submitted ? (
-            <div className="bg-card border border-border rounded-lg p-8">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Email Address</label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 w-5 h-5 text-muted-foreground" />
-                    <Input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@example.com"
-                      required
-                      className="pl-10"
-                    />
-                  </div>
+        {/* Form Section */}
+        <div className="flex flex-1 items-center justify-center">
+          <div className="w-full max-w-xs">
+            <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
+              <FieldGroup>
+                <div className="flex flex-col items-center gap-1 text-center">
+                  <h1 className="text-2xl font-bold text-foreground">Forgot Password</h1>
+                  <p className="text-muted-foreground text-sm text-balance">
+                    Enter your email and we’ll send a password reset link.
+                  </p>
                 </div>
 
-                {error && (
-                  <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-2 rounded-md text-sm">
-                    {error}
-                  </div>
-                )}
+                {/* Email */}
+                <Field>
+                  <FieldLabel htmlFor="email" className="text-foreground">Email</FieldLabel>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="bg-secondary text-foreground border border-border placeholder-muted-foreground focus:ring-primary"
+                  />
+                </Field>
 
-                <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
-                  Send Reset Link
+                {/* Error or Success */}
+                {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+                {success && <p className="text-green-500 text-sm text-center">{success}</p>}
+
+                {/* Submit */}
+                <Button
+                  type="submit"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground w-full"
+                  disabled={loading}
+                >
+                  {loading ? "Sending..." : "Send Reset Link"}
                 </Button>
 
-                <Link href="/login" className="block text-center text-sm text-muted-foreground hover:text-foreground">
-                  Back to login
-                </Link>
-              </form>
-            </div>
-          ) : (
-            <div className="bg-card border border-border rounded-lg p-8 text-center">
-              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                <Mail className="h-6 w-6 text-primary" />
-              </div>
-              <h2 className="text-xl font-semibold mb-2">Check your email</h2>
-              <p className="text-muted-foreground mb-6">We've sent password reset instructions to {email}</p>
-              <Link href="/login" className="inline-block text-primary hover:underline font-medium">
-                Back to login
-              </Link>
-            </div>
-          )}
+                <FieldDescription className="text-center text-muted-foreground">
+                  Remember your password?{" "}
+                  <a href="/login" className="text-primary hover:underline">
+                    Sign in
+                  </a>
+                </FieldDescription>
+              </FieldGroup>
+            </form>
+          </div>
         </div>
       </div>
-      <Footer />
-    </main>
-  )
+
+      {/* Right Image Section */}
+      <div className="bg-muted relative hidden lg:block">
+        <img
+          src="/imgs/c-1.jpg"
+          alt="Fashion display"
+          className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
+        />
+      </div>
+    </div>
+  );
 }

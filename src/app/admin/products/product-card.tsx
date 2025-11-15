@@ -127,8 +127,8 @@ export function ProductCard({ product, index }) {
             </div>
 
             {product.isFeatured && (
-              <Badge className="absolute top-3 left-3 bg-primary text-white text-xs px-3 py-1 shadow-md">
-                <Star className="w-3 h-3 mr-1 fill-white" /> Featured
+              <Badge className="absolute top-3 left-3 bg-primary text-black text-xs px-3 py-1 shadow-md">
+                <Star className="w-3 h-3 mr-1 " /> Featured
               </Badge>
             )}
           </div>

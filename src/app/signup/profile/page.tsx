@@ -1,23 +1,27 @@
 "use client";
 
-import { useState, ChangeEvent } from "react";
+import { useState, ChangeEvent, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 interface UploadProfileImageProps {
-  onNext: (file?: File) => void;
+  token: string; // JWT token from signup/login
+  onComplete: (userData: any) => void;
 }
 
-export default function UploadProfileImage({ onNext }: UploadProfileImageProps) {
+export default function UploadProfileImage({ token, onComplete }: UploadProfileImageProps) {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
     if (!selected) return;
 
-    // Validate type
     if (!["image/png", "image/jpeg", "image/jpg"].includes(selected.type)) {
       setError("Only JPG or PNG files are allowed.");
       setFile(null);
@@ -25,7 +29,6 @@ export default function UploadProfileImage({ onNext }: UploadProfileImageProps) 
       return;
     }
 
-    // Validate size (<5MB)
     if (selected.size > 5 * 1024 * 1024) {
       setError("File size must be less than 5MB.");
       setFile(null);
@@ -38,64 +41,88 @@ export default function UploadProfileImage({ onNext }: UploadProfileImageProps) 
     setError(null);
   };
 
-  const handleNext = () => {
-    onNext(file || undefined);
+  const triggerFileInput = () => inputRef.current?.click();
+
+  const handleUpload = async () => {
+    if (!file) {
+      onComplete(null); // skip if no file
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const res = await fetch("/api/auth/signup/profile", {
+        method: "PATCH",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.msg || "Failed to upload image.");
+      } else {
+        onComplete(data.user); // return updated user
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Something went wrong. Try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center gap-6 max-w-md mx-auto mt-10 p-6 bg-secondary rounded-xl border border-border shadow-md">
-      <h1 className="text-2xl font-bold text-foreground text-center">
-        Upload Profile Image
-      </h1>
+    <div className="flex flex-col items-center justify-center gap-6 max-w-md mx-auto mt-10 p-6 bg-secondary rounded-xl border border-border shadow-lg sm:p-8">
+      <h1 className="text-2xl font-bold text-foreground text-center">Upload Profile Image</h1>
       <p className="text-sm text-muted-foreground text-center">
         Add a profile picture before creating your account (optional)
       </p>
 
-      {/* Preview */}
-      <div className="w-32 h-32 rounded-full overflow-hidden border border-border bg-muted flex items-center justify-center">
+      {/* Image Circle */}
+      <div
+        className={cn(
+          "w-32 h-32 sm:w-36 sm:h-36 rounded-full overflow-hidden border-2 border-border bg-muted flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-primary transition",
+          error && "border-destructive"
+        )}
+        onClick={triggerFileInput}
+      >
         {preview ? (
           <img src={preview} alt="Preview" className="object-cover w-full h-full" />
         ) : (
-          <span className="text-muted-foreground">No Image</span>
+          <span className="text-muted-foreground text-center">Click to Upload</span>
         )}
       </div>
 
-      {/* Hidden File Input Trigger */}
+      {/* Hidden File Input */}
       <input
         type="file"
         accept="image/png, image/jpeg, image/jpg"
-        id="profile-image"
+        ref={inputRef}
         className="hidden"
         onChange={handleFileChange}
       />
-      <label
-        htmlFor="profile-image"
-        className={cn(
-          "cursor-pointer px-4 py-2 border border-border rounded text-sm text-foreground bg-secondary hover:bg-secondary/80 transition",
-          error && "border-destructive"
-        )}
-      >
-        {file ? "Change Image" : "Select Image"}
-      </label>
 
       {error && <p className="text-red-500 text-sm">{error}</p>}
 
       {/* Buttons */}
-      <div className="flex flex-col gap-3 w-full">
+      <div className="flex flex-col gap-3 w-full mt-2">
         <Button
-          onClick={handleNext}
+          onClick={handleUpload}
+          disabled={loading }
           className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
         >
-          Continue
+          {loading ? "Uploading..." : "Continue"}
         </Button>
 
-        <Button
-          variant="outline"
-          onClick={() => onNext()}
-          className="w-full text-foreground hover:bg-muted"
+        <Link
+          href="/admin/products"
+         
+          className="w-full text-center py-2 rounded-md text-foreground hover:bg-muted transition"
         >
           Skip
-        </Button>
+        </Link>
       </div>
     </div>
   );

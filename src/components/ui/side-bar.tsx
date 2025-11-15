@@ -86,14 +86,14 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
               <Icon
                 size={20}
                 className={`transition-colors ${
-                  active ? "text-rose-400" : "text-neutral-500"
+                  active ? "text-primary" : "text-neutral-500"
                 }`}
               />
               {!collapsed && <span>{name}</span>}
               {active && (
                 <motion.span
                   layoutId="activeIndicator"
-                  className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-pink-500 to-fuchsia-500 rounded-r"
+                  className="absolute left-0 top-0 h-full w-1 bg-primary rounded-r"
                 />
               )}
             </motion.button>

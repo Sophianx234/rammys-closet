@@ -63,13 +63,13 @@ export default function Topbar() {
         <Button
           variant="ghost"
           size="icon"
-          className="relative text-muted-foreground hover:text-white"
+          className="relative hover:bg-transparent border border-transparent hover:border-gray-300 transition-all hover:border text-muted-foreground hover:text-white"
         >
           <Bell size={20} />
           {notifications > 0 && (
             <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75 animate-ping" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500" />
+              <span className="absolute inline-flex h-full w-full rounded-full bg-primary opacity-75 animate-ping" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary" />
             </span>
           )}
         </Button>

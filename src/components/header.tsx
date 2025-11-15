@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ShoppingCart, Menu, X, Search } from "lucide-react";
 import { FaUserCircle } from "react-icons/fa";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import { useCart } from "./cart-context";
 import {
@@ -13,10 +13,16 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { IUser } from "@/models/User";
+import { useDashStore } from "@/lib/store";
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const { items } = useCart();
+  const {user} = useDashStore()
+
+
+
 
   return (
     <header className="sticky top-0 z-50 bg-background border-b border-border">
@@ -66,11 +72,22 @@ export default function Header() {
 
             {/* User Dropdown */}
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="p-2 hover:bg-secondary rounded-full transition-colors">
-                  <FaUserCircle className="w-6 h-6 text-foreground" />
-                </button>
-              </DropdownMenuTrigger>
+           <DropdownMenuTrigger asChild>
+  {!user ? (
+    <button className="p-2 hover:bg-secondary rounded-full transition-colors">
+      <FaUserCircle className="w-6 h-6 text-foreground" />
+    </button>
+  ) : (
+    <button className="w-9 h-9 rounded-full overflow-hidden border border-border hover:ring-2 hover:ring-primary transition-all">
+      <img
+        src={user?.profile}
+        alt="Profile"
+        className="w-full h-full object-cover"
+      />
+    </button>
+  )}
+</DropdownMenuTrigger>
+
 
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem asChild>

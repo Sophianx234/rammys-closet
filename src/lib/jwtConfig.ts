@@ -22,7 +22,7 @@ const jwtSecret = process.env.JWT_SECRET as string;
 const jwtExpires = process.env.JWT_EXPIRES;
 export const signToken = async (user: IUser) => {
   if (jwtSecret && jwtExpires)
-    return jwt.sign({ userId: user._id,  }, jwtSecret, {
+    return jwt.sign({ userId: user._id, role:user.role  }, jwtSecret, {
       expiresIn: Number(jwtExpires)*60*60*24,
     });
   else {

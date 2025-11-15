@@ -1,17 +1,68 @@
-import { GalleryVerticalEnd } from "lucide-react"
-import { Button } from "@/components/ui/button"
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { GalleryVerticalEnd } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Field,
   FieldDescription,
   FieldGroup,
   FieldLabel,
   FieldSeparator,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.message || "Failed to login");
+        setLoading(false);
+        return;
+      }
+      
+      // Login successful
+      // JWT token is set via cookie if your backend uses setAuthCookie
+      if(res.ok) {
+        console.log("Login successful:", data);
+        if(data.user.role === 'admin'){
+          router.push("/admin/products"); // redirect after login
+        } else {
+          router.push("/"); // redirect to homepage for regular users
+        }
+        // router.push("/admin/products"); // redirect after login
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Something went wrong. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="grid h-dvh overflow-hidden relative bg-gradient-to-b from-secondary to-background  lg:grid-cols-2">
+    <div className="grid h-dvh overflow-hidden relative bg-gradient-to-b from-secondary to-background lg:grid-cols-2">
       {/* Left Section */}
       <div className="flex flex-col overflow-y-scroll scrollbar-hide gap-4 p-6 md:p-10">
         {/* Logo */}
@@ -27,7 +78,7 @@ export default function LoginPage() {
         {/* Form Section */}
         <div className="flex flex-1 items-center justify-center">
           <div className="w-full max-w-xs">
-            <form className="flex flex-col gap-6">
+            <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
               <FieldGroup>
                 <div className="flex flex-col items-center gap-1 text-center">
                   <h1 className="text-2xl font-bold text-foreground">Welcome Back</h1>
@@ -38,28 +89,28 @@ export default function LoginPage() {
 
                 {/* Email */}
                 <Field>
-                  <FieldLabel htmlFor="email" className="text-foreground">
-                    Email
-                  </FieldLabel>
+                  <FieldLabel htmlFor="email" className="text-foreground">Email</FieldLabel>
                   <Input
                     id="email"
                     type="email"
                     placeholder="m@example.com"
                     required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="bg-secondary text-foreground border border-border placeholder-muted-foreground focus:ring-primary"
                   />
                 </Field>
 
                 {/* Password */}
                 <Field>
-                  <FieldLabel htmlFor="password" className="text-foreground">
-                    Password
-                  </FieldLabel>
+                  <FieldLabel htmlFor="password" className="text-foreground">Password</FieldLabel>
                   <Input
                     id="password"
                     type="password"
                     placeholder="********"
                     required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     className="bg-secondary text-foreground border border-border placeholder-muted-foreground focus:ring-primary"
                   />
                   <div className="flex justify-end mt-1">
@@ -69,13 +120,17 @@ export default function LoginPage() {
                   </div>
                 </Field>
 
+                {/* Error Message */}
+                {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+
                 {/* Submit */}
                 <Field>
                   <Button
                     type="submit"
                     className="bg-primary hover:bg-primary/90 text-primary-foreground w-full"
+                    disabled={loading}
                   >
-                    Sign In
+                    {loading ? "Signing in..." : "Sign In"}
                   </Button>
                 </Field>
 
@@ -95,10 +150,7 @@ export default function LoginPage() {
                       viewBox="0 0 24 24"
                       className="w-5 h-5"
                     >
-                      <path
-                        d="M12 .297c-6.63 0-12 5.373-12 12..."
-                        fill="currentColor"
-                      />
+                      <path d="M12 .297c-6.63 0-12 5.373-12 12..." fill="currentColor" />
                     </svg>
                     Sign in with GitHub
                   </Button>
@@ -125,5 +177,5 @@ export default function LoginPage() {
         />
       </div>
     </div>
-  )
+  );
 }

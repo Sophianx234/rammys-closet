@@ -13,7 +13,6 @@ export async function GET() {
     const products = await Product.find().populate('category').sort({ createdAt: -1 })
       .lean(); // lean() converts to plain JS objects
 
-      console.log("Products fetched from DB:", products);
     return NextResponse.json(products, { status: 200 });
   } catch (err: any) {
     console.error("Error fetching products:", err);
