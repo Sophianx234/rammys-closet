@@ -12,9 +12,11 @@ import {
   LayoutGrid,
   LucidePanelLeft,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { useDashStore } from "@/lib/store";
+import { IUser } from "@/models/User";
 
 interface SidebarProps {
   activeTab: string;
@@ -29,8 +31,26 @@ const navItems = [
   { name: "Analytics", key: "analytics", icon: BarChart3 },
 ];
 
-export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
+export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
+   const [activeTab, setActiveTab] = useState("overview");
+
+
+    const {setUser,user} = useDashStore()
+  
+       useEffect(()=>{
+      const getMe = async()=>{
+        const res = await fetch('/api/auth/me')
+        const data = await res.json()
+        if(res.ok ){
+          setUser(data.user as IUser)
+          console.log('user', data.user)
+          
+          
+    }
+  }
+   if(!user) getMe()
+    },[]) 
 
   return (
     <aside

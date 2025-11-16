@@ -86,7 +86,7 @@ export default function Topbar() {
                 alt="Admin Avatar"
                 width={36}
                 height={36}
-                className="rounded-full border border-neutral-700"
+                className="rounded-full size-9 object-cover border border-neutral-700"
               />
               <div className="hidden sm:flex flex-col items-start">
                 <span className="text-sm font-semibold text-white leading-tight">
