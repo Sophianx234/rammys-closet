@@ -6,6 +6,7 @@ import { connectToDatabase } from "@/lib/connectDB";
 import { encryptPassword } from "@/lib/bcrypt";
 import { signToken } from "@/lib/jwtConfig";
 import { setAuthCookie } from "@/lib/setAuthCookie";
+import { uploadBufferToCloudinary } from "@/lib/cloudinary";
 
 export async function POST(req: NextRequest) {
   await connectToDatabase();
@@ -17,7 +18,6 @@ export async function POST(req: NextRequest) {
     const name = formData.get("name")?.toString();
     const email = formData.get("email")?.toString();
     const password = formData.get("password")?.toString();
-    const profileImageFile = formData.get("profileImage") as File | null;
 
     if (!name || !email || !password) {
       return NextResponse.json(
@@ -25,6 +25,8 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    
 
     // Check if user exists
     const existingUser = await User.findOne({ email });

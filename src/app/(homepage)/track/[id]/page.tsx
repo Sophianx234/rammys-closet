@@ -65,7 +65,6 @@ export default async function TrackOrderPage({
 
   return (
     <main className="min-h-screen bg-background">
-      <Header />
       <div className="max-w-3xl mx-auto px-4 py-12">
         <Link
           href="/orders"
@@ -112,7 +111,6 @@ export default async function TrackOrderPage({
           </div>
         </div>
       </div>
-      <Footer />
     </main>
   );
 }

@@ -5,6 +5,8 @@ import { IUser } from "@/models/User"
 import type React from "react"
 
 import { createContext, useContext, useEffect, useState } from "react"
+import Footer from "./footer"
+import Header from "./header"
 
 export interface CartItem {
   id: number
@@ -93,7 +95,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <CartContext.Provider value={{ items, addItem, removeItem, updateQuantity, clearCart, total }}>
+<Header/>
       {children}
+              <Footer />
+      
     </CartContext.Provider>
   )
 }

@@ -46,7 +46,6 @@ import { FaFeatherAlt, FaHeart, FaLeaf } from "react-icons/fa"
 export default function AboutPage() {
   return (
     <main>
-      <Header />
 
       {/* Hero Section */}
       <section className="bg-secondary border-b border-border py-16 md:py-24">
@@ -276,7 +275,6 @@ export default function AboutPage() {
 
 
 
-      <Footer />
     </main>
   )
 }

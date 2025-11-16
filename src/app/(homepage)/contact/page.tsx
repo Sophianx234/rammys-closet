@@ -36,7 +36,6 @@ export default function ContactPage() {
 
   return (
     <main>
-      <Header />
 
       {/* Page Header */}
       <section className="bg-secondary border-b border-border py-16 md:py-24">
@@ -196,7 +195,6 @@ export default function ContactPage() {
         </div>
       </div>
 
-      <Footer />
     </main>
   )
 }

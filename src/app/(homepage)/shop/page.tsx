@@ -115,7 +115,6 @@ export default function ShopPage() {
 
   return (
     <main>
-      <Header />
 
       {/* Page Header */}
       <section className="bg-secondary border-b border-border py-8">
@@ -286,7 +285,6 @@ export default function ShopPage() {
         </div>
       </div>
 
-      <Footer />
     </main>
   );
 }

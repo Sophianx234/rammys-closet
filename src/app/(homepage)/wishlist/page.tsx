@@ -13,7 +13,6 @@ export default function WishlistPage() {
 
   return (
     <main className="min-h-screen bg-background">
-      <Header />
       <div className="max-w-5xl mx-auto px-4 py-12">
         <h1 className="text-3xl font-bold mb-8">My Wishlist</h1>
 
@@ -79,7 +78,6 @@ export default function WishlistPage() {
           </div>
         )}
       </div>
-      <Footer />
     </main>
   );
 }

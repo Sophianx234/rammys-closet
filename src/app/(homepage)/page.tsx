@@ -15,7 +15,6 @@ export default function HomePage() {
  
   return (
     <main>
-      <Header />
       <Hero />
       <CategoriesShowcase />
       <FeaturedProducts />
@@ -28,7 +27,6 @@ export default function HomePage() {
       <Sustainability />
       {/* <SocialFeed /> */}
       <Newsletter />
-      <Footer />
     </main>
   )
 }

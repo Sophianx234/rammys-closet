@@ -4,7 +4,9 @@ import { Analytics } from "@vercel/analytics/next"
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import type React from "react"
-import "./globals.css"
+import "../globals.css"
+import Header from "@/components/header"
+import Footer from "@/components/footer"
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
@@ -25,8 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`font-sans antialiased`}>
-        <CartProvider>{children}</CartProvider>
-        <Analytics />
+          {children}
       </body>
     </html>
   )

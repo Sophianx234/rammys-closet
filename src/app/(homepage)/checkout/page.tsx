@@ -155,7 +155,6 @@ export default function CheckoutPage() {
   if (currentStep === "success") {
     return (
       <main>
-        <Header />
         <section className="bg-secondary border-b border-border py-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h1 className="text-3xl md:text-4xl font-serif font-bold">
@@ -504,7 +503,6 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      <Footer />
     </main>
   );
 }

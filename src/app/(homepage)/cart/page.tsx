@@ -28,7 +28,6 @@ export default function CartPage() {
 
   return (
     <main>
-      <Header />
 
       {/* Page Header */}
       <section className="bg-secondary border-b border-border py-8">
@@ -186,7 +185,6 @@ export default function CartPage() {
         )}
       </div>
 
-      <Footer />
     </main>
   );
 }
