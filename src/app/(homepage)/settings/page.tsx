@@ -33,7 +33,6 @@ const passwordSchema = z.object({
 export default function SettingsPage() {
   const { user, setUser } = useDashStore();
 
-  // Local state for safe initialization
   const [profile, setProfile] = useState({
     name: "",
     email: "",
@@ -52,12 +51,11 @@ export default function SettingsPage() {
   const [btnEmail, setBtnEmail] = useState("Update Email");
   const [btnPass, setBtnPass] = useState("Update Password");
 
-  // Hydrate profile state when user is loaded
   useEffect(() => {
     if (user) {
       setProfile({
-        name: user.name,
-        email: user.email,
+        name: "",
+        email: "",
         image: user.profile || "/default-profile.png",
         file: null,
       });
@@ -77,75 +75,73 @@ export default function SettingsPage() {
     setBtnProfile("Save Changes");
   };
 
-  /* ------------------ PROFILE SAVE ------------------ */
-  const handleProfileSave = async () => {
-    const validate = profileSchema.safeParse({ name: profile.name });
-    if (!validate.success) {
-      setErrors({ profileName: validate.error.errors[0].message });
-      return;
-    }
-    setErrors({});
-    setBtnProfile("Saving...");
-
+  /* ------------------ GENERIC UPDATE FUNCTION ------------------ */
+  const updateUserField = async (url: string, form: FormData, successMsg: string, btnSetter: (val: string) => void) => {
     try {
-      const form = new FormData();
-      form.append("userId", user._id);
-
-      form.append("name", profile.name);
-      if (profile.file) form.append("profile", profile.file);
-      console.log("Submitting profile update with form data:", user._id, profile.name, profile.file);
-
-      const res = await fetch("/api/users/update-profile", { method: "POST", body: form });
+      btnSetter("Saving...");
+      const res = await fetch(url, { method: "PATCH", body: form });
       const data = await res.json();
 
       if (!res.ok) {
-        Swal.fire({ toast: true, icon: "error", title: data.message || "Failed to update profile", position: "top-end", showConfirmButton: false, timer: 2000 });
-        setBtnProfile("Save Profile");
+        Swal.fire({ toast: true, icon: "error", title: data.message || "Failed to update", position: "top-end", showConfirmButton: false, timer: 2000 });
+        btnSetter(url.includes("profile") ? "Save Profile" : url.includes("email") ? "Update Email" : "Update Password");
         return;
       }
 
-      setUser(data.user);
-      setProfile((prev) => ({ ...prev, image: data.user.profile }));
-      setBtnProfile("Updated!");
-      setTimeout(() => setBtnProfile("Save Profile"), 1500);
-    } catch {
+      if (url.includes("profile") || url.includes("email")) {
+        setUser(data.user);
+      }
+
+      Swal.fire({ toast: true, icon: "success", title: successMsg, position: "top-end", showConfirmButton: false, timer: 2000 });
+      btnSetter(url.includes("profile") ? "Save Profile" : url.includes("email") ? "Update Email" : "Update Password");
+
+      if (url.includes("profile")) setProfile((prev) => ({ ...prev, image: data.user.profile || prev.image, name: "" }));
+      if (url.includes("password")) setPasswords({ current: "", newPass: "", confirm: "" });
+    } catch (err) {
       Swal.fire({ toast: true, icon: "error", title: "Something went wrong", position: "top-end", showConfirmButton: false, timer: 2000 });
-      setBtnProfile("Save Profile");
+      btnSetter(url.includes("profile") ? "Save Profile" : url.includes("email") ? "Update Email" : "Update Password");
     }
+  };
+
+  /* ------------------ PROFILE SAVE ------------------ */
+  const handleProfileSave = async () => {
+    if (!profile.name && !profile.file) {
+      Swal.fire({ toast: true, icon: "warning", title: "Please provide a name or a profile picture", position: "top-end", showConfirmButton: false, timer: 2000 });
+      return;
+    }
+
+    if (profile.name) {
+      const validate = profileSchema.safeParse({ name: profile.name });
+      if (!validate.success) {
+        setErrors({ profileName: validate.error.errors[0].message });
+        return;
+      }
+    }
+
+    setErrors({});
+    const form = new FormData();
+    form.append("userId", user._id);
+    if (profile.name) form.append("name", profile.name);
+    if (profile.file) form.append("profile", profile.file);
+
+    await updateUserField("/api/users/update-profile", form, "Profile updated successfully", setBtnProfile);
   };
 
   /* ------------------ EMAIL UPDATE ------------------ */
   const handleEmailUpdate = async () => {
-    const validate = emailSchema.safeParse({ email: profile.email });
+    const validate = emailSchema.safeParse({ email: profile.email || user.email });
     if (!validate.success) {
       setErrors({ email: validate.error.errors[0].message });
       Swal.fire({ toast: true, icon: "error", title: validate.error.errors[0].message, position: "top-end", showConfirmButton: false, timer: 2000 });
       return;
     }
+
     setErrors({});
-    setBtnEmail("Updating...");
+    const form = new FormData();
+    form.append("userId", user._id);
+    form.append("email", profile.email || user.email);
 
-    try {
-      const form = new FormData();
-      form.append("userId", user._id);
-      form.append("email", profile.email);
-
-      const res = await fetch("/api/users/update-email", { method: "POST", body: form });
-      const data = await res.json();
-
-      if (!res.ok) {
-        Swal.fire({ toast: true, icon: "error", title: data.message || "Failed to update email", position: "top-end", showConfirmButton: false, timer: 2000 });
-        setBtnEmail("Update Email");
-        return;
-      }
-
-      setUser(data.user);
-      setBtnEmail("Updated!");
-      setTimeout(() => setBtnEmail("Update Email"), 1500);
-    } catch {
-      Swal.fire({ toast: true, icon: "error", title: "Something went wrong", position: "top-end", showConfirmButton: false, timer: 2000 });
-      setBtnEmail("Update Email");
-    }
+    await updateUserField("/api/users/update-email", form, "Email updated successfully", setBtnEmail);
   };
 
   /* ------------------ PASSWORD UPDATE ------------------ */
@@ -159,30 +155,12 @@ export default function SettingsPage() {
     }
 
     setErrors({});
-    setBtnPass("Updating...");
+    const form = new FormData();
+    form.append("userId", user._id);
+    form.append("current", passwords.current);
+    form.append("newPass", passwords.newPass);
 
-    try {
-      const form = new FormData();
-      form.append("userId", user._id);
-      form.append("current", passwords.current);
-      form.append("newPass", passwords.newPass);
-
-      const res = await fetch("/api/users/update-password", { method: "POST", body: form });
-      const data = await res.json();
-
-      if (!res.ok) {
-        Swal.fire({ toast: true, icon: "error", title: data.message || "Failed to update password", position: "top-end", showConfirmButton: false, timer: 2000 });
-        setBtnPass("Update Password");
-        return;
-      }
-
-      setBtnPass("Updated!");
-      setTimeout(() => setBtnPass("Update Password"), 1500);
-      setPasswords({ current: "", newPass: "", confirm: "" });
-    } catch {
-      Swal.fire({ toast: true, icon: "error", title: "Something went wrong", position: "top-end", showConfirmButton: false, timer: 2000 });
-      setBtnPass("Update Password");
-    }
+    await updateUserField("/api/users/update-password", form, "Password updated successfully", setBtnPass);
   };
 
   return (
@@ -208,7 +186,11 @@ export default function SettingsPage() {
             </div>
             <div className="space-y-1">
               <Label>Full Name</Label>
-              <Input value={profile.name} onChange={(e) => { setProfile((p) => ({ ...p, name: e.target.value })); setBtnProfile("Save Changes"); }} />
+              <Input
+                placeholder={user.name || "Enter your name"}
+                value={profile.name}
+                onChange={(e) => { setProfile((p) => ({ ...p, name: e.target.value })); setBtnProfile("Save Changes"); }}
+              />
               {errors.profileName && <p className="text-primary text-sm">{errors.profileName}</p>}
             </div>
             <Button className="w-fit" onClick={handleProfileSave}>{btnProfile}</Button>
@@ -222,7 +204,12 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <Label>New Email</Label>
-            <Input type="email" value={profile.email} onChange={(e) => { setProfile((p) => ({ ...p, email: e.target.value })); setBtnEmail("Save Changes"); }} />
+            <Input
+              placeholder={user.email || "Enter your email"}
+              type="email"
+              value={profile.email}
+              onChange={(e) => { setProfile((p) => ({ ...p, email: e.target.value })); setBtnEmail("Save Changes"); }}
+            />
             {errors.email && <p className="text-primary text-sm">{errors.email}</p>}
             <Button className="w-fit" onClick={handleEmailUpdate}>{btnEmail}</Button>
           </CardContent>
