@@ -14,15 +14,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import Link from "next/link";
+import { useDashStore } from "@/lib/store";
 
 export default function Topbar() {
   const [notifications] = useState(2);
+  const {user} = useDashStore()
 
   const handleLogout = () => {
     // Hook to your logout logic
     console.log("Logging out...");
   };
-
+   if(!user) return 
   return (
     <motion.header
       initial={{ opacity: 0, y: -10 }}
@@ -79,7 +82,7 @@ export default function Topbar() {
           <DropdownMenuTrigger asChild>
             <button className="group flex items-center gap-3 rounded-full bg-neutral-900/70 border border-neutral-700 hover:border-neutral-600 hover:bg-neutral-800/80 transition p-1.5 pr-3">
               <img
-                src="https://i.pravatar.cc/100?img=12"
+                src={user?.profile||"https://i.pravatar.cc/100?img=12"}
                 alt="Admin Avatar"
                 width={36}
                 height={36}
@@ -106,7 +109,9 @@ export default function Topbar() {
               <User className="mr-2 h-4 w-4 text-neutral-400" /> Profile
             </DropdownMenuItem>
             <DropdownMenuItem className="hover:bg-neutral-800">
+              <Link href='/settings' className="w-full flex items-center">
               <Settings className="mr-2 h-4 w-4 text-neutral-400" /> Settings
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-neutral-800" />
             <DropdownMenuItem

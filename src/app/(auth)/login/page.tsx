@@ -12,11 +12,13 @@ import {
   FieldSeparator,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { motion } from "framer-motion";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState<"user" | "admin">("user");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -31,27 +33,23 @@ export default function LoginPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, role }),
       });
 
-      
       const data = await res.json();
       if (!res.ok) {
         setError(data.message || "Failed to login");
         setLoading(false);
         return;
       }
-      
-      // Login successful
-      // JWT token is set via cookie if your backend uses setAuthCookie
-      if(res.ok) {
+
+      if (res.ok) {
         console.log("Login successful:", data);
-        if(data.user.role === 'admin'){
-          router.push("/admin/products"); // redirect after login
+        if (role === "admin") {
+          router.push("/admin/products");
         } else {
-          router.push("/"); // redirect to homepage for regular users
+          router.push("/");
         }
-        // router.push("/admin/products"); // redirect after login
       }
     } catch (err) {
       console.error(err);
@@ -62,9 +60,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="grid h-dvh overflow-hidden relative bg-gradient-to-b from-secondary to-background lg:grid-cols-2">
+    <div className="grid h-dvh font-sans overflow-hidden relative bg-gradient-to-b from-secondary to-background lg:grid-cols-2">
       {/* Left Section */}
       <div className="flex flex-col overflow-y-scroll scrollbar-hide gap-4 p-6 md:p-10">
+        
         {/* Logo */}
         <div className="flex justify-center gap-2 md:justify-start">
           <a href="#" className="flex items-center gap-2 font-medium">
@@ -85,6 +84,38 @@ export default function LoginPage() {
                   <p className="text-muted-foreground text-sm text-balance">
                     Sign in to continue shopping with us
                   </p>
+                </div>
+
+                {/* ROLE TOGGLER */}
+                <div className="flex justify-center mt-2">
+                  <div className="relative bg-secondary rounded-full p-1 flex w-[220px]">
+                    <motion.div
+                      layout
+                      className="absolute h-full w-1/2 bg-primary rounded-full"
+                      animate={{
+                        x: role === "user" ? 0 : 110,
+                      }}
+                      transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setRole("user")}
+                      className={`z-10 w-1/2 py-2 text-sm font-medium transition ${
+                        role === "user" ? "text-primary-foreground" : "text-muted-foreground"
+                      }`}
+                    >
+                      User
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRole("admin")}
+                      className={`z-10 w-1/2 py-2 text-sm font-medium transition ${
+                        role === "admin" ? "text-primary-foreground" : "text-muted-foreground"
+                      }`}
+                    >
+                      Admin
+                    </button>
+                  </div>
                 </div>
 
                 {/* Email */}
@@ -121,7 +152,9 @@ export default function LoginPage() {
                 </Field>
 
                 {/* Error Message */}
-                {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+                {error && (
+                  <p className="text-red-500 text-sm text-center">{error}</p>
+                )}
 
                 {/* Submit */}
                 <Field>
@@ -150,7 +183,10 @@ export default function LoginPage() {
                       viewBox="0 0 24 24"
                       className="w-5 h-5"
                     >
-                      <path d="M12 .297c-6.63 0-12 5.373-12 12..." fill="currentColor" />
+                      <path
+                        d="M12 .297c-6.63 0-12 5.373-12 12..."
+                        fill="currentColor"
+                      />
                     </svg>
                     Sign in with GitHub
                   </Button>

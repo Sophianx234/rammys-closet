@@ -40,20 +40,10 @@ export async function POST(req: NextRequest) {
     const token = await signToken(user);
 
     // Optionally, set HttpOnly cookie
-    const response = setAuthCookie(token);
+    return setAuthCookie(token);
 
-    // Include user role in the response
-    const responseData = {
-      message: "Login successful",
-      token,
-      user: {
-        id: user._id,
-        email: user.email,
-        role: user.role || "user", // default to 'user' if role not set
-      },
-    };
+  
 
-    return NextResponse.json(responseData, { status: 200 });
   } catch (err) {
     console.error("Login error:", err);
     return NextResponse.json(

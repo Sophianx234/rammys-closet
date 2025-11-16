@@ -30,19 +30,19 @@ const CartContext = createContext<CartContextType | undefined>(undefined)
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
   const [isLoaded, setIsLoaded] = useState(false)
-   const {setUser} = useDashStore()
-       useEffect(()=>{
+   const {setUser,user} = useDashStore()
+useEffect(()=>{
       const getMe = async()=>{
         const res = await fetch('/api/auth/me')
         const data = await res.json()
         if(res.ok ){
           setUser(data.user as IUser)
-          console.log('user', data.user)
+          console.log('user', data)
           
           
     }
   }
-      getMe()
+      if(!user)getMe()
     },[]) 
 
   // Load cart from localStorage on mount
