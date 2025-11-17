@@ -105,11 +105,9 @@ export default function Topbar() {
               Account
             </DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-neutral-800" />
+            
             <DropdownMenuItem className="hover:bg-neutral-800">
-              <User className="mr-2 h-4 w-4 text-neutral-400" /> Profile
-            </DropdownMenuItem>
-            <DropdownMenuItem className="hover:bg-neutral-800">
-              <Link href='/settings' className="w-full flex items-center">
+              <Link href='/admin/settings' className="w-full flex items-center">
               <Settings className="mr-2 h-4 w-4 text-neutral-400" /> Settings
               </Link>
             </DropdownMenuItem>

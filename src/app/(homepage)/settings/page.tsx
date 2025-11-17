@@ -176,11 +176,11 @@ export default function SettingsPage() {
           <CardContent className="space-y-6">
             <div className="flex items-center gap-6">
               <img src={profile.image} className="w-20 h-20 rounded-full object-cover border" />
-              <div>
+              <div className="space-y-1">
                 <Label>Profile Picture</Label>
                 <div className="relative inline-block">
                   <Input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={handleImageUpload} />
-                  <Button variant="outline" className="flex gap-2"><Upload className="w-4 h-4" /> Upload</Button>
+                  <Button variant="outline" className="flex gap-2 hover:border-primary"><Upload className="w-4 h-4" /> Upload</Button>
                 </div>
               </div>
             </div>

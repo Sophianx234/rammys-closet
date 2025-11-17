@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Product } from "@/models/Product";
 import { connectToDatabase } from "@/lib/connectDB";
 import { uploadBufferToCloudinary } from "@/lib/cloudinary";
-import { Category } from "@/models/Category";
 import slugify from "slugify";
+import  "@/models/Category";
+import { Product } from "@/models/Product";
 
 export async function GET() {
   try {

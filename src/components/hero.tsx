@@ -34,7 +34,7 @@ export default function Hero() {
           </h1>
 
           <p className="text-gray-300 text-lg max-w-md">
-            Discover our timeless collection — crafted for confidence, radiance, and individuality. Where luxury meets authenticity.
+            Discover our timeless collection, crafted for confidence, radiance, and individuality. Where luxury meets authenticity.
           </p>
 
           <div className="flex flex-wrap gap-4 pt-6">

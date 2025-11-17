@@ -12,12 +12,12 @@ import { FaFeatherAlt, FaHeart, FaLeaf } from "react-icons/fa"
     {
       icon: <LucideDiamond className="text-rose-400 w-8 h-8" />,
       title: "Uncompromising Quality",
-      desc: "Every product is crafted with precision and integrity — because luxury begins with the details.",
+      desc: "Every product is crafted with precision and integrity because luxury begins with the details.",
     },
     {
       icon: <LucideFeather className="text-emerald-500 w-8 h-8" />,
       title: "Sustainably Chic",
-      desc: "We believe elegance and ethics can coexist beautifully — thoughtful sourcing, minimal waste, maximum care.",
+      desc: "We believe elegance and ethics can coexist beautifully thoughtful sourcing, minimal waste, maximum care.",
     },
     {
       icon: <LucideSparkles className="text-amber-400 w-8 h-8" />,

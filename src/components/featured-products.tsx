@@ -3,10 +3,11 @@
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import Link from "next/link";
-import { Heart } from "lucide-react";
-import { useState } from "react";
+import { Heart, Star } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Badge } from "./ui/badge";
 
-const featuredProducts = [
+/* const featuredProducts = [
   {
     id: 1,
     name: "Luxury Lipstick - Crimson",
@@ -35,12 +36,37 @@ const featuredProducts = [
     category: "Face",
     image: "/luxury-setting-powder-shimmer.jpg",
   },
-];
+]; */
+
+
+interface Product {
+  _id: string;
+  name: string;
+  price: number;
+  category: { name: string };
+  images: string[];
+}
 
 export default function FeaturedProducts() {
-  const [favorites, setFavorites] = useState<number[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [favorites, setFavorites] = useState<string[]>([]);
 
-  const toggleFavorite = (id: number) => {
+  useEffect(() => {
+    const getFeaturedProducts = async () => {
+      try {
+        const res = await fetch("/api/admin/products");
+        const data = await res.json();
+        console.log('featured products', data)
+        const featured = data.filter((p: any) => p.isFeatured);
+      setProducts(featured);
+      } catch (err) {
+        console.error("Failed to fetch products:", err);
+      }
+    };
+    getFeaturedProducts();
+  }, []);
+
+  const toggleFavorite = (id: string) => {
     setFavorites((prev) =>
       prev.includes(id) ? prev.filter((fav) => fav !== id) : [...prev, id]
     );
@@ -62,25 +88,28 @@ export default function FeaturedProducts() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featuredProducts.map((product) => (
-            <Card
-              key={product.id}
-              className="bg-card border-border overflow-hidden hover:border-primary transition-colors group"
+          {products.map((product) => (
+            <div
+              key={product._id}
+              className="border  rounded-md overflow-hidden hover:border-primary transition-colors "
             >
               <div className="relative overflow-hidden bg-secondary h-64">
+                <Badge className="absolute top-3 left-3 bg-primary text-black text-xs px-3 py-1 shadow-md">
+                <Star className="w-3 h-3 mr-1 " /> Featured
+              </Badge>
                 <img
-                  src={product.image || "/placeholder.svg"}
+                  src={product.images[0] || "/placeholder.svg"}
                   alt={product.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 <button
-                  onClick={() => toggleFavorite(product.id)}
+                  onClick={() => toggleFavorite(product._id)}
                   className="absolute top-3 right-3 p-2 bg-background/80 backdrop-blur rounded-full hover:bg-background transition-colors"
                 >
                   <Heart
                     size={18}
                     className={
-                      favorites.includes(product.id)
+                      favorites.includes(product._id)
                         ? "fill-primary text-primary"
                         : ""
                     }
@@ -90,7 +119,7 @@ export default function FeaturedProducts() {
 
               <div className="p-4 space-y-3">
                 <p className="text-xs text-muted-foreground uppercase tracking-wider">
-                  {product.category}
+                  {product.category?.name || "Uncategorized"}
                 </p>
                 <h3 className="font-semibold text-sm line-clamp-2">
                   {product.name}
@@ -99,7 +128,7 @@ export default function FeaturedProducts() {
                   <span className="text-primary font-semibold">
                     ₵{product.price.toLocaleString()}
                   </span>
-                  <Link href={`/product/${product.id}`}>
+                  <Link href={`/product/${product._id}`}>
                     <Button
                       size="sm"
                       className="bg-primary hover:bg-primary/90 text-primary-foreground"
@@ -109,7 +138,7 @@ export default function FeaturedProducts() {
                   </Link>
                 </div>
               </div>
-            </Card>
+            </div>
           ))}
         </div>
 

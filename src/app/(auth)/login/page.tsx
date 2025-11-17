@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
+import { IUser } from "@/models/User";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -44,11 +45,14 @@ export default function LoginPage() {
       }
 
       if (res.ok) {
-        console.log("Login successful:", data);
-        if (role === "admin") {
-          router.push("/admin/products");
-        } else {
-          router.push("/");
+        const res = await fetch("/api/auth/me");
+        const userData = await res.json();
+        if (res.ok) {
+          if ((userData.user as IUser).role === "admin") {
+            router.push("/admin/products");
+          } else {
+            router.push("/");
+          }
         }
       }
     } catch (err) {
@@ -63,7 +67,6 @@ export default function LoginPage() {
     <div className="grid h-dvh font-sans overflow-hidden relative bg-gradient-to-b from-secondary to-background lg:grid-cols-2">
       {/* Left Section */}
       <div className="flex flex-col overflow-y-scroll scrollbar-hide gap-4 p-6 md:p-10">
-        
         {/* Logo */}
         <div className="flex justify-center gap-2 md:justify-start">
           <a href="#" className="flex items-center gap-2 font-medium">
@@ -80,47 +83,22 @@ export default function LoginPage() {
             <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
               <FieldGroup>
                 <div className="flex flex-col items-center gap-1 text-center">
-                  <h1 className="text-2xl font-bold text-foreground">Welcome Back</h1>
+                  <h1 className="text-2xl font-bold text-foreground">
+                    Welcome Back
+                  </h1>
                   <p className="text-muted-foreground text-sm text-balance">
                     Sign in to continue shopping with us
                   </p>
                 </div>
 
                 {/* ROLE TOGGLER */}
-                <div className="flex justify-center mt-2">
-                  <div className="relative bg-secondary rounded-full p-1 flex w-[220px]">
-                    <motion.div
-                      layout
-                      className="absolute h-full w-1/2 bg-primary rounded-full"
-                      animate={{
-                        x: role === "user" ? 0 : 110,
-                      }}
-                      transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setRole("user")}
-                      className={`z-10 w-1/2 py-2 text-sm font-medium transition ${
-                        role === "user" ? "text-primary-foreground" : "text-muted-foreground"
-                      }`}
-                    >
-                      User
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setRole("admin")}
-                      className={`z-10 w-1/2 py-2 text-sm font-medium transition ${
-                        role === "admin" ? "text-primary-foreground" : "text-muted-foreground"
-                      }`}
-                    >
-                      Admin
-                    </button>
-                  </div>
-                </div>
+                
 
                 {/* Email */}
                 <Field>
-                  <FieldLabel htmlFor="email" className="text-foreground">Email</FieldLabel>
+                  <FieldLabel htmlFor="email" className="text-foreground">
+                    Email
+                  </FieldLabel>
                   <Input
                     id="email"
                     type="email"
@@ -134,7 +112,9 @@ export default function LoginPage() {
 
                 {/* Password */}
                 <Field>
-                  <FieldLabel htmlFor="password" className="text-foreground">Password</FieldLabel>
+                  <FieldLabel htmlFor="password" className="text-foreground">
+                    Password
+                  </FieldLabel>
                   <Input
                     id="password"
                     type="password"
@@ -145,7 +125,10 @@ export default function LoginPage() {
                     className="bg-secondary text-foreground border border-border placeholder-muted-foreground focus:ring-primary"
                   />
                   <div className="flex justify-end mt-1">
-                    <a href="/forgot-password" className="text-sm text-primary hover:underline">
+                    <a
+                      href="/forgot-password"
+                      className="text-sm text-primary hover:underline"
+                    >
                       Forgot password?
                     </a>
                   </div>
