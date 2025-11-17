@@ -19,7 +19,7 @@ import { useDashStore } from "@/lib/store";
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const { items } = useCart();
-  const {user} = useDashStore()
+  const {user,cart} = useDashStore()
 
 
 
@@ -62,9 +62,9 @@ export default function Header() {
             <Link href="/cart">
               <Button variant="outline" size="icon" className="relative bg-transparent">
                 <ShoppingCart size={20} />
-                {items.length > 0 && (
+                {cart.length > 0 && (
                   <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                    {items.length}
+                    {cart.length}
                   </span>
                 )}
               </Button>

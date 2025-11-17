@@ -8,9 +8,12 @@ import { Trash2, ShoppingBag } from "lucide-react";
 import { useCart } from "@/components/cart-context";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useDashStore } from "@/lib/store";
 
 export default function CartPage() {
-  const { items, removeItem, updateQuantity, total, clearCart } = useCart();
+  // const { items, removeItem, updateQuantity, total, clearCart } = useCart();
+  const {  total} = useCart();
+  const {cart,removeItem, updateQuantity,cartTotal, clearCart} = useDashStore()
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -21,8 +24,8 @@ export default function CartPage() {
     return <div>Loading...</div>;
   }
 
-  const subtotal = total;
-  const shipping = items.length > 0 ? 500 : 0;
+  const subtotal = cartTotal();
+  const shipping = cart.length > 0 ? 500 : 0;
   const tax = Math.round(subtotal * 0.1);
   const finalTotal = subtotal + shipping + tax;
 
@@ -40,7 +43,7 @@ export default function CartPage() {
 
       {/* Cart Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {items.length === 0 ? (
+        {cart.length === 0 ? (
           <div className="text-center py-12">
             <ShoppingBag
               size={48}
@@ -62,7 +65,7 @@ export default function CartPage() {
             <div className="lg:col-span-2 space-y-4">
               <div className="flex items-center justify-between pb-4 border-b border-border">
                 <h2 className="text-lg font-semibold">
-                  Items ({items.length})
+                  Items ({cart.length})
                 </h2>
                 <button
                   onClick={clearCart}
@@ -72,14 +75,14 @@ export default function CartPage() {
                 </button>
               </div>
 
-              {items.map((item) => (
+              {cart.map((item) => (
                 <Card
                   key={item.id}
                   className="bg-card border-border p-4 flex gap-4"
                 >
                   <div className="w-24 h-24 bg-secondary rounded-lg overflow-hidden flex-shrink-0">
                     <img
-                      src={item.image || "/placeholder.svg"}
+                      src={item.images[0] || "/placeholder.svg"}
                       alt={item.name}
                       className="w-full h-full object-cover"
                     />
@@ -97,7 +100,7 @@ export default function CartPage() {
                       <div className="flex items-center border border-border rounded-lg">
                         <button
                           onClick={() =>
-                            updateQuantity(item.id, item.quantity - 1)
+                            updateQuantity(item._id, item.quantity - 1)
                           }
                           className="px-3 py-1 hover:bg-secondary transition-colors"
                         >
@@ -108,7 +111,7 @@ export default function CartPage() {
                         </span>
                         <button
                           onClick={() =>
-                            updateQuantity(item.id, item.quantity + 1)
+                            updateQuantity(item._id, item.quantity + 1)
                           }
                           className="px-3 py-1 hover:bg-secondary transition-colors"
                         >
@@ -117,7 +120,7 @@ export default function CartPage() {
                       </div>
 
                       <button
-                        onClick={() => removeItem(item.id)}
+                        onClick={() => removeItem(item._id)}
                         className="p-2 hover:bg-secondary rounded-lg transition-colors text-muted-foreground hover:text-foreground"
                       >
                         <Trash2 size={18} />

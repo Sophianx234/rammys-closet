@@ -6,24 +6,25 @@ import { Heart, Share2, Check } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
 import { IProduct } from "@/models/Product";
+import { useDashStore } from "@/lib/store";
 
 export default function ProductClient({ product }: { product: IProduct }) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
+  const { setCart } = useDashStore();
 
   // ⭐ Rating States
   const [userRating, setUserRating] = useState(product.rating || 0);
   const [hoverRating, setHoverRating] = useState(0);
   const finalRating = hoverRating || userRating;
 
-  // ⭐ When star is clicked
+  // ⭐ SEND RATING
   const handleRate = async (value: number) => {
     setUserRating(value);
 
-    // OPTIONAL: Send rating to backend
     try {
-      await fetch(`/api/products/${product._id}/rate`, {
+      await fetch(`/api/users/products/${product._id}/rate`, {
         method: "POST",
         body: JSON.stringify({ rating: value }),
         headers: { "Content-Type": "application/json" },
@@ -33,19 +34,52 @@ export default function ProductClient({ product }: { product: IProduct }) {
     }
   };
 
-  const handleAddToCart = () => {
-    const cart = JSON.parse(localStorage.getItem("cart") || "[]");
-    const existingItem = cart.find((item: any) => item._id === product._id);
+  // ⭐ HANDLE ADD TO CART — CONNECTED TO BACKEND
+  const handleAddToCart = async () => {
+    try {
+      const res = await fetch("/api/users/cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId: product._id,
+          quantity,
+        }),
+      });
 
-    if (existingItem) {
-      existingItem.quantity += quantity;
-    } else {
-      cart.push({ ...product, quantity });
+      if (!res.ok) {
+        console.error("Cart update failed");
+        return;
+      }
+
+      // Update local store as well
+      setCart(product, quantity);
+
+      setAddedToCart(true);
+      setTimeout(() => setAddedToCart(false), 2000);
+    } catch (err) {
+      console.error("Cart request failed:", err);
     }
+  };
 
-    localStorage.setItem("cart", JSON.stringify(cart));
-    setAddedToCart(true);
-    setTimeout(() => setAddedToCart(false), 2000);
+  // ⭐ HANDLE WISHLIST — CONNECTED TO BACKEND
+  const handleWishlist = async () => {
+    try {
+      const res = await fetch("/api/users/wishlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: product._id }),
+      });
+
+      if (!res.ok) {
+        console.error("Wishlist update failed");
+        return;
+      }
+
+      const data = await res.json();
+      setIsFavorite(data.isFavorite); // backend returns true/false
+    } catch (err) {
+      console.error("Wishlist failed:", err);
+    }
   };
 
   return (
@@ -84,12 +118,11 @@ export default function ProductClient({ product }: { product: IProduct }) {
               </p>
               <h1 className="text-3xl md:text-4xl font-serif font-bold mb-4">{product.name}</h1>
 
-              {/* ⭐ RATING SECTION (Clickable) */}
+              {/* ⭐ RATING */}
               <div className="flex items-center gap-3 mb-4">
                 <div className="flex items-center gap-1">
                   <span className="text-primary font-semibold text-lg">{userRating.toFixed(1)}</span>
 
-                  {/* Stars */}
                   <div className="flex gap-0.5">
                     {[1, 2, 3, 4, 5].map((value) => (
                       <span
@@ -164,6 +197,7 @@ export default function ProductClient({ product }: { product: IProduct }) {
                 <span className="text-sm text-muted-foreground">{product.stock} available</span>
               </div>
 
+              {/* ADD TO CART */}
               <Button
                 onClick={handleAddToCart}
                 disabled={!product.inStock}
@@ -180,8 +214,9 @@ export default function ProductClient({ product }: { product: IProduct }) {
               </Button>
 
               <div className="flex gap-3">
+                {/* WISHLIST */}
                 <Button
-                  onClick={() => setIsFavorite(!isFavorite)}
+                  onClick={handleWishlist}
                   variant="outline"
                   className="flex-1 flex items-center justify-center gap-2"
                 >
@@ -201,7 +236,9 @@ export default function ProductClient({ product }: { product: IProduct }) {
             <Card className="bg-secondary border-border p-4">
               <div className="space-y-2 text-sm">
                 <p>
-                  <span className="font-semibold">SKU:</span> RC-{product._id.toString().slice(-3)}
+                  <span className="font-semibold">SKU:</span> RC-{product._id
+                    .toString()
+                    .slice(-3)}
                 </p>
                 <p>
                   <span className="font-semibold">Availability:</span> Ships within 2–3 business days

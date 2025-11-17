@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import { IUser } from "@/models/User";
 export type userType = {
   _id: string;
@@ -17,7 +17,7 @@ export type DecodedToken = {
   name?: string;
   iat: number;
   exp: number;
-};
+} & JwtPayload;
 const jwtSecret = process.env.JWT_SECRET as string;
 const jwtExpires = process.env.JWT_EXPIRES;
 export const signToken = async (user: IUser) => {

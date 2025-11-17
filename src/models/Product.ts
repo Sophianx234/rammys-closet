@@ -7,6 +7,7 @@ export interface IVariant {
 }
 
 export interface IProduct extends Document {
+  _id: mongoose.Types.ObjectId;
   name: string;
   slug: string;
   description: string;
@@ -16,6 +17,7 @@ export interface IProduct extends Document {
   features: string[];
   rating: number;
   reviewsCount: number;
+  quantity: number;
   stock: number;
   inStock: boolean;
   variants: IVariant[];
@@ -37,6 +39,7 @@ const productSchema = new Schema<IProduct>(
     reviewsCount: { type: Number, default: 0 },
     stock: { type: Number, default: 0 },
     inStock: { type: Boolean, default: true },
+    quantity: { type: Number, default: undefined },
     variants: [
       {
         name: String,

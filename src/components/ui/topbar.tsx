@@ -19,7 +19,7 @@ import { useDashStore } from "@/lib/store";
 
 export default function Topbar() {
   const [notifications] = useState(2);
-  const {user} = useDashStore()
+  const {user,cart} = useDashStore()
 
   const handleLogout = () => {
     // Hook to your logout logic
