@@ -10,17 +10,15 @@ export async function GET(request: NextRequest) {
 
     const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY
 
-    if (!paystackSecretKey) {
-      return NextResponse.json({ error: "Paystack secret key not configured" }, { status: 500 })
+   const response = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
+      headers: { Authorization: `Bearer ${process.env.NEXT_PUBLIC_PAYSTACK_LIVE_KEY}` },
+    });
+
+    const data = await response.json();
+
+    if (!data.status || data.data.status !== "success") {
+      return NextResponse.json({ error: "Payment verification failed" }, { status: 400 });
     }
-
-    const response = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
-      headers: {
-        Authorization: `Bearer ${paystackSecretKey}`,
-      },
-    })
-
-    const data = await response.json()
 
     if (!response.ok) {
       console.error("[v0] Paystack verification error:", data)

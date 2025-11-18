@@ -21,19 +21,13 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 
 export default function CheckoutPage() {
-  // const { items, total, clearCart } = useCart();
-  const { cart, cartTotal, clearCart } = useDashStore();
-  const [currentStep, setCurrentStep] = useState<
-    "delivery" | "payment" | "success"
-  >("delivery");
+  const { cart, cartTotal, clearCart, user } = useDashStore();
+  const [currentStep, setCurrentStep] = useState<"delivery" | "payment" | "success">("delivery");
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
+    
     phone: "",
     address: "",
     city: "",
-    state: "",
     region: "",
   });
   const searchParams = useSearchParams();
@@ -42,14 +36,13 @@ export default function CheckoutPage() {
   const [error, setError] = useState<string>("");
   const router = useRouter();
 
-
   useEffect(() => {
     if (cart.length === 0 && currentStep === "delivery") {
       // window.location.href = "/cart";
     }
   }, [cart, currentStep]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement> | { target: { name: string; value: string } }) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -60,12 +53,7 @@ export default function CheckoutPage() {
 
   const handledeliverySubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (
-      formData.firstName &&
-      formData.email &&
-      formData.address &&
-      formData.city
-    ) {
+    if (formData.phone && formData.address && formData.city && formData.region) {
       setCurrentStep("payment");
       setError("");
     } else {
@@ -73,78 +61,68 @@ export default function CheckoutPage() {
     }
   };
 
+  const handlePaymentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsProcessing(true);
+    setError("");
 
-const handlePaymentSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setIsProcessing(true);
-  setError("");
-
-  try {
-    const reference = `ORD-${Date.now()}`;
-    
-    // Initialize Paystack payment
-    const initResponse = await fetch("/api/paystack/initialize", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: formData.email,
-        amount: finalTotal,
-        reference,
-      }),
-    });
-    
-    const initData = await initResponse.json();
-    
-    if (!initResponse.ok) {
-      throw new Error(initData.error || "Failed to initialize payment");
-    }
-
-    if (initData.authorization_url) {
-      // Save order info before redirect
-      console.log('initData', initData.reference);
-      localStorage.setItem(
-        "pendingOrder",
-        JSON.stringify({
-          reference:initData.reference,
-          formData,
-          cart,
-          total: finalTotal,
-        })
-      );
-      
-      // Redirect using Next.js router (NO PAGE REFRESH)
-      // router.replace(`/checkout?reference=${initData.reference}`);
-      router.push(initData.authorization_url);
-    }
-  } catch (err) {
-    console.error("[Payment error]:", err);
-    setError(
-      err instanceof Error ? err.message : "Payment failed. Please try again."
-    );
-    setIsProcessing(false);
-  }
-};
-
-useEffect(() => {
-const verifyPayment = async () => {
-console.log('searchParams');
-
-  const pendingOrder = localStorage.getItem("pendingOrder");
-    const orderData = JSON.parse(pendingOrder as string);
     try {
-      setIsProcessing(true); // prevents flicker
+      const reference = `ORD-${Date.now()}`;
 
-      const verifyResponse = await fetch(`/api/paystack/verify?reference=${orderData.reference}`);
-      const verifyData = await verifyResponse.json();
+      // Initialize Paystack payment
+      const initResponse = await fetch("/api/paystack/initialize", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          amount: finalTotal,
+          reference,
+        }),
+      });
 
-      if (verifyResponse.ok && verifyData.status === "success") {
-        const pendingOrder = localStorage.getItem("pendingOrder");
+      const initData = await initResponse.json();
 
-        if (pendingOrder) {
-          const orderData = JSON.parse(pendingOrder);
+      if (!initResponse.ok) {
+        throw new Error(initData.error || "Failed to initialize payment");
+      }
 
+      if (initData.authorization_url) {
+        // Save order info before redirect
+        localStorage.setItem(
+          "pendingOrder",
+          JSON.stringify({
+            reference: initData.reference,
+            formData,
+            cart,
+            total: finalTotal,
+          })
+        );
+
+        // Redirect using Next.js router (NO PAGE REFRESH)
+        router.push(initData.authorization_url);
+      }
+    } catch (err) {
+      console.error("[Payment error]:", err);
+      setError(err instanceof Error ? err.message : "Payment failed. Please try again.");
+      setIsProcessing(false);
+    }
+  };
+
+  useEffect(() => {
+    const verifyPayment = async () => {
+      const pendingOrder = localStorage.getItem("pendingOrder");
+      if (!pendingOrder) return;
+
+      const orderData = JSON.parse(pendingOrder as string);
+      try {
+        setIsProcessing(true);
+
+        const verifyResponse = await fetch(`/api/paystack/verify?reference=${orderData.reference}`);
+        const verifyData = await verifyResponse.json();
+
+        if (verifyResponse.ok && verifyData.status === "success") {
           await fetch("/api/orders", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -157,20 +135,18 @@ console.log('searchParams');
 
           clearCart();
           localStorage.removeItem("pendingOrder");
+        } else {
+          setError("Payment verification failed");
         }
-      } else {
-        setError("Payment verification failed");
+      } catch (e) {
+        setError("Verification error");
+      } finally {
+        setIsProcessing(false);
       }
-    } catch (e) {
-      setError("Verification error");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+    };
 
-  verifyPayment();
-}, [searchParams]);
-
+    verifyPayment();
+  }, [searchParams]);
 
   const subtotal = cartTotal();
   const delivery = cart.length > 0 ? 500 : 0;
@@ -206,7 +182,7 @@ console.log('searchParams');
             <div className="space-y-2 text-left">
               <p className="text-sm font-semibold">Order Details</p>
               <div className="space-y-1 text-sm text-muted-foreground">
-                <p>Email: {formData.email}</p>
+                <p>Email: {user?.email}</p>
                 <p>Items: {cart.length}</p>
                 <p>Total: ₵{finalTotal.toLocaleString()}</p>
               </div>
@@ -309,37 +285,6 @@ console.log('searchParams');
                   </div>
                 )}
                 <form onSubmit={handledeliverySubmit} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <input
-                      type="text"
-                      name="firstName"
-                      placeholder="First Name"
-                      value={formData.firstName}
-                      onChange={handleInputChange}
-                      className="bg-background border border-border rounded-lg px-4 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
-                      required
-                    />
-                    <input
-                      type="text"
-                      name="lastName"
-                      placeholder="Last Name"
-                      value={formData.lastName}
-                      onChange={handleInputChange}
-                      className="bg-background border border-border rounded-lg px-4 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
-                      required
-                    />
-                  </div>
-
-                  <input
-                    type="email"
-                    name="email"
-                    placeholder="Email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className="w-full bg-background border border-border rounded-lg px-4 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
-                    required
-                  />
-
                   <input
                     type="tel"
                     name="phone"
@@ -360,7 +305,7 @@ console.log('searchParams');
                     required
                   />
 
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <input
                       type="text"
                       name="city"
@@ -382,15 +327,11 @@ console.log('searchParams');
                       </SelectTrigger>
 
                       <SelectContent>
-                        <SelectItem value="Greater Accra">
-                          Greater Accra
-                        </SelectItem>
+                        <SelectItem value="Greater Accra">Greater Accra</SelectItem>
                         <SelectItem value="Ashanti">Ashanti</SelectItem>
                         <SelectItem value="Eastern">Eastern</SelectItem>
                         <SelectItem value="Western">Western</SelectItem>
-                        <SelectItem value="Western North">
-                          Western North
-                        </SelectItem>
+                        <SelectItem value="Western North">Western North</SelectItem>
                         <SelectItem value="Central">Central</SelectItem>
                         <SelectItem value="Volta">Volta</SelectItem>
                         <SelectItem value="Oti">Oti</SelectItem>
