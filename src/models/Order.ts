@@ -1,13 +1,14 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
-// --- Custom Order Statuses (Lowercase Version) ---
 export type OrderStatus =
   | "processing"
-  | "on_hold"
-  | "awaiting_pick"
-  | "packing"
+  | "awaiting_payment"
+  | "paid"
+  | "awaiting_pickup"
+  | "packed"
   | "ready_for_dispatch"
   | "dispatched"
+  | "in_transit"
   | "arrived"
   | "delivery_attempted"
   | "delivered"
@@ -20,34 +21,46 @@ export interface IOrderItem {
 }
 
 export interface IOrder extends Document {
-  user: mongoose.Types.ObjectId;
+  user?: mongoose.Types.ObjectId;  
   items: IOrderItem[];
   totalAmount: number;
+
+  // Paystack
   paymentStatus: "pending" | "paid" | "failed";
-  paymentReference?: string;
-  deliveryAddress: {
-    street?: string;
-    city?: string;
-    state?: string;
-    country?: string;
-    postalCode?: string;
+  paymentReference: string;
+
+  // From your formData
+  customer: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
   };
+
+  // Ghana address format
+  deliveryAddress: {
+    address: string;   // street
+    city: string;
+    region: string;    // Shadcn select
+  };
+
   orderStatus: OrderStatus;
+
   createdAt: Date;
   updatedAt: Date;
 }
 
 const orderSchema = new Schema<IOrder>(
   {
-    user: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: false, // allow guest checkout
+    },
 
     items: [
       {
-        product: {
-          type: Schema.Types.ObjectId,
-          ref: "Product",
-          required: true,
-        },
+        product: { type: Schema.Types.ObjectId, ref: "Product", required: true },
         quantity: { type: Number, required: true },
         price: { type: Number, required: true },
       },
@@ -55,32 +68,43 @@ const orderSchema = new Schema<IOrder>(
 
     totalAmount: { type: Number, required: true },
 
+    // Payment
     paymentStatus: {
       type: String,
       enum: ["pending", "paid", "failed"],
       default: "pending",
     },
 
-    paymentReference: String,
+    paymentReference: { type: String, required: true },
 
+    // Customer info matching your formData
+    customer: {
+      firstName: { type: String, required: true },
+      lastName: { type: String, required: false },
+      email: { type: String, required: true },
+      phone: { type: String, required: true },
+    },
+
+    // Ghana structure
     deliveryAddress: {
-      street: String,
-      city: String,
-      state: String,
-      country: String,
-      postalCode: String,
+      address: { type: String, required: true }, // street
+      city: { type: String, required: true },
+      region: { type: String, required: true },
     },
 
     orderStatus: {
       type: String,
       enum: [
         "processing",
-        "on_hold",
-        "awaiting_pick",
-        "packing",
+        "awaiting_payment",
+        "paid",
+        "awaiting_pickup",
+        "packed",
         "ready_for_dispatch",
         "dispatched",
+        "in_transit",
         "arrived",
+        "delivery_attempted",
         "delivered",
         "cancelled",
       ],

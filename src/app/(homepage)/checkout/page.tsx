@@ -10,12 +10,22 @@ import { useCart } from "@/components/cart-context";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { CheckCircle, ArrowLeft, AlertCircle } from "lucide-react";
+import { useDashStore } from "@/lib/store";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function CheckoutPage() {
-  const { items, total, clearCart } = useCart();
+  // const { items, total, clearCart } = useCart();
+  const { cart, cartTotal, clearCart } = useDashStore();
   const [currentStep, setCurrentStep] = useState<
-    "shipping" | "payment" | "success"
-  >("shipping");
+    "delivery" | "payment" | "success"
+  >("delivery");
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -24,17 +34,19 @@ export default function CheckoutPage() {
     address: "",
     city: "",
     state: "",
-    zipCode: "",
+    region: "",
   });
+  const searchParams = useSearchParams();
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderNumber, setOrderNumber] = useState("");
   const [error, setError] = useState<string>("");
+  const router = useRouter();
 
   useEffect(() => {
-    if (items.length === 0 && currentStep === "shipping") {
-      window.location.href = "/cart";
+    if (cart.length === 0 && currentStep === "delivery") {
+      // window.location.href = "/cart";
     }
-  }, [items, currentStep]);
+  }, [cart, currentStep]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -45,7 +57,7 @@ export default function CheckoutPage() {
     setError("");
   };
 
-  const handleShippingSubmit = (e: React.FormEvent) => {
+  const handledeliverySubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (
       formData.firstName &&
@@ -60,97 +72,108 @@ export default function CheckoutPage() {
     }
   };
 
-  const handlePaymentSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsProcessing(true);
-    setError("");
 
-    try {
-      const reference = `ORD-${Date.now()}`;
+const handlePaymentSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsProcessing(true);
+  setError("");
 
-      // Initialize Paystack payment
-      const initResponse = await fetch("/api/paystack/initialize", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          amount: finalTotal,
-          reference,
-        }),
-      });
+  try {
+    const reference = `ORD-${Date.now()}`;
+    
+    // Initialize Paystack payment
+    const initResponse = await fetch("/api/paystack/initialize", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: formData.email,
+        amount: finalTotal,
+        reference,
+      }),
+    });
+    
+    const initData = await initResponse.json();
+    
+    if (!initResponse.ok) {
+      throw new Error(initData.error || "Failed to initialize payment");
+    }
 
-      const initData = await initResponse.json();
-
-      if (!initResponse.ok) {
-        throw new Error(initData.error || "Failed to initialize payment");
-      }
-
-      // Redirect to Paystack payment page
-      if (initData.authorization_url) {
-        // Store order data in localStorage before redirecting
-        localStorage.setItem(
-          "pendingOrder",
-          JSON.stringify({
-            reference,
-            formData,
-            items,
-            total: finalTotal,
-          })
-        );
-        window.location.href = initData.authorization_url;
-      }
-    } catch (err) {
-      console.error("[v0] Payment error:", err);
-      setError(
-        err instanceof Error ? err.message : "Payment failed. Please try again."
+    if (initData.authorization_url) {
+      // Save order info before redirect
+      console.log('initData', initData.reference);
+      localStorage.setItem(
+        "pendingOrder",
+        JSON.stringify({
+          reference:initData.reference,
+          formData,
+          cart,
+          total: finalTotal,
+        })
       );
+      
+      // Redirect using Next.js router (NO PAGE REFRESH)
+      // router.replace(`/checkout?reference=${initData.reference}`);
+      router.push(initData.authorization_url);
+    }
+  } catch (err) {
+    console.error("[Payment error]:", err);
+    setError(
+      err instanceof Error ? err.message : "Payment failed. Please try again."
+    );
+    setIsProcessing(false);
+  }
+};
+
+useEffect(() => {
+  const reference = searchParams.get("reference");
+  if (!reference) return;
+
+  const verifyPayment = async () => {
+    try {
+      setIsProcessing(true); // prevents flicker
+
+      const verifyResponse = await fetch(`/api/paystack/verify?reference=${reference}`);
+      const verifyData = await verifyResponse.json();
+
+      if (verifyResponse.ok && verifyData.status === "success") {
+        const pendingOrder = localStorage.getItem("pendingOrder");
+
+        if (pendingOrder) {
+          const orderData = JSON.parse(pendingOrder);
+
+          await fetch("/api/orders", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(orderData),
+          });
+
+          setOrderNumber(orderData.reference);
+          setFormData(orderData.formData);
+          setCurrentStep("success");
+
+          clearCart();
+          localStorage.removeItem("pendingOrder");
+        }
+      } else {
+        setError("Payment verification failed");
+      }
+    } catch (e) {
+      setError("Verification error");
+    } finally {
       setIsProcessing(false);
     }
   };
 
-  useEffect(() => {
-    const verifyPayment = async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const reference = urlParams.get("reference");
+  verifyPayment();
+}, [searchParams]);
 
-      if (reference) {
-        try {
-          const verifyResponse = await fetch(
-            `/api/paystack/verify?reference=${reference}`
-          );
-          const verifyData = await verifyResponse.json();
 
-          if (verifyResponse.ok && verifyData.status === "success") {
-            const pendingOrder = localStorage.getItem("pendingOrder");
-            if (pendingOrder) {
-              const orderData = JSON.parse(pendingOrder);
-              setOrderNumber(orderData.reference);
-              setFormData(orderData.formData);
-              setCurrentStep("success");
-              clearCart();
-              localStorage.removeItem("pendingOrder");
-            }
-          } else {
-            setError("Payment verification failed. Please contact support.");
-          }
-        } catch (err) {
-          console.error("[v0] Verification error:", err);
-          setError(
-            "Could not verify payment. Please check your email for confirmation."
-          );
-        }
-      }
-    };
-
-    verifyPayment();
-  }, [clearCart]);
-
-  const subtotal = total;
-  const shipping = items.length > 0 ? 500 : 0;
+  const subtotal = cartTotal();
+  const delivery = cart.length > 0 ? 500 : 0;
   const tax = Math.round(subtotal * 0.1);
-  const finalTotal = subtotal + shipping + tax;
+  const finalTotal = subtotal + delivery + tax;
 
   if (currentStep === "success") {
     return (
@@ -182,7 +205,7 @@ export default function CheckoutPage() {
               <p className="text-sm font-semibold">Order Details</p>
               <div className="space-y-1 text-sm text-muted-foreground">
                 <p>Email: {formData.email}</p>
-                <p>Items: {items.length}</p>
+                <p>Items: {cart.length}</p>
                 <p>Total: ₵{finalTotal.toLocaleString()}</p>
               </div>
             </div>
@@ -208,8 +231,6 @@ export default function CheckoutPage() {
 
   return (
     <main>
-      <Header />
-
       <section className="bg-secondary border-b border-border py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-3xl md:text-4xl font-serif font-bold">
@@ -223,7 +244,7 @@ export default function CheckoutPage() {
         <div className="flex items-center justify-center gap-4 mb-8">
           <div
             className={`flex items-center gap-2 ${
-              currentStep === "shipping" ||
+              currentStep === "delivery" ||
               currentStep === "payment" ||
               currentStep === "success"
                 ? "text-primary"
@@ -232,7 +253,7 @@ export default function CheckoutPage() {
           >
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                currentStep === "shipping" ||
+                currentStep === "delivery" ||
                 currentStep === "payment" ||
                 currentStep === "success"
                   ? "bg-primary text-primary-foreground"
@@ -241,7 +262,7 @@ export default function CheckoutPage() {
             >
               1
             </div>
-            <span className="text-sm font-semibold">Shipping</span>
+            <span className="text-sm font-semibold">Delivery</span>
           </div>
           <div
             className={`h-0.5 w-12 ${
@@ -273,9 +294,9 @@ export default function CheckoutPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Form */}
           <div className="lg:col-span-2">
-            {currentStep === "shipping" && (
+            {currentStep === "delivery" && (
               <Card className="bg-card border-border p-6 space-y-6">
-                <h2 className="text-xl font-semibold">Shipping Information</h2>
+                <h2 className="text-xl font-semibold">Delivery Information</h2>
                 {error && (
                   <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 flex gap-3">
                     <AlertCircle
@@ -285,7 +306,7 @@ export default function CheckoutPage() {
                     <p className="text-red-500 text-sm">{error}</p>
                   </div>
                 )}
-                <form onSubmit={handleShippingSubmit} className="space-y-4">
+                <form onSubmit={handledeliverySubmit} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <input
                       type="text"
@@ -347,24 +368,40 @@ export default function CheckoutPage() {
                       className="bg-background border border-border rounded-lg px-4 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
                       required
                     />
-                    <input
-                      type="text"
-                      name="state"
-                      placeholder="State"
-                      value={formData.state}
-                      onChange={handleInputChange}
-                      className="bg-background border border-border rounded-lg px-4 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
-                      required
-                    />
-                    <input
-                      type="text"
-                      name="zipCode"
-                      placeholder="ZIP Code"
-                      value={formData.zipCode}
-                      onChange={handleInputChange}
-                      className="bg-background border border-border rounded-lg px-4 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
-                      required
-                    />
+
+                    <Select
+                      onValueChange={(value) =>
+                        handleInputChange({ target: { name: "region", value } })
+                      }
+                      defaultValue={formData.region}
+                    >
+                      <SelectTrigger className="bg-background border border-border rounded-lg px-4 py-2">
+                        <SelectValue placeholder="Select Region" />
+                      </SelectTrigger>
+
+                      <SelectContent>
+                        <SelectItem value="Greater Accra">
+                          Greater Accra
+                        </SelectItem>
+                        <SelectItem value="Ashanti">Ashanti</SelectItem>
+                        <SelectItem value="Eastern">Eastern</SelectItem>
+                        <SelectItem value="Western">Western</SelectItem>
+                        <SelectItem value="Western North">
+                          Western North
+                        </SelectItem>
+                        <SelectItem value="Central">Central</SelectItem>
+                        <SelectItem value="Volta">Volta</SelectItem>
+                        <SelectItem value="Oti">Oti</SelectItem>
+                        <SelectItem value="Northern">Northern</SelectItem>
+                        <SelectItem value="Savannah">Savannah</SelectItem>
+                        <SelectItem value="North East">North East</SelectItem>
+                        <SelectItem value="Upper East">Upper East</SelectItem>
+                        <SelectItem value="Upper West">Upper West</SelectItem>
+                        <SelectItem value="Bono">Bono</SelectItem>
+                        <SelectItem value="Bono East">Bono East</SelectItem>
+                        <SelectItem value="Ahafo">Ahafo</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <Button
@@ -381,7 +418,7 @@ export default function CheckoutPage() {
               <Card className="bg-card border-border p-6 space-y-6">
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => setCurrentStep("shipping")}
+                    onClick={() => setCurrentStep("delivery")}
                     className="p-2 hover:bg-secondary rounded-lg transition-colors"
                   >
                     <ArrowLeft size={20} />
@@ -424,8 +461,8 @@ export default function CheckoutPage() {
                       <span>₵{subtotal.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-muted-foreground">
-                      <span>Shipping</span>
-                      <span>₵{shipping.toLocaleString()}</span>
+                      <span>Delivery</span>
+                      <span>₵{delivery.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-muted-foreground">
                       <span>Tax</span>
@@ -459,7 +496,7 @@ export default function CheckoutPage() {
               <h3 className="font-semibold text-lg">Order Summary</h3>
 
               <div className="space-y-3 max-h-64 overflow-y-auto border-b border-border pb-4">
-                {items.map((item) => (
+                {cart.map((item) => (
                   <div key={item.id} className="flex justify-between text-sm">
                     <span className="text-muted-foreground">
                       {item.name} x {item.quantity}
@@ -477,8 +514,8 @@ export default function CheckoutPage() {
                   <span>₵{subtotal.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Shipping</span>
-                  <span>₵{shipping.toLocaleString()}</span>
+                  <span className="text-muted-foreground">Delivery</span>
+                  <span>₵{delivery.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Tax</span>
@@ -502,7 +539,6 @@ export default function CheckoutPage() {
           </div>
         </div>
       </div>
-
     </main>
   );
 }

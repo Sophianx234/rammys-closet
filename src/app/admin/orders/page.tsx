@@ -69,7 +69,7 @@ const mockOrders = [
     qty: 3,
     status: "delivered",
     payment: "paid",
-    shipping: "Lagos, NG",
+    delivery: "Lagos, NG",
     date: "2025-10-18",
   },
   {
@@ -79,7 +79,7 @@ const mockOrders = [
     qty: 2,
     status: "shipped",
     payment: "paid",
-    shipping: "Abuja, NG",
+    delivery: "Abuja, NG",
     date: "2025-10-20",
   },
   {
@@ -89,7 +89,7 @@ const mockOrders = [
     qty: 5,
     status: "processing",
     payment: "pending",
-    shipping: "Kano, NG",
+    delivery: "Kano, NG",
     date: "2025-10-25",
   },
   {
@@ -99,7 +99,7 @@ const mockOrders = [
     qty: 1,
     status: "delivered",
     payment: "paid",
-    shipping: "Ibadan, NG",
+    delivery: "Ibadan, NG",
     date: "2025-10-25",
   },
   {
@@ -109,7 +109,7 @@ const mockOrders = [
     qty: 4,
     status: "processing",
     payment: "paid",
-    shipping: "Port Harcourt, NG",
+    delivery: "Port Harcourt, NG",
     date: "2025-10-26",
   },
   {
@@ -119,7 +119,7 @@ const mockOrders = [
     qty: 1,
     status: "cancelled",
     payment: "failed",
-    shipping: "Enugu, NG",
+    delivery: "Enugu, NG",
     date: "2025-10-27",
   },
 ];
@@ -256,7 +256,7 @@ export default function OrdersTab() {
 
                     <TableCell className="flex items-center gap-1">
                       <MapPin className="w-3 h-3 text-primary" />
-                      {o.shipping}
+                      {o.delivery}
                     </TableCell>
 
                     {/* STATUS SELECT */}
@@ -366,7 +366,7 @@ export default function OrdersTab() {
                 />
                 <Detail label="Payment" value={selectedOrder.payment} />
                 <Detail label="Status" value={selectedOrder.status} />
-                <Detail label="Address" value={selectedOrder.shipping} />
+                <Detail label="Address" value={selectedOrder.delivery} />
                 <Detail
                   label="Date"
                   value={new Date(selectedOrder.date).toLocaleDateString()}

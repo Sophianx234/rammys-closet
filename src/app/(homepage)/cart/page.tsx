@@ -12,8 +12,9 @@ import { useDashStore } from "@/lib/store";
 
 export default function CartPage() {
   // const { items, removeItem, updateQuantity, total, clearCart } = useCart();
-  const {  total} = useCart();
-  const {cart,removeItem, updateQuantity,cartTotal, clearCart} = useDashStore()
+  const { total } = useCart();
+  const { cart, removeItem, updateQuantity, cartTotal, clearCart } =
+    useDashStore();
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -25,13 +26,12 @@ export default function CartPage() {
   }
 
   const subtotal = cartTotal();
-  const shipping = cart.length > 0 ? 500 : 0;
+  const delivery = cart.length > 0 ? 500 : 0;
   const tax = Math.round(subtotal * 0.1);
-  const finalTotal = subtotal + shipping + tax;
+  const finalTotal = subtotal + delivery + tax;
 
   return (
     <main>
-
       {/* Page Header */}
       <section className="bg-secondary border-b border-border py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -64,9 +64,7 @@ export default function CartPage() {
             {/* Cart Items */}
             <div className="lg:col-span-2 space-y-4">
               <div className="flex items-center justify-between pb-4 border-b border-border">
-                <h2 className="text-lg font-semibold">
-                  Items ({cart.length})
-                </h2>
+                <h2 className="text-lg font-semibold">Items ({cart.length})</h2>
                 <button
                   onClick={clearCart}
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -148,8 +146,8 @@ export default function CartPage() {
                     <span>₵{subtotal.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Shipping</span>
-                    <span>₵{shipping.toLocaleString()}</span>
+                    <span className="text-muted-foreground">delivery</span>
+                    <span>₵{delivery.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Tax (10%)</span>
@@ -187,7 +185,6 @@ export default function CartPage() {
           </div>
         )}
       </div>
-
     </main>
   );
 }

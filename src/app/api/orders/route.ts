@@ -1,0 +1,46 @@
+import { NextResponse } from "next/server";
+import { Order } from "@/models/Order";
+import { connectToDatabase } from "@/lib/connectDB";
+
+export async function POST(req: Request) {
+  try {
+    await connectToDatabase();
+
+    const data = await req.json();
+
+    const newOrder = await Order.create({
+      customer: {
+        firstName: data.formData.firstName,
+        lastName: data.formData.lastName,
+        email: data.formData.email,
+        phone: data.formData.phone,
+      },
+
+      deliveryAddress: {
+        address: data.formData.address,
+        city: data.formData.city,
+        region: data.formData.region,
+      },
+
+      items: data.cart.map((item: any) => ({
+        product: item._id,
+        quantity: item.quantity,
+        price: item.price,
+      })),
+
+      totalAmount: data.total,
+      paymentStatus: "paid",
+      paymentReference: data.reference,
+      orderStatus: "processing",
+      user: data.userId || null,
+    });
+
+    return NextResponse.json({ success: true, order: newOrder });
+  } catch (error: any) {
+    console.error("Order creation error:", error);
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    );
+  }
+}

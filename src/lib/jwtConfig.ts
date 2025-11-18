@@ -23,7 +23,8 @@ const jwtExpires = process.env.JWT_EXPIRES;
 export const signToken = async (user: IUser) => {
   if (jwtSecret && jwtExpires)
     return jwt.sign({ userId: user._id, role:user.role  }, jwtSecret, {
-      expiresIn: Number(jwtExpires)*60*60*24,
+      // expiresIn: Number(jwtExpires)*60*60*24,
+      expiresIn: '30d',
     });
   else {
     throw new Error("JWT_EXPIRES is not defined in environment variables");
