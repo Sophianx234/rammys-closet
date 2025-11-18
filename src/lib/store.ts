@@ -13,6 +13,7 @@ export type storeState = {
   cartTotal: () => number;
   setUser: (user: IUser) => void;
   setCart: (product: IProduct, qty: number) => void;
+  loadCart: (cartItems: { product: IProduct; quantity: number }[]) => void;
 };
 
 export const useDashStore = create<storeState>((set,get) => ({
@@ -49,7 +50,13 @@ export const useDashStore = create<storeState>((set,get) => ({
         item._id === id ? { ...item, quantity: qty } : item
       ),
     })),
-
+loadCart: (cartItems) =>
+    set(() => ({
+      cart: cartItems.map((item) => ({
+        ...item.product,        // product data
+        quantity: item.quantity // quantity from DB
+      })),
+    })),
   // Clear entire cart
   clearCart: () => set({ cart: [] }),
 

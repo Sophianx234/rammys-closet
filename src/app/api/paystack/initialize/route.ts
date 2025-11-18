@@ -20,6 +20,7 @@ export async function POST(request: NextRequest) {
         email,
         amount: Math.round(amount * 100), // Paystack uses kobo
         reference,
+        
         metadata: {
           order_id: reference,
         },

@@ -15,7 +15,8 @@ export async function GET(req: NextRequest) {
   try {
     
     const decoded = jwt.verify(token, process.env.JWT_SECRET!);
-    const user = await User.findById((decoded as DecodedToken).userId)
+    const user = await User.findById((decoded as DecodedToken).userId).populate("cart.product") // ← this is what you need
+      .lean();
     
     return NextResponse.json({ user });
   } catch (err) {

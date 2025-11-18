@@ -42,6 +42,7 @@ export default function CheckoutPage() {
   const [error, setError] = useState<string>("");
   const router = useRouter();
 
+
   useEffect(() => {
     if (cart.length === 0 && currentStep === "delivery") {
       // window.location.href = "/cart";
@@ -127,14 +128,15 @@ const handlePaymentSubmit = async (e: React.FormEvent) => {
 };
 
 useEffect(() => {
-  const reference = searchParams.get("reference");
-  if (!reference) return;
+const verifyPayment = async () => {
+console.log('searchParams');
 
-  const verifyPayment = async () => {
+  const pendingOrder = localStorage.getItem("pendingOrder");
+    const orderData = JSON.parse(pendingOrder as string);
     try {
       setIsProcessing(true); // prevents flicker
 
-      const verifyResponse = await fetch(`/api/paystack/verify?reference=${reference}`);
+      const verifyResponse = await fetch(`/api/paystack/verify?reference=${orderData.reference}`);
       const verifyData = await verifyResponse.json();
 
       if (verifyResponse.ok && verifyData.status === "success") {

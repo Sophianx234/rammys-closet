@@ -9,7 +9,7 @@ import { IProduct } from "@/models/Product";
 import { useDashStore } from "@/lib/store";
 
 export default function ProductClient({ product }: { product: IProduct }) {
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(product.isFeatured);
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
   const { setCart } = useDashStore();

@@ -30,13 +30,17 @@ const CartContext = createContext<CartContextType | undefined>(undefined)
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
   const [isLoaded, setIsLoaded] = useState(false)
-   const {setUser,user} = useDashStore()
+   const {setUser,user,loadCart} = useDashStore()
 useEffect(()=>{
       const getMe = async()=>{
         const res = await fetch('/api/auth/me')
         const data = await res.json()
         if(res.ok ){
           setUser(data.user as IUser)
+             if (data.user.cart?.length > 0) {
+              console.log('loading cart from db', data.user.cart)
+        loadCart(data.user.cart); // ← Works now!
+      }
           console.log('user', data)
           
           
