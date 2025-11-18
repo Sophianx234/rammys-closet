@@ -21,6 +21,41 @@ export default function CartPage() {
     setIsLoaded(true);
   }, []);
 
+  const handleRemoveCartItem = async (productId: string) => {
+  try {
+    const res = await fetch(`/api/cart/${productId}`, {
+      method: "DELETE",
+    });
+
+    if (!res.ok) {
+      console.error("Failed to remove item");
+      return;
+    }
+
+    removeItem(productId); // Zustand update
+  } catch (error) {
+    console.error("Remove cart error:", error);
+  }
+};
+
+const handleClearCart = async () => {
+  try {
+    const res = await fetch("/api/cart/clear", {
+      method: "DELETE",
+    });
+
+    if (!res.ok) {
+      console.error("Failed to clear cart");
+      return;
+    }
+
+    clearCart(); // Zustand update
+  } catch (error) {
+    console.error("Clear cart error:", error);
+  }
+};
+
+
   if (!isLoaded) {
     return <div>Loading...</div>;
   }
@@ -66,7 +101,7 @@ export default function CartPage() {
               <div className="flex items-center justify-between pb-4 border-b border-border">
                 <h2 className="text-lg font-semibold">Items ({cart.length})</h2>
                 <button
-                  onClick={clearCart}
+                  onClick={handleClearCart}
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Clear Cart
@@ -118,7 +153,7 @@ export default function CartPage() {
                       </div>
 
                       <button
-                        onClick={() => removeItem(item._id)}
+                        onClick={() => handleRemoveCartItem(item._id)}
                         className="p-2 hover:bg-secondary rounded-lg transition-colors text-muted-foreground hover:text-foreground"
                       >
                         <Trash2 size={18} />
