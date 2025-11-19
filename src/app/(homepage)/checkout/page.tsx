@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useRouter, useSearchParams } from "next/navigation";
+import { IOrder } from "@/models/Order";
 
 export default function CheckoutPage() {
   const { cart, cartTotal, clearCart, user } = useDashStore();
@@ -32,9 +33,51 @@ export default function CheckoutPage() {
   });
   const searchParams = useSearchParams();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [placedOrder, setPlacedOrder] = useState<IOrder|null>(null);
   const [orderNumber, setOrderNumber] = useState("");
   const [error, setError] = useState<string>("");
   const router = useRouter();
+
+    useEffect(() => {
+    const verifyPayment = async () => {
+      const pendingOrder = localStorage.getItem("pendingOrder");
+      if (!pendingOrder) return;
+
+      const orderData = JSON.parse(pendingOrder as string);
+      try {
+        setIsProcessing(true);
+
+        const verifyResponse = await fetch(`/api/paystack/verify?reference=${orderData.reference}`);
+        const verifyData = await verifyResponse.json();
+
+        if (verifyResponse.ok && verifyData.status === "success") {
+         const order =  await fetch("/api/orders", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(orderData),
+          });
+          if(order.ok){
+            const orderData = await order.json();
+            console.log('Order placed:', placedOrder);
+            setOrderNumber(orderData?.order.paymentReference);
+            setPlacedOrder(orderData.order);
+            setCurrentStep("success");
+          }
+
+          clearCart();
+          localStorage.removeItem("pendingOrder");
+        } else {
+          setError("Payment verification failed");
+        }
+      } catch (e) {
+        setError("Verification error");
+      } finally {
+        setIsProcessing(false);
+      }
+    };
+
+    verifyPayment();
+  }, [searchParams]);
 
   useEffect(() => {
     if (cart.length === 0 && currentStep === "delivery") {
@@ -111,43 +154,7 @@ export default function CheckoutPage() {
     }
   };
 
-  useEffect(() => {
-    const verifyPayment = async () => {
-      const pendingOrder = localStorage.getItem("pendingOrder");
-      if (!pendingOrder) return;
 
-      const orderData = JSON.parse(pendingOrder as string);
-      try {
-        setIsProcessing(true);
-
-        const verifyResponse = await fetch(`/api/paystack/verify?reference=${orderData.reference}`);
-        const verifyData = await verifyResponse.json();
-
-        if (verifyResponse.ok && verifyData.status === "success") {
-          await fetch("/api/orders", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(orderData),
-          });
-
-          setOrderNumber(orderData.reference);
-          setFormData(orderData.formData);
-          setCurrentStep("success");
-
-          clearCart();
-          localStorage.removeItem("pendingOrder");
-        } else {
-          setError("Payment verification failed");
-        }
-      } catch (e) {
-        setError("Verification error");
-      } finally {
-        setIsProcessing(false);
-      }
-    };
-
-    verifyPayment();
-  }, [searchParams]);
 
   const subtotal = cartTotal();
   const delivery = cart.length > 0 ? 500 : 0;
@@ -184,15 +191,15 @@ export default function CheckoutPage() {
               <p className="text-sm font-semibold">Order Details</p>
               <div className="space-y-1 text-sm text-muted-foreground">
                 <p>Email: {user?.email}</p>
-                <p>Items: {cart.length}</p>
-                <p>Total: ₵{finalTotal.toLocaleString()}</p>
+                <p>Items: {placedOrder?.items.length}</p>
+                <p>Total: ₵{placedOrder?.totalAmount.toLocaleString()}</p>
               </div>
             </div>
 
             <div className="space-y-3 pt-6 border-t border-border">
               <p className="text-sm text-muted-foreground">
                 A confirmation email has been sent to{" "}
-                <strong>{formData.email}</strong>. You will receive tracking
+                <strong>{user.email}</strong>. You will receive tracking
                 information shortly.
               </p>
               <Link href="/shop">
@@ -203,7 +210,6 @@ export default function CheckoutPage() {
             </div>
           </Card>
         </div>
-        <Footer />
       </main>
     );
   }

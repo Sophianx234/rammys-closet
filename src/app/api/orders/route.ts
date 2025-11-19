@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
 import { Order } from "@/models/Order";
+import { User } from "@/models/User";
 import { connectToDatabase } from "@/lib/connectDB";
 
 export async function POST(req: Request) {
   try {
     await connectToDatabase();
-
     const data = await req.json();
 
     const newOrder = await Order.create({
-      user:data.userId,
+      user: data.userId,
       customer: {
         phone: data.formData.phone,
       },
@@ -31,6 +31,11 @@ export async function POST(req: Request) {
       paymentReference: data.reference,
       orderStatus: "processing",
     });
+
+    // 🔥 CLEAR USER CART IF LOGGED IN
+    if (data.userId) {
+      await User.findByIdAndUpdate(data.userId, { cart: [] });
+    }
 
     return NextResponse.json({ success: true, order: newOrder });
   } catch (error: any) {
