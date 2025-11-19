@@ -46,3 +46,53 @@ export async function POST(req: Request) {
     );
   }
 }
+
+
+
+export async function GET(req: Request) {
+  try {
+    await connectToDatabase();
+
+    const { searchParams } = new URL(req.url);
+
+    const page = Number(searchParams.get("page")) || 1;
+    const limit = Number(searchParams.get("limit")) || 20;
+    const search = searchParams.get("search") || "";
+
+    const query: any = {};
+
+    // Search by order ID, phone, reference
+    if (search) {
+      query.$or = [
+        { paymentReference: { $regex: search, $options: "i" } },
+        { "customer.phone": { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const orders = await Order.find(query)
+      .populate("user", "name email phone")
+      .populate("items.product", "name price images")
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    const totalOrders = await Order.countDocuments(query);
+
+    return NextResponse.json({
+      success: true,
+      orders,
+      pagination: {
+        total: totalOrders,
+        page,
+        totalPages: Math.ceil(totalOrders / limit),
+      },
+    });
+  } catch (error: any) {
+    console.error("Fetch orders error:", error);
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    );
+  }
+}
+
