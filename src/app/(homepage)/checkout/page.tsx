@@ -24,7 +24,7 @@ export default function CheckoutPage() {
   const { cart, cartTotal, clearCart, user } = useDashStore();
   const [currentStep, setCurrentStep] = useState<"delivery" | "payment" | "success">("delivery");
   const [formData, setFormData] = useState({
-    
+    userId: user?._id || "",
     phone: "",
     address: "",
     city: "",
@@ -76,7 +76,7 @@ export default function CheckoutPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: formData.email,
+          email: user?.email,
           amount: finalTotal,
           reference,
         }),
@@ -93,6 +93,7 @@ export default function CheckoutPage() {
         localStorage.setItem(
           "pendingOrder",
           JSON.stringify({
+            userId:user._id,
             reference: initData.reference,
             formData,
             cart,

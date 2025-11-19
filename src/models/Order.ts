@@ -31,9 +31,6 @@ export interface IOrder extends Document {
 
   // From your formData
   customer: {
-    firstName: string;
-    lastName: string;
-    email: string;
     phone: string;
   };
 
@@ -79,9 +76,7 @@ const orderSchema = new Schema<IOrder>(
 
     // Customer info matching your formData
     customer: {
-      firstName: { type: String, required: true },
-      lastName: { type: String, required: false },
-      email: { type: String, required: true },
+     
       phone: { type: String, required: true },
     },
 

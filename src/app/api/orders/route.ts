@@ -9,10 +9,8 @@ export async function POST(req: Request) {
     const data = await req.json();
 
     const newOrder = await Order.create({
+      user:data.userId,
       customer: {
-        firstName: data.formData.firstName,
-        lastName: data.formData.lastName,
-        email: data.formData.email,
         phone: data.formData.phone,
       },
 
@@ -32,7 +30,6 @@ export async function POST(req: Request) {
       paymentStatus: "paid",
       paymentReference: data.reference,
       orderStatus: "processing",
-      user: data.userId || null,
     });
 
     return NextResponse.json({ success: true, order: newOrder });
