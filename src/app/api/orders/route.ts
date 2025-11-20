@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Order } from "@/models/Order";
 import { User } from "@/models/User";
 import { connectToDatabase } from "@/lib/connectDB";
+import "@/models/Product";
 
 export async function POST(req: Request) {
   try {
@@ -21,6 +22,7 @@ export async function POST(req: Request) {
       },
 
       items: data.cart.map((item: any) => ({
+
         product: item._id,
         quantity: item.quantity,
         price: item.price,
@@ -70,11 +72,12 @@ export async function GET(req: Request) {
     }
 
     const orders = await Order.find(query)
-      .populate("user", "name email phone")
-      .populate("items.product", "name price images")
+      .populate("user")
+      .populate("items.product")
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit);
+      console.log('orderxxx',orders);
 
     const totalOrders = await Order.countDocuments(query);
 

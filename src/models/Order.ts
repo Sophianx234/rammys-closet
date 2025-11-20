@@ -15,6 +15,7 @@ export type OrderStatus =
   | "cancelled";
 
 export interface IOrderItem {
+  image:string,
   product: mongoose.Types.ObjectId;
   quantity: number;
   price: number;

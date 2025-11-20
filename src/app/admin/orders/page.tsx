@@ -1,50 +1,39 @@
 "use client";
-
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
-
-const Toast = withReactContent(Swal).mixin({
-  toast: true,
-  position: "top-end",
-  showConfirmButton: false,
-  timer: 2000,
-  timerProgressBar: true,
-});
-
 import {
   Search,
   Filter,
-  Eye,
-  Trash2,
   MoreVertical,
   MapPin,
-  DollarSign,
-  CheckCircle,
-  Clock,
   CreditCard,
   ChevronLeft,
   ChevronRight,
-  ListOrdered,
-  User,
   Package,
   Truck,
-  Check,
-  Timer,
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  Calendar,
+  User,
+  Copy,
+  ExternalLink,
+  XCircle,
+  RefreshCw,
 } from "lucide-react";
 
 import {
   Card,
-  CardHeader,
   CardContent,
+  CardHeader,
   CardTitle,
-  CardDescription,
 } from "@/components/ui/card";
-
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectTrigger,
@@ -52,23 +41,22 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter,
+} from "@/components/ui/sheet";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
 import {
   Table,
   TableHeader,
@@ -77,484 +65,598 @@ import {
   TableCell,
   TableBody,
 } from "@/components/ui/table";
+import { Separator } from "@/components/ui/separator";
 
-/* ================= BADGES ================= */
+/* ============================
+   Types (match server response)
+   ============================ */
 
-const paymentBadge = {
-  paid: { label: "Paid", variant: "default", icon: DollarSign },
-  pending: { label: "Pending", variant: "secondary", icon: Clock },
-  failed: { label: "Failed", variant: "destructive", icon: CreditCard },
+type OrderStatus =
+  | "processing"
+  | "awaiting_payment"
+  | "paid"
+  | "awaiting_pickup"
+  | "packed"
+  | "ready_for_dispatch"
+  | "dispatched"
+  | "in_transit"
+  | "arrived"
+  | "delivery_attempted"
+  | "delivered"
+  | "cancelled"
+  | "failed";
+
+type PaymentStatus = "pending" | "paid" | "failed";
+
+type ProductSummary = {
+  _id?: string;
+  name?: string;
+  images?: string | null;
+  price?: number;
 };
 
-/* ================= STATUS OPTIONS ================= */
+type OrderItem = {
+  images: string[],
+  product: ProductSummary | string;
+  quantity: number;
+  price?: number;
+};
 
-const statusOptions = [
-  "processing",
-  "awaiting_payment",
-  "paid",
-  "packed",
-  "ready_for_pickup",
-  "ready_for_dispatch",
-  "dispatched",
-  "in_transit",
-  "arrived",
-  "delivery_attempted",
-  "delivered",
-  "cancelled",
-];
+type ServerOrder = {
+  _id: string;
+  user?: {
+    _id?: string;
+    name?: string;
+    email?: string;
+    avatar?: string;
+    profile?: string;
+  } | null;
+  customer: {
+    phone: string;
+    // server sample didn't include customer.name, so we read from user when available
+  };
+  deliveryAddress: {
+    address: string;
+    city: string;
+    region: string;
+  };
+  items: OrderItem[];
+  totalAmount: number;
+  paymentStatus: PaymentStatus;
+  paymentReference: string;
+  orderStatus: OrderStatus;
+  createdAt: string;
+  updatedAt: string;
+};
 
-/* ================= MAIN COMPONENT ================= */
+/* ============================
+   UI / Status Config
+   ============================ */
 
-export default function OrdersTab() {
-  const [orders, setOrders] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const [openModal, setOpenModal] = useState(false);
-  const [page, setPage] = useState(1);
+const ITEMS_PER_PAGE = 10;
 
-  const ordersPerPage = 10;
+const STATUS_CONFIG: Record<
+  string,
+  { label: string; color: string; icon: any }
+> = {
+  processing: { label: "Processing", color: "bg-blue-50 text-blue-700", icon: Clock },
+  awaiting_payment: { label: "Awaiting Payment", color: "bg-yellow-50 text-yellow-700", icon: Clock },
+  paid: { label: "Paid", color: "bg-emerald-50 text-emerald-700", icon: CreditCard },
+  awaiting_pickup: { label: "Awaiting Pickup", color: "bg-indigo-50 text-indigo-700", icon: Package },
+  packed: { label: "Packed", color: "bg-indigo-50 text-indigo-700", icon: Package },
+  ready_for_dispatch: { label: "Ready for Dispatch", color: "bg-violet-50 text-violet-700", icon: Truck },
+  dispatched: { label: "Dispatched", color: "bg-purple-50 text-purple-700", icon: Truck },
+  in_transit: { label: "In Transit", color: "bg-orange-50 text-orange-700", icon: Truck },
+  arrived: { label: "Arrived", color: "bg-sky-50 text-sky-700", icon: Truck },
+  delivery_attempted: { label: "Delivery Attempted", color: "bg-yellow-50 text-yellow-700", icon: AlertCircle },
+  delivered: { label: "Delivered", color: "bg-green-50 text-green-700", icon: CheckCircle },
+  cancelled: { label: "Cancelled", color: "bg-red-50 text-red-700", icon: XCircle },
+  failed: { label: "Failed", color: "bg-red-50 text-red-700", icon: AlertCircle },
+};
 
-  /* ================= FETCH REAL ORDERS ================= */
-  useEffect(() => {
-    const loadOrders = async () => {
-      try {
-        const res = await fetch(`/api/orders?page=${page}&limit=${ordersPerPage}`);
-        const data = await res.json();
+const Toast = withReactContent(Swal).mixin({
+  toast: true,
+  position: "top-end",
+  showConfirmButton: false,
+  timer: 2000,
+  timerProgressBar: false,
+  customClass: {
+    popup: "text-sm font-medium rounded-lg shadow-md",
+  },
+});
 
-        if (!data.success) {
-          Toast.fire({
-            icon: "error",
-            title: "Failed to fetch orders",
-          });
-          return;
-        }
+/* ============================
+   Helpers
+   ============================ */
 
-        const formatted = data.orders.map((o) => ({
-          id: o.paymentReference,
-          customer: o.user?.name || "Unknown",
-          phone: o.customer?.phone,
-          total: o.totalAmount,
-          qty: o.items.length,
-          status: o.orderStatus,
-          payment: o.paymentStatus,
-          reference: o.paymentReference,
-          delivery: {
-            address: o.deliveryAddress?.address,
-            city: o.deliveryAddress?.city,
-            region: o.deliveryAddress?.region,
-          },
-          items: o.items.map((i) => ({
-            name: i.product?.name,
-            qty: i.quantity,
-            price: i.price,
-          })),
-          date: o.createdAt,
-        }));
+const formatCurrency = (amount: number) =>
+  new Intl.NumberFormat("en-GH", { style: "currency", currency: "GHS" }).format(amount);
 
-        setOrders(formatted);
-      } catch (error) {
-        Toast.fire({
-          icon: "error",
-          title: "Network error fetching orders",
-        });
+const formatDate = (d?: string) =>
+  d ? new Date(d).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "-";
+
+/* ============================
+   Main Component
+   ============================ */
+
+export default function OrdersManagement() {
+  const [orders, setOrders] = useState<ServerOrder[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [page, setPage] = useState<number>(1);
+  const [selectedOrder, setSelectedOrder] = useState<ServerOrder | null>(null);
+  const [isSheetOpen, setIsSheetOpen] = useState<boolean>(false);
+
+  console.log('orders',orders);
+  const fetchOrders = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/orders?page=${page}&limit=${ITEMS_PER_PAGE}`);
+      const data = await res.json();
+      // Expect data.orders as array
+      if (!data || !Array.isArray(data.orders)) {
+        throw new Error("Unexpected response");
       }
-    };
-
-    loadOrders();
+      setOrders(data.orders as ServerOrder[]);
+    } catch (err) {
+      console.error("Fetch orders error:", err);
+      Toast.fire({ icon: "error", title: "Could not load orders." });
+    } finally {
+      setLoading(false);
+    }
   }, [page]);
 
-  /* FILTERING */
-  const filtered = orders.filter(
-    (o) =>
-      o.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      o.id.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
-  const totalPages = Math.max(Math.ceil(filtered.length / ordersPerPage), 1);
-
-  const visible = filtered.slice(
-    (page - 1) * ordersPerPage,
-    page * ordersPerPage
-  );
-
-  /* OPEN MODAL */
-  const viewOrder = (order) => {
-    setSelectedOrder(order);
-    setOpenModal(true);
-  };
-
-  /* ================= UPDATE STATUS (Backend) ================= */
-  const updateStatus = async (id, newStatus) => {
+  // update status: server expects paymentReference or _id? earlier you used 'reference' — we'll send paymentReference
+  const handleStatusUpdate = async (paymentReference: string, newStatus: string) => {
     try {
       const res = await fetch("/api/orders/update-status", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reference: id, status: newStatus }),
+        body: JSON.stringify({ reference: paymentReference, status: newStatus }),
       });
-
-      if (!res.ok) {
-        Toast.fire({
-          icon: "error",
-          title: "Status update failed",
-        });
-        return;
+      if (!res.ok) throw new Error("Update failed");
+      // reflect locally
+      setOrders((prev) => prev.map((o) => (o.paymentReference === paymentReference ? { ...o, orderStatus: newStatus as OrderStatus } : o)));
+      Toast.fire({ icon: "success", title: "Order status updated" });
+      // also update sheet if open
+      if (selectedOrder && selectedOrder.paymentReference === paymentReference) {
+        setSelectedOrder({ ...selectedOrder, orderStatus: newStatus as OrderStatus });
       }
-
-      setOrders((prev) =>
-        prev.map((o) => (o.id === id ? { ...o, status: newStatus } : o))
-      );
-
-      Toast.fire({
-        icon: "success",
-        title: "Status updated!",
-      });
     } catch (err) {
-      Toast.fire({
-        icon: "error",
-        title: "Network error updating status",
-      });
+      console.error("Status update error:", err);
+      Toast.fire({ icon: "error", title: "Update failed" });
     }
   };
 
-  /* DELETE ORDER */
-  const deleteOrder = async (order) => {
-    const confirm = await Swal.fire({
-      title: "Delete Order?",
-      text: `Are you sure you want to delete ${order.id}?`,
+  const handleDelete = async (orderId: string) => {
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "This action cannot be undone.",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonText: "Yes, delete",
-      cancelButtonText: "Cancel",
+      confirmButtonColor: "#ef4444",
+      confirmButtonText: "Yes, delete it",
+      customClass: { popup: "rounded-xl" },
     });
 
-    if (!confirm.isConfirmed) return;
-
-    try {
-      const res = await fetch(`/api/orders/${order.id}`, {
-        method: "DELETE",
-      });
-
-      if (!res.ok) {
+    if (result.isConfirmed) {
+      try {
+        const res = await fetch(`/api/orders/${orderId}`, { method: "DELETE" });
+        if (!res.ok) throw new Error("Delete failed");
+        setOrders((prev) => prev.filter((o) => o._id !== orderId));
+        Toast.fire({ icon: "success", title: "Order deleted" });
+        setIsSheetOpen(false);
+      } catch (err) {
+        console.error("Delete error:", err);
         Toast.fire({ icon: "error", title: "Delete failed" });
-        return;
       }
-
-      setOrders((prev) => prev.filter((o) => o.id !== order.id));
-
-      Toast.fire({ icon: "success", title: "Order deleted" });
-    } catch {
-      Toast.fire({ icon: "error", title: "Network error" });
     }
   };
 
+  // client side filter
+  const filteredOrders = useMemo(() => {
+    const lower = searchTerm.toLowerCase();
+    return orders.filter((o) => {
+      const referenceMatch = o.paymentReference?.toLowerCase().includes(lower);
+      const phoneMatch = o.customer?.phone?.toLowerCase().includes(lower);
+      const nameMatch = o.user?.name?.toLowerCase().includes(lower);
+      return referenceMatch || phoneMatch || nameMatch;
+    });
+  }, [orders, searchTerm]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / ITEMS_PER_PAGE));
+  const paginated = filteredOrders.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
-      {/* HEADER */}
-      <div className="flex flex-col md:flex-row items-center gap-4 justify-between">
-        <div className="relative w-full md:w-80">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search orders (ID or customer)"
-            className="pl-10"
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setPage(1);
-            }}
-          />
+    <div className="p-6 max-w-[1400px] mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Orders</h1>
+          <p className="text-sm text-muted-foreground mt-1">Manage and track customer orders.</p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <Button variant="outline">
-            <Filter className="w-4 h-4 mr-2" /> Filters
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <Button variant="outline" size="sm" onClick={fetchOrders} disabled={loading}>
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+            Refresh
           </Button>
-
-          <Button>Create Manual Order</Button>
+          <Button size="sm" onClick={() => Toast.fire({ icon: "info", title: "Create order not implemented" })}>
+            <Package className="w-4 h-4 mr-2" />
+            Create Order
+          </Button>
         </div>
       </div>
 
-      {/* TABLE */}
-      <Card className="overflow-hidden">
-        <CardHeader>
-          <CardTitle>Orders</CardTitle>
-          <CardDescription>
-            Showing {visible.length} of {filtered.length} orders
-          </CardDescription>
+      {/* Card */}
+      <Card>
+        <CardHeader className="border-b p-4">
+          <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
+            <div className="relative w-full md:w-96">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search order #, phone or name..."
+                className="pl-10 pr-3"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm">
+                <Filter className="w-4 h-4 mr-2" /> Status
+              </Button>
+              <Button variant="outline" size="sm">
+                <Calendar className="w-4 h-4 mr-2" /> Date Range
+              </Button>
+            </div>
+          </div>
         </CardHeader>
 
         <CardContent className="p-0">
           <Table>
-            <TableHeader>
+            <TableHeader className="bg-muted/50">
               <TableRow>
-                <TableHead>Order ID</TableHead>
+                <TableHead className="w-[160px]">Reference</TableHead>
                 <TableHead>Customer</TableHead>
-                <TableHead>Qty</TableHead>
-                <TableHead>Payment</TableHead>
-                <TableHead>Total</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>Payment</TableHead>
+                <TableHead className="text-right">Total</TableHead>
+                <TableHead className="hidden md:table-cell">Date</TableHead>
+                <TableHead className="w-[50px]"></TableHead>
               </TableRow>
             </TableHeader>
 
             <TableBody>
-              {visible.map((o, i) => {
-                const P = paymentBadge[o.payment];
-                const Icon = P.icon;
-
-                return (
-                  <motion.tr
-                    key={o.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                    className="border-b"
-                  >
-                    <TableCell className="font-medium">{o.id}</TableCell>
-                    <TableCell>{o.customer}</TableCell>
-                    <TableCell>{o.qty}</TableCell>
-
-                    {/* PAYMENT */}
+              {loading ? (
+                Array.from({ length: 6 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell><Skeleton className="h-4 w-28" /></TableCell>
                     <TableCell>
-                      <Badge variant={P.variant} className="flex items-center gap-1">
-                        <Icon className="w-3 h-3" />
-                        {P.label}
-                      </Badge>
+                      <div className="space-y-1">
+                        <Skeleton className="h-4 w-40" />
+                        <Skeleton className="h-3 w-24" />
+                      </div>
                     </TableCell>
-
-                    <TableCell className="font-semibold">
-                      ₵{o.total?.toLocaleString()}
-                    </TableCell>
-
-                    {/* STATUS SELECT */}
-                    <TableCell>
-                      <Select
-                        defaultValue={o.status}
-                        onValueChange={(v) => updateStatus(o.id, v)}
-                      >
-                        <SelectTrigger className="h-8 text-xs capitalize">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {statusOptions.map((s) => (
-                            <SelectItem key={s} value={s} className="capitalize">
-                              {s.replace("_", " ")}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                    <TableCell><Skeleton className="h-6 w-28 rounded-full" /></TableCell>
+                    <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
+                    <TableCell className="text-right"><Skeleton className="h-4 w-20 ml-auto" /></TableCell>
+                    <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-28" /></TableCell>
+                    <TableCell><Skeleton className="h-8 w-8 rounded-md" /></TableCell>
+                  </TableRow>
+                ))
+              ) : paginated.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="h-48 text-center">
+                    <div className="flex flex-col items-center justify-center text-muted-foreground">
+                      <Package className="h-12 w-12 mb-2 opacity-20" />
+                      <p>No orders found.</p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                paginated.map((order) => (
+                  <TableRow key={order._id} className="group hover:bg-muted/30 transition-colors">
+                    <TableCell className="font-mono font-medium text-xs">
+                      {order.paymentReference}
                     </TableCell>
 
                     <TableCell>
-                      {new Date(o.date).toLocaleDateString()}
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={order.user?.profile || `https://ui-avatars.com/api/?name=${encodeURIComponent(order.user?.name || "Guest")}`}
+                          alt={order.user?.name || "Guest"}
+                          className="w-9 h-9  rounded-full object-cover"
+                        />
+                        <div className="flex flex-col">
+                          <span className="font-medium text-sm">{order.user?.name ?? "Guest"}</span>
+                          <span className="text-xs text-muted-foreground">{order.customer?.phone}</span>
+                        </div>
+                      </div>
                     </TableCell>
 
-                    {/* ACTIONS */}
-                    <TableCell className="text-right">
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <StatusSelector
+                          current={order.orderStatus}
+                          onChange={(v) => handleStatusUpdate(order.paymentReference, v)}
+                        />
+                      </div>
+                    </TableCell>
+
+                    <TableCell>
+                      <PaymentBadge status={order.paymentStatus} />
+                    </TableCell>
+
+                    <TableCell className="text-right font-semibold">
+                      {formatCurrency(order.totalAmount)}
+                    </TableCell>
+
+                    <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
+                      {formatDate(order.createdAt)}
+                    </TableCell>
+
+                    <TableCell>
                       <DropdownMenu>
-                        <DropdownMenuTrigger>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="w-4 h-4" />
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
 
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => viewOrder(o)}>
-                            <Eye className="w-4 h-4 mr-2" /> View Order
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setSelectedOrder(order);
+                              setIsSheetOpen(true);
+                            }}
+                          >
+                            <ExternalLink className="mr-2 h-4 w-4" /> View Details
                           </DropdownMenuItem>
 
-                          <DropdownMenuItem
-                            onClick={() => deleteOrder(o)}
-                            className="text-red-500"
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" /> Delete Order
+                          <DropdownMenuItem onClick={() => navigator.clipboard.writeText(order.paymentReference)}>
+                            <Copy className="mr-2 h-4 w-4" /> Copy Reference
+                          </DropdownMenuItem>
+
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => handleDelete(order._id)} className="text-red-600 focus:text-red-600">
+                            Delete Order
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
-                  </motion.tr>
-                );
-              })}
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>
 
-        {/* PAGINATION */}
-        <div className="flex items-center justify-between p-4 border-t">
-          <p className="text-sm text-muted-foreground">
+        {/* Footer / Pagination */}
+        <div className="border-t p-4 flex items-center justify-between">
+          <span className="text-xs text-muted-foreground">
             Page {page} of {totalPages}
-          </p>
-
+          </span>
           <div className="flex gap-2">
-            <Button
-              size="icon"
-              variant="outline"
-              disabled={page === 1}
-              onClick={() => setPage(page - 1)}
-            >
-              <ChevronLeft className="w-4 h-4" />
+            <Button variant="outline" size="icon" disabled={page === 1 || loading} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+              <ChevronLeft className="h-4 w-4" />
             </Button>
-
-            <Button
-              size="icon"
-              variant="outline"
-              disabled={page === totalPages}
-              onClick={() => setPage(page + 1)}
-            >
-              <ChevronRight className="w-4 h-4" />
+            <Button variant="outline" size="icon" disabled={page === totalPages || loading} onClick={() => setPage((p) => p + 1)}>
+              <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </div>
       </Card>
 
-      {/* ================= MODAL ================= */}
-      <Dialog open={openModal} onOpenChange={setOpenModal}>
-        <DialogContent className="max-w-3xl h-[32rem]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ListOrdered className="w-5 h-5 text-primary" />
-              Order Details — {selectedOrder?.id}
-            </DialogTitle>
-            <DialogDescription>
-              Full detailed breakdown of this order.
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedOrder && (
-            <div className="space-y-6 overflow-y-scroll scrollbar-hide">
-              {/* TIMELINE */}
-              <OrderTimeline status={selectedOrder.status} />
-
-              <div className="grid grid-cols-1 gap-4">
-                <InfoCard
-                  title="Customer Info"
-                  icon={<User className="w-4 h-4 text-primary" />}
-                  items={[
-                    { label: "Name", value: selectedOrder.customer },
-                    { label: "Phone", value: selectedOrder.phone },
-                  ]}
-                />
-
-                <InfoCard
-                  title="Payment Details"
-                  icon={<CreditCard className="w-4 h-4 text-primary" />}
-                  items={[
-                    { label: "Status", value: selectedOrder.payment },
-                    { label: "Reference", value: selectedOrder.reference },
-                  ]}
-                />
-
-                <InfoCard
-                  title="Delivery Address"
-                  icon={<MapPin className="w-4 h-4 text-primary" />}
-                  items={[
-                    { label: "Street", value: selectedOrder.delivery.address },
-                    { label: "City", value: selectedOrder.delivery.city },
-                    { label: "Region", value: selectedOrder.delivery.region },
-                  ]}
-                />
-              </div>
-
-              {/* ITEMS */}
-              <div>
-                <h3 className="font-semibold text-lg mb-3">Items</h3>
-
-                <div className="border rounded-lg p-4 space-y-3">
-                  {selectedOrder.items.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="flex justify-between items-center border-b pb-2 last:border-none"
-                    >
-                      <div className="font-medium">{item.name}</div>
-                      <div className="text-sm">
-                        {item.qty} × ₵{item.price.toLocaleString()}
-                      </div>
-                    </div>
-                  ))}
-
-                  <div className="flex justify-between pt-3 font-semibold">
-                    <p>Total</p>
-                    <p>₵{selectedOrder.total.toLocaleString()}</p>
-                  </div>
-                </div>
-              </div>
+      {/* Details Sheet */}
+      <Sheet open={isSheetOpen} onOpenChange={(v) => { setIsSheetOpen(v); if (!v) setSelectedOrder(null); }}>
+        <SheetContent className="sm:max-w-2xl w-full overflow-y-auto">
+          {selectedOrder ? <OrderDetailsSheetContent order={selectedOrder} onDelete={handleDelete} onStatusChange={handleStatusUpdate} /> : (
+            <div className="p-6">
+              <Skeleton className="h-6 w-44 mb-4" />
+              <Skeleton className="h-48" />
             </div>
           )}
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpenModal(false)}>
-              Close
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
 
-/* ================= INFO CARD ================= */
-const InfoCard = ({ title, icon, items }) => (
-  <Card>
-    <CardHeader className="pb-2">
-      <CardTitle className="flex items-center gap-2 text-sm">
-        {icon} {title}
-      </CardTitle>
-    </CardHeader>
+/* ============================
+   Subcomponents
+   ============================ */
 
-    <CardContent className="space-y-1 text-sm">
-      {items.map((item, i) => (
-        <p key={i}>
-          <span className="text-muted-foreground">{item.label}: </span>
-          {item.value}
-        </p>
-      ))}
-    </CardContent>
-  </Card>
-);
+function StatusSelector({ current, onChange }: { current: string; onChange: (v: string) => void }) {
+  const conf = STATUS_CONFIG[current] || { label: current, color: "bg-gray-50 text-gray-700" };
+  return (
+    <Select value={current} onValueChange={(v) => onChange(v)} >
+      <SelectTrigger className={`h-8 text-xs w-[170px] border-0 ${conf.color} font-medium`}>
+        <SelectValue>{conf.label}</SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        {Object.entries(STATUS_CONFIG).map(([k, c]) => (
+          <SelectItem key={k} value={k}>
+            <div className="flex items-center gap-2">
+              <span className="text-sm">{c.label}</span>
+            </div>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
 
-/* ================= TIMELINE ================= */
+function PaymentBadge({ status }: { status: PaymentStatus }) {
+  const styles: Record<PaymentStatus, string> = {
+    paid: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    pending: "bg-yellow-50 text-yellow-700 border-yellow-200",
+    failed: "bg-red-50 text-red-700 border-red-200",
+  };
+  return (
+    <Badge variant="outline" className={`${styles[status]} capitalize border px-3 py-1 shadow-sm text-sm`}>
+      {status}
+    </Badge>
+  );
+}
 
-const timelineStages = [
-  { key: "processing", label: "Processing", icon: Timer },
-  { key: "paid", label: "Paid", icon: DollarSign },
-  { key: "packed", label: "Packed", icon: Package },
-  { key: "in_transit", label: "In Transit", icon: Truck },
-  { key: "delivered", label: "Delivered", icon: CheckCircle },
-];
+/* ============================
+   Order Details Sheet Content
+   ============================ */
 
-function OrderTimeline({ status }) {
-  const activeIndex = timelineStages.findIndex((s) => s.key === status);
+function OrderDetailsSheetContent({
+  order,
+  onDelete,
+  onStatusChange,
+}: {
+  order: ServerOrder;
+  onDelete: (id: string) => void;
+  onStatusChange: (ref: string, newStatus: string) => void;
+}) {
+  // helper to derive product shape
+
+  console.log('order in sheet',order);
+  const normalizeItem = (it: OrderItem) => {
+    const prod = typeof it.product === "string" ? { _id: it.product, name: "Product", image: null, price: it.price || 0 } : (it.product as ProductSummary);
+    return {
+      name: prod?.name || "Product",
+      image: prod?.images[0] || null,
+      price: it.price ?? prod?.price ?? 0,
+      qty: it.quantity ?? 1,
+      id: prod?._id,
+    };
+  };
+
+  const items = (order.items || []).map(normalizeItem);
+  console.log('normalized items',items);
 
   return (
-    <div>
-      <h3 className="font-semibold mb-3">Order Status</h3>
-
-      <div className="flex items-center justify-between">
-        {timelineStages.map((stage, index) => {
-          const Icon = stage.icon;
-
-          return (
-            <div key={stage.key} className="flex flex-col items-center gap-2">
-              <div
-                className={`p-3 rounded-full ${
-                  index <= activeIndex ? "bg-primary text-white" : "bg-muted"
-                }`}
-              >
-                <Icon className="w-4 h-4" />
+    <div className="space-y-6 p-6">
+      <SheetHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              <img
+                src={order.user?.profile || `https://ui-avatars.com/api/?name=${encodeURIComponent(order.user?.name || "Guest")}`}
+                alt={order.user?.name || "Guest"}
+                className="w-12 h-12 rounded-md object-cover"
+              />
+              <div>
+                <div className="text-sm text-muted-foreground">Customer</div>
+                <div className="font-semibold">{order.user?.name ?? "Guest"}</div>
+                <div className="text-xs text-muted-foreground">{order.customer.phone}</div>
               </div>
-              <span
-                className={`text-xs ${
-                  index <= activeIndex
-                    ? "font-semibold"
-                    : "text-muted-foreground"
-                }`}
-              >
-                {stage.label}
-              </span>
             </div>
-          );
-        })}
+          </div>
+
+          <div className="text-right">
+            <Badge className="font-mono">#{order.paymentReference}</Badge>
+            <div className="text-xs text-muted-foreground mt-1">{formatDate(order.createdAt)}</div>
+          </div>
+        </div>
+
+        <SheetTitle className="mt-4 text-2xl">Order Details</SheetTitle>
+        <SheetDescription className="mt-1">
+          Status: <span className="font-medium">{STATUS_CONFIG[order.orderStatus]?.label ?? order.orderStatus}</span>
+        </SheetDescription>
+      </SheetHeader>
+
+      <div className="space-y-4">
+        <h3 className="font-semibold flex items-center gap-2">
+          <Package className="w-4 h-4" /> Items
+        </h3>
+
+        <div className="border rounded-lg divide-y">
+          {items.map((it, idx) => (
+            <div key={idx} className="p-4 flex gap-4 items-center">
+              <div className="w-16 h-16 bg-muted rounded-md overflow-hidden flex-shrink-0">
+                {it.image ? (
+                  <img src={it.image} alt={it.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
+                    No image
+                  </div>
+                )}
+              </div>
+
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">{it.name}</p>
+                    <p className="text-xs text-muted-foreground">Qty: {it.qty}</p>
+                  </div>
+                  <div className="font-medium">{formatCurrency(it.price * it.qty)}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          <div className="p-4 bg-muted/30 flex justify-between items-center">
+            <span className="font-semibold">Total</span>
+            <span className="font-bold text-lg">{formatCurrency(order.totalAmount)}</span>
+          </div>
+        </div>
       </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h4 className="font-semibold flex items-center gap-2"><User className="w-4 h-4" /> Customer</h4>
+          <div className="mt-3 border rounded-lg p-4 text-sm">
+            <div className="grid grid-cols-3 gap-2">
+              <div className="text-xs text-muted-foreground">Name</div>
+              <div className="col-span-2 font-medium">{order.user?.name ?? "Guest"}</div>
+            </div>
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              <div className="text-xs text-muted-foreground">Phone</div>
+              <div className="col-span-2">{order.customer.phone}</div>
+            </div>
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              <div className="text-xs text-muted-foreground">Email</div>
+              <div className="col-span-2">{order.user?.email ?? "-"}</div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h4 className="font-semibold flex items-center gap-2"><MapPin className="w-4 h-4" /> Delivery</h4>
+          <div className="mt-3 border rounded-lg p-4 text-sm">
+            <p className="font-medium">{order.deliveryAddress.address}</p>
+            <p className="text-muted-foreground">{order.deliveryAddress.city}, {order.deliveryAddress.region}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex gap-3">
+        <Select value={order.orderStatus} onValueChange={(v) => onStatusChange(order.paymentReference, v)} >
+          <SelectTrigger className="h-10 w-56 text-sm border-0">
+            <SelectValue>{STATUS_CONFIG[order.orderStatus]?.label ?? order.orderStatus}</SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(STATUS_CONFIG).map(([k, c]) => (
+              <SelectItem key={k} value={k}>{c.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Button variant="destructive" onClick={() => onDelete(order._id)}>
+          Delete Order
+        </Button>
+
+        <Button onClick={() => Toast.fire({ icon: "success", title: "Invoice downloaded (placeholder)" })}>
+          <ExternalLink className="w-4 h-4 mr-2" /> Download Invoice
+        </Button>
+      </div>
+
+      <SheetFooter className="pt-4">
+        <div className="w-full text-right">
+          <div className="text-sm text-muted-foreground">Last updated: {formatDate(order.updatedAt)}</div>
+        </div>
+      </SheetFooter>
     </div>
   );
 }
