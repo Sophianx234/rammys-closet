@@ -1,14 +1,11 @@
 "use client";
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { motion } from "framer-motion";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import {
   Search,
   Filter,
   MoreVertical,
-  MapPin,
-  CreditCard,
   ChevronLeft,
   ChevronRight,
   Package,
@@ -17,37 +14,28 @@ import {
   Clock,
   AlertCircle,
   Calendar,
-  User,
-  Copy,
   ExternalLink,
   XCircle,
   RefreshCw,
+  CreditCard,
+  X,
+  Check,
+  SlidersHorizontal,
+  Copy
 } from "lucide-react";
 
 import {
   Card,
   CardContent,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
-import {
   Sheet,
   SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-  SheetFooter,
 } from "@/components/ui/sheet";
 import {
   DropdownMenu,
@@ -56,7 +44,15 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableHeader,
@@ -66,12 +62,15 @@ import {
   TableBody,
 } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
+import StatusSelector from "./status-selector";
+import PaymentBadge from "./payment-badge";
+import OrderDetailsSheetContent from "./order-details";
 
 /* ============================
-   Types (match server response)
+   Types & Config
    ============================ */
 
-type OrderStatus =
+export type OrderStatus =
   | "processing"
   | "awaiting_payment"
   | "paid"
@@ -86,23 +85,9 @@ type OrderStatus =
   | "cancelled"
   | "failed";
 
-type PaymentStatus = "pending" | "paid" | "failed";
+export type PaymentStatus = "pending" | "paid" | "failed";
 
-type ProductSummary = {
-  _id?: string;
-  name?: string;
-  images?: string | null;
-  price?: number;
-};
-
-type OrderItem = {
-  images: string[],
-  product: ProductSummary | string;
-  quantity: number;
-  price?: number;
-};
-
-type ServerOrder = {
+export type ServerOrder = {
   _id: string;
   user?: {
     _id?: string;
@@ -113,14 +98,13 @@ type ServerOrder = {
   } | null;
   customer: {
     phone: string;
-    // server sample didn't include customer.name, so we read from user when available
   };
   deliveryAddress: {
     address: string;
     city: string;
     region: string;
   };
-  items: OrderItem[];
+  items: any[];
   totalAmount: number;
   paymentStatus: PaymentStatus;
   paymentReference: string;
@@ -129,13 +113,9 @@ type ServerOrder = {
   updatedAt: string;
 };
 
-/* ============================
-   UI / Status Config
-   ============================ */
+export const ITEMS_PER_PAGE = 10;
 
-const ITEMS_PER_PAGE = 10;
-
-const STATUS_CONFIG: Record<
+export const STATUS_CONFIG: Record<
   string,
   { label: string; color: string; icon: any }
 > = {
@@ -165,14 +145,10 @@ const Toast = withReactContent(Swal).mixin({
   },
 });
 
-/* ============================
-   Helpers
-   ============================ */
-
-const formatCurrency = (amount: number) =>
+export const formatCurrency = (amount: number) =>
   new Intl.NumberFormat("en-GH", { style: "currency", currency: "GHS" }).format(amount);
 
-const formatDate = (d?: string) =>
+export const formatDate = (d?: string) =>
   d ? new Date(d).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "-";
 
 /* ============================
@@ -182,18 +158,21 @@ const formatDate = (d?: string) =>
 export default function OrdersManagement() {
   const [orders, setOrders] = useState<ServerOrder[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  
+  // --- Filtering States ---
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
+  const [dateFilter, setDateFilter] = useState<string>("all"); // all, today, week, month
+  
   const [page, setPage] = useState<number>(1);
   const [selectedOrder, setSelectedOrder] = useState<ServerOrder | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState<boolean>(false);
 
-  console.log('orders',orders);
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch(`/api/orders?page=${page}&limit=${ITEMS_PER_PAGE}`);
       const data = await res.json();
-      // Expect data.orders as array
       if (!data || !Array.isArray(data.orders)) {
         throw new Error("Unexpected response");
       }
@@ -210,7 +189,6 @@ export default function OrdersManagement() {
     fetchOrders();
   }, [fetchOrders]);
 
-  // update status: server expects paymentReference or _id? earlier you used 'reference' — we'll send paymentReference
   const handleStatusUpdate = async (paymentReference: string, newStatus: string) => {
     try {
       const res = await fetch("/api/orders/update-status", {
@@ -219,20 +197,18 @@ export default function OrdersManagement() {
         body: JSON.stringify({ reference: paymentReference, status: newStatus }),
       });
       if (!res.ok) throw new Error("Update failed");
-      // reflect locally
       setOrders((prev) => prev.map((o) => (o.paymentReference === paymentReference ? { ...o, orderStatus: newStatus as OrderStatus } : o)));
       Toast.fire({ icon: "success", title: "Order status updated" });
-      // also update sheet if open
       if (selectedOrder && selectedOrder.paymentReference === paymentReference) {
         setSelectedOrder({ ...selectedOrder, orderStatus: newStatus as OrderStatus });
       }
     } catch (err) {
-      console.error("Status update error:", err);
       Toast.fire({ icon: "error", title: "Update failed" });
     }
   };
 
   const handleDelete = async (orderId: string) => {
+    setIsSheetOpen(false);
     const result = await Swal.fire({
       title: "Are you sure?",
       text: "This action cannot be undone.",
@@ -251,29 +227,68 @@ export default function OrdersManagement() {
         Toast.fire({ icon: "success", title: "Order deleted" });
         setIsSheetOpen(false);
       } catch (err) {
-        console.error("Delete error:", err);
         Toast.fire({ icon: "error", title: "Delete failed" });
       }
     }
   };
 
-  // client side filter
+  // --- Sophisticated Filtering Logic ---
   const filteredOrders = useMemo(() => {
-    const lower = searchTerm.toLowerCase();
     return orders.filter((o) => {
+      // 1. Text Search
+      const lower = searchTerm.toLowerCase();
       const referenceMatch = o.paymentReference?.toLowerCase().includes(lower);
       const phoneMatch = o.customer?.phone?.toLowerCase().includes(lower);
       const nameMatch = o.user?.name?.toLowerCase().includes(lower);
-      return referenceMatch || phoneMatch || nameMatch;
-    });
-  }, [orders, searchTerm]);
+      const matchesSearch = referenceMatch || phoneMatch || nameMatch;
 
+      // 2. Status Filter (Multi-select)
+      const matchesStatus = statusFilter.length === 0 || statusFilter.includes(o.orderStatus);
+
+      // 3. Date Filter
+      let matchesDate = true;
+      if (dateFilter !== "all") {
+        const date = new Date(o.createdAt);
+        const now = new Date();
+        if (dateFilter === "today") {
+          matchesDate = date.toDateString() === now.toDateString();
+        } else if (dateFilter === "week") {
+          const weekAgo = new Date(now.setDate(now.getDate() - 7));
+          matchesDate = date >= weekAgo;
+        } else if (dateFilter === "month") {
+          const monthAgo = new Date(now.setMonth(now.getMonth() - 1));
+          matchesDate = date >= monthAgo;
+        }
+      }
+
+      return matchesSearch && matchesStatus && matchesDate;
+    });
+  }, [orders, searchTerm, statusFilter, dateFilter]);
+
+  // Pagination based on filtered results
   const totalPages = Math.max(1, Math.ceil(filteredOrders.length / ITEMS_PER_PAGE));
   const paginated = filteredOrders.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
+  // Helpers for Filter UI
+  const isFilterActive = statusFilter.length > 0 || dateFilter !== "all" || searchTerm !== "";
+  
+  const clearFilters = () => {
+    setSearchTerm("");
+    setStatusFilter([]);
+    setDateFilter("all");
+  };
+
+  const toggleStatusFilter = (statusKey: string) => {
+    setStatusFilter(prev => 
+      prev.includes(statusKey) 
+        ? prev.filter(s => s !== statusKey) 
+        : [...prev, statusKey]
+    );
+  };
+
   return (
     <div className="p-6 max-w-[1400px] mx-auto space-y-6">
-      {/* Header */}
+      {/* Top Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Orders</h1>
@@ -292,31 +307,116 @@ export default function OrdersManagement() {
         </div>
       </div>
 
-      {/* Card */}
       <Card>
+        {/* --- SOPHISTICATED FILTER BAR --- */}
         <CardHeader className="border-b p-4">
-          <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-            <div className="relative w-full md:w-96">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
+            
+            {/* Left: Search */}
+            <div className="relative w-full lg:w-96 group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
               <Input
                 placeholder="Search order #, phone or name..."
-                className="pl-10 pr-3"
+                className="pl-10 pr-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
+              {searchTerm && (
+                <button 
+                  onClick={() => setSearchTerm("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
 
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm">
-                <Filter className="w-4 h-4 mr-2" /> Status
-              </Button>
-              <Button variant="outline" size="sm">
-                <Calendar className="w-4 h-4 mr-2" /> Date Range
-              </Button>
+            {/* Right: Filters */}
+            <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+              
+              {/* Status Multi-Select Filter */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className={`h-9 border-dashed ${statusFilter.length > 0 ? "bg-accent/50 border-primary/50 text-primary" : "text-muted-foreground"}`}
+                  >
+                    <Filter className="w-4 h-4 mr-2" />
+                    Status
+                    {statusFilter.length > 0 && (
+                      <>
+                        <Separator orientation="vertical" className="mx-2 h-4" />
+                        <Badge variant="secondary" className="h-5 px-1 rounded-sm text-[10px] font-normal lg:hidden">
+                          {statusFilter.length}
+                        </Badge>
+                        <span className="hidden lg:inline text-xs font-medium">
+                          {statusFilter.length} selected
+                        </span>
+                      </>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {Object.keys(STATUS_CONFIG).map((key) => (
+                    <DropdownMenuCheckboxItem
+                      key={key}
+                      checked={statusFilter.includes(key)}
+                      onCheckedChange={() => toggleStatusFilter(key)}
+                      className="capitalize"
+                    >
+                      {STATUS_CONFIG[key].label}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                  {statusFilter.length > 0 && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem 
+                        onSelect={() => setStatusFilter([])}
+                        className="justify-center text-center text-xs font-medium"
+                      >
+                        Clear status
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Date Range Selector (Simplified) */}
+              <Select value={dateFilter} onValueChange={setDateFilter}>
+                <SelectTrigger className={`h-9 w-[160px] ${dateFilter !== 'all' ? "bg-accent/50 border-primary/50 text-primary" : "text-muted-foreground border-dashed"}`}>
+                   <div className="flex items-center truncate">
+                      <Calendar className="w-4 h-4 mr-2 flex-shrink-0" />
+                      <SelectValue placeholder="Date Range" />
+                   </div>
+                </SelectTrigger>
+                <SelectContent align="end">
+                   <SelectItem value="all">All Time</SelectItem>
+                   <SelectItem value="today">Today</SelectItem>
+                   <SelectItem value="week">Last 7 Days</SelectItem>
+                   <SelectItem value="month">Last 30 Days</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Global Reset Button */}
+              {isFilterActive && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={clearFilters}
+                  className="h-9 px-2 lg:px-3 text-muted-foreground hover:text-destructive"
+                >
+                  <span className="sr-only lg:not-sr-only">Reset</span>
+                  <XCircle className="ml-0 lg:ml-2 w-4 h-4" />
+                </Button>
+              )}
             </div>
           </div>
         </CardHeader>
 
+        {/* Content */}
         <CardContent className="p-0">
           <Table>
             <TableHeader className="bg-muted/50">
@@ -351,10 +451,18 @@ export default function OrdersManagement() {
                 ))
               ) : paginated.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-48 text-center">
+                  <TableCell colSpan={7} className="h-64 text-center">
                     <div className="flex flex-col items-center justify-center text-muted-foreground">
-                      <Package className="h-12 w-12 mb-2 opacity-20" />
-                      <p>No orders found.</p>
+                      <div className="bg-muted/50 p-4 rounded-full mb-3">
+                         <SlidersHorizontal className="h-8 w-8 opacity-50" />
+                      </div>
+                      <p className="font-medium">No orders found.</p>
+                      <p className="text-xs mt-1">Try adjusting your filters or search query.</p>
+                      {isFilterActive && (
+                        <Button variant="link" onClick={clearFilters} className="mt-2 text-primary">
+                          Clear all filters
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -370,7 +478,7 @@ export default function OrdersManagement() {
                         <img
                           src={order.user?.profile || `https://ui-avatars.com/api/?name=${encodeURIComponent(order.user?.name || "Guest")}`}
                           alt={order.user?.name || "Guest"}
-                          className="w-9 h-9  rounded-full object-cover"
+                          className="w-9 h-9 rounded-full object-cover border bg-muted"
                         />
                         <div className="flex flex-col">
                           <span className="font-medium text-sm">{order.user?.name ?? "Guest"}</span>
@@ -380,12 +488,10 @@ export default function OrdersManagement() {
                     </TableCell>
 
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <StatusSelector
+                       <StatusSelector
                           current={order.orderStatus}
                           onChange={(v) => handleStatusUpdate(order.paymentReference, v)}
                         />
-                      </div>
                     </TableCell>
 
                     <TableCell>
@@ -407,7 +513,6 @@ export default function OrdersManagement() {
                             <MoreVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuItem
@@ -418,11 +523,9 @@ export default function OrdersManagement() {
                           >
                             <ExternalLink className="mr-2 h-4 w-4" /> View Details
                           </DropdownMenuItem>
-
                           <DropdownMenuItem onClick={() => navigator.clipboard.writeText(order.paymentReference)}>
                             <Copy className="mr-2 h-4 w-4" /> Copy Reference
                           </DropdownMenuItem>
-
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => handleDelete(order._id)} className="text-red-600 focus:text-red-600">
                             Delete Order
@@ -464,199 +567,6 @@ export default function OrdersManagement() {
           )}
         </SheetContent>
       </Sheet>
-    </div>
-  );
-}
-
-/* ============================
-   Subcomponents
-   ============================ */
-
-function StatusSelector({ current, onChange }: { current: string; onChange: (v: string) => void }) {
-  const conf = STATUS_CONFIG[current] || { label: current, color: "bg-gray-50 text-gray-700" };
-  return (
-    <Select value={current} onValueChange={(v) => onChange(v)} >
-      <SelectTrigger className={`h-8 text-xs w-[170px] border-0 ${conf.color} font-medium`}>
-        <SelectValue>{conf.label}</SelectValue>
-      </SelectTrigger>
-      <SelectContent>
-        {Object.entries(STATUS_CONFIG).map(([k, c]) => (
-          <SelectItem key={k} value={k}>
-            <div className="flex items-center gap-2">
-              <span className="text-sm">{c.label}</span>
-            </div>
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-}
-
-function PaymentBadge({ status }: { status: PaymentStatus }) {
-  const styles: Record<PaymentStatus, string> = {
-    paid: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    pending: "bg-yellow-50 text-yellow-700 border-yellow-200",
-    failed: "bg-red-50 text-red-700 border-red-200",
-  };
-  return (
-    <Badge variant="outline" className={`${styles[status]} capitalize border px-3 py-1 shadow-sm text-sm`}>
-      {status}
-    </Badge>
-  );
-}
-
-/* ============================
-   Order Details Sheet Content
-   ============================ */
-
-function OrderDetailsSheetContent({
-  order,
-  onDelete,
-  onStatusChange,
-}: {
-  order: ServerOrder;
-  onDelete: (id: string) => void;
-  onStatusChange: (ref: string, newStatus: string) => void;
-}) {
-  // helper to derive product shape
-
-  console.log('order in sheet',order);
-  const normalizeItem = (it: OrderItem) => {
-    const prod = typeof it.product === "string" ? { _id: it.product, name: "Product", image: null, price: it.price || 0 } : (it.product as ProductSummary);
-    return {
-      name: prod?.name || "Product",
-      image: prod?.images[0] || null,
-      price: it.price ?? prod?.price ?? 0,
-      qty: it.quantity ?? 1,
-      id: prod?._id,
-    };
-  };
-
-  const items = (order.items || []).map(normalizeItem);
-  console.log('normalized items',items);
-
-  return (
-    <div className="space-y-6 p-6">
-      <SheetHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3">
-              <img
-                src={order.user?.profile || `https://ui-avatars.com/api/?name=${encodeURIComponent(order.user?.name || "Guest")}`}
-                alt={order.user?.name || "Guest"}
-                className="w-12 h-12 rounded-md object-cover"
-              />
-              <div>
-                <div className="text-sm text-muted-foreground">Customer</div>
-                <div className="font-semibold">{order.user?.name ?? "Guest"}</div>
-                <div className="text-xs text-muted-foreground">{order.customer.phone}</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="text-right">
-            <Badge className="font-mono">#{order.paymentReference}</Badge>
-            <div className="text-xs text-muted-foreground mt-1">{formatDate(order.createdAt)}</div>
-          </div>
-        </div>
-
-        <SheetTitle className="mt-4 text-2xl">Order Details</SheetTitle>
-        <SheetDescription className="mt-1">
-          Status: <span className="font-medium">{STATUS_CONFIG[order.orderStatus]?.label ?? order.orderStatus}</span>
-        </SheetDescription>
-      </SheetHeader>
-
-      <div className="space-y-4">
-        <h3 className="font-semibold flex items-center gap-2">
-          <Package className="w-4 h-4" /> Items
-        </h3>
-
-        <div className="border rounded-lg divide-y">
-          {items.map((it, idx) => (
-            <div key={idx} className="p-4 flex gap-4 items-center">
-              <div className="w-16 h-16 bg-muted rounded-md overflow-hidden flex-shrink-0">
-                {it.image ? (
-                  <img src={it.image} alt={it.name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
-                    No image
-                  </div>
-                )}
-              </div>
-
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">{it.name}</p>
-                    <p className="text-xs text-muted-foreground">Qty: {it.qty}</p>
-                  </div>
-                  <div className="font-medium">{formatCurrency(it.price * it.qty)}</div>
-                </div>
-              </div>
-            </div>
-          ))}
-
-          <div className="p-4 bg-muted/30 flex justify-between items-center">
-            <span className="font-semibold">Total</span>
-            <span className="font-bold text-lg">{formatCurrency(order.totalAmount)}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <h4 className="font-semibold flex items-center gap-2"><User className="w-4 h-4" /> Customer</h4>
-          <div className="mt-3 border rounded-lg p-4 text-sm">
-            <div className="grid grid-cols-3 gap-2">
-              <div className="text-xs text-muted-foreground">Name</div>
-              <div className="col-span-2 font-medium">{order.user?.name ?? "Guest"}</div>
-            </div>
-            <div className="mt-2 grid grid-cols-3 gap-2">
-              <div className="text-xs text-muted-foreground">Phone</div>
-              <div className="col-span-2">{order.customer.phone}</div>
-            </div>
-            <div className="mt-2 grid grid-cols-3 gap-2">
-              <div className="text-xs text-muted-foreground">Email</div>
-              <div className="col-span-2">{order.user?.email ?? "-"}</div>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <h4 className="font-semibold flex items-center gap-2"><MapPin className="w-4 h-4" /> Delivery</h4>
-          <div className="mt-3 border rounded-lg p-4 text-sm">
-            <p className="font-medium">{order.deliveryAddress.address}</p>
-            <p className="text-muted-foreground">{order.deliveryAddress.city}, {order.deliveryAddress.region}</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex gap-3">
-        <Select value={order.orderStatus} onValueChange={(v) => onStatusChange(order.paymentReference, v)} >
-          <SelectTrigger className="h-10 w-56 text-sm border-0">
-            <SelectValue>{STATUS_CONFIG[order.orderStatus]?.label ?? order.orderStatus}</SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {Object.entries(STATUS_CONFIG).map(([k, c]) => (
-              <SelectItem key={k} value={k}>{c.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Button variant="destructive" onClick={() => onDelete(order._id)}>
-          Delete Order
-        </Button>
-
-        <Button onClick={() => Toast.fire({ icon: "success", title: "Invoice downloaded (placeholder)" })}>
-          <ExternalLink className="w-4 h-4 mr-2" /> Download Invoice
-        </Button>
-      </div>
-
-      <SheetFooter className="pt-4">
-        <div className="w-full text-right">
-          <div className="text-sm text-muted-foreground">Last updated: {formatDate(order.updatedAt)}</div>
-        </div>
-      </SheetFooter>
     </div>
   );
 }
