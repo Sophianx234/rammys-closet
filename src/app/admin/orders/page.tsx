@@ -365,7 +365,7 @@ export default function OrdersManagement() {
                       key={key}
                       checked={statusFilter.includes(key)}
                       onCheckedChange={() => toggleStatusFilter(key)}
-                      className="capitalize"
+                      className="capitalize scrollbar-hide"
                     >
                       {STATUS_CONFIG[key].label}
                     </DropdownMenuCheckboxItem>
@@ -425,7 +425,7 @@ export default function OrdersManagement() {
                 <TableHead>Customer</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Payment</TableHead>
-                <TableHead className="text-right">Total</TableHead>
+                <TableHead className="">Total</TableHead>
                 <TableHead className="hidden md:table-cell">Date</TableHead>
                 <TableHead className="w-[50px]"></TableHead>
               </TableRow>
