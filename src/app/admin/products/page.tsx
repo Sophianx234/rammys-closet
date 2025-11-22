@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { ProductCard } from "./product-card";
 import Link from "next/link";
+import { GridLoader } from "react-spinners";
 
 interface IProduct {
   _id: string | number;
@@ -122,6 +123,10 @@ const filteredProducts = products
       return 0; 
   }
 });
+
+if(loading) return (<div className="h-dvh flex items-center justify-center">
+      <GridLoader size={24} color="#ffaf9f" />
+    </div>)
 
 
   return (

@@ -65,6 +65,7 @@ import { Separator } from "@/components/ui/separator";
 import StatusSelector from "./status-selector";
 import PaymentBadge from "./payment-badge";
 import OrderDetailsSheetContent from "./order-details";
+import { GridLoader } from "react-spinners";
 
 /* ============================
    Types & Config
@@ -285,6 +286,9 @@ export default function OrdersManagement() {
         : [...prev, statusKey]
     );
   };
+  if(loading) return (<div className="h-dvh flex items-center justify-center">
+        <GridLoader size={24} color="#ffaf9f" />
+      </div>)
 
   return (
     <div className="p-6 max-w-[1400px] mx-auto space-y-6">
@@ -300,10 +304,7 @@ export default function OrdersManagement() {
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
             Refresh
           </Button>
-          <Button size="sm" onClick={() => Toast.fire({ icon: "info", title: "Create order not implemented" })}>
-            <Package className="w-4 h-4 mr-2" />
-            Create Order
-          </Button>
+          
         </div>
       </div>
 

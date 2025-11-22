@@ -45,7 +45,6 @@ export async function GET() {
       // 5. Recent Orders (Fetch 5, populate User data)
       Order.find()
         .sort({ createdAt: -1 })
-        .limit(5)
         .populate("user", "name email profile")
         .lean(),
 

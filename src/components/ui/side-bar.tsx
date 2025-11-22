@@ -28,7 +28,6 @@ const navItems = [
   { name: "Products", key: "products", icon: Package2 },
   { name: "Orders", key: "orders", icon: ShoppingCart },
   { name: "Customers", key: "customers", icon: UsersRound },
-  { name: "Analytics", key: "analytics", icon: BarChart3 },
 ];
 
 export default function Sidebar() {

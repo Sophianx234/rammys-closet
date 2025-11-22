@@ -9,6 +9,14 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input"; // Added
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"; // Added
 import {
   Table,
   TableHeader,
@@ -25,8 +33,10 @@ import {
   ShoppingBag,
   Users,
   Package,
-  AlertCircle,
   ArrowUpRight,
+  Search, // Added
+  Filter, // Added
+  XCircle, // Added
 } from "lucide-react";
 
 import {
@@ -39,6 +49,7 @@ import {
   Tooltip,
 } from "recharts";
 import { useRouter } from "next/navigation";
+import { GridLoader } from "react-spinners";
 
 // ------------------ Types -------------------
 
@@ -78,7 +89,7 @@ interface StockAlert {
   name: string;
   stock: number;
   price: number;
-  images:string[]
+  images: string[];
 }
 
 const salesData = [
@@ -101,60 +112,57 @@ const formatCurrency = (amount: number) =>
 
 const statusColor = (status: OrderStatus) => {
   const map: Record<OrderStatus, string> = {
-    delivered: "bg-emerald-100 text-emerald-800",
-    processing: "bg-blue-100 text-blue-800",
-    cancelled: "bg-red-100 text-red-800",
-    in_transit: "bg-amber-100 text-amber-800",
-    awaiting_payment: "bg-gray-100 text-gray-600",
-    awaiting_pickup: "bg-gray-100 text-gray-600",
-    packed: "bg-gray-100 text-gray-600",
-    ready_for_dispatch: "bg-gray-100 text-gray-600",
-    dispatched: "bg-gray-100 text-gray-600",
-    arrived: "bg-gray-100 text-gray-600",
-    delivery_attempted: "bg-gray-100 text-gray-600",
-    paid: "bg-gray-100 text-gray-600",
+    delivered: "bg-emerald-100 text-emerald-800 border-emerald-200",
+    processing: "bg-blue-100 text-blue-800 border-blue-200",
+    cancelled: "bg-red-100 text-red-800 border-red-200",
+    in_transit: "bg-amber-100 text-amber-800 border-amber-200",
+    awaiting_payment: "bg-orange-100 text-orange-800 border-orange-200",
+    awaiting_pickup: "bg-purple-100 text-purple-800 border-purple-200",
+    packed: "bg-indigo-100 text-indigo-800 border-indigo-200",
+    ready_for_dispatch: "bg-cyan-100 text-cyan-800 border-cyan-200",
+    dispatched: "bg-sky-100 text-sky-800 border-sky-200",
+    arrived: "bg-teal-100 text-teal-800 border-teal-200",
+    delivery_attempted: "bg-rose-100 text-rose-800 border-rose-200",
+    paid: "bg-lime-100 text-lime-800 border-lime-200",
   };
 
-  return map[status];
+  return map[status] || "bg-gray-100 text-gray-600";
 };
 
 // ------------------ Component -------------------
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
-  const router = useRouter()
+  const router = useRouter();
+  
+  // Data State
   const [stats, setStats] = useState<DashboardStats>({
     totalRevenue: 0,
     totalOrders: 0,
     totalCustomers: 0,
     lowStockCount: 0,
   });
-
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [stockAlerts, setStockAlerts] = useState<StockAlert[]>([]);
 
-
-  // ... inside DashboardPage component
+  // Filter State
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const res = await fetch("/api/admin/dashboard", {
-           cache: "no-store" // Ensure we always get fresh data
+          cache: "no-store",
         });
-        
+
         if (!res.ok) throw new Error("Failed to fetch");
-        
+
         const data = await res.json();
 
         setStats(data.stats);
         setRecentOrders(data.recentOrders);
         setStockAlerts(data.stockAlerts);
-        // You will need to update your state definition to include salesData
-        // setSalesData(data.salesData); 
-        
-        // Note: You need to add `const [salesData, setSalesData] = useState(...)` 
-        // to your component state if you want the chart to be dynamic.
       } catch (error) {
         console.error(error);
       } finally {
@@ -164,65 +172,25 @@ export default function DashboardPage() {
 
     fetchData();
   }, []);
-/*   useEffect(() => {
-    setTimeout(() => {
-      setStats({
-        totalRevenue: 15420.5,
-        totalOrders: 142,
-        totalCustomers: 89,
-        lowStockCount: 3,
-      });
 
-      setRecentOrders([
-        {
-          _id: "ORD-001",
-          customerName: "Abena Koranteng",
-          customerEmail: "abena@example.com",
-          totalAmount: 450,
-          status: "processing",
-          date: "2023-10-25",
-        },
-        {
-          _id: "ORD-002",
-          customerName: "Kofi Mensah",
-          customerEmail: "kofi@example.com",
-          totalAmount: 120,
-          status: "delivered",
-          date: "2023-10-24",
-        },
-        {
-          _id: "ORD-003",
-          customerName: "Sarah Doe",
-          customerEmail: "sarah@example.com",
-          totalAmount: 890,
-          status: "in_transit",
-          date: "2023-10-24",
-        },
-        {
-          _id: "ORD-004",
-          customerName: "Kwame Osei",
-          customerEmail: "kwame@example.com",
-          totalAmount: 65,
-          status: "cancelled",
-          date: "2023-10-23",
-        },
-      ]);
+  // --- Filtering Logic ---
+  const filteredOrders = recentOrders.filter((order) => {
+    const matchesSearch =
+      order.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.customerEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order._id.toLowerCase().includes(searchQuery.toLowerCase());
 
-      setStockAlerts([
-        { _id: "1", name: "Velvet Matte Lipstick - Ruby", stock: 2, price: 85 },
-        { _id: "2", name: "Hydrating Face Serum", stock: 0, price: 150 },
-        { _id: "3", name: "Rose Water Toner", stock: 4, price: 45 },
-      ]);
+    const matchesStatus =
+      statusFilter === "all" || order.status === statusFilter;
 
-      setLoading(false);
-    }, 1000);
-  }, []);
- */
+    return matchesSearch && matchesStatus;
+  });
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen text-muted-foreground">
-        Loading dashboard...
-      </div>
+      <div className="h-dvh flex items-center justify-center">
+      <GridLoader size={24} color="#ffaf9f" />
+    </div>
     );
   }
 
@@ -236,25 +204,26 @@ export default function DashboardPage() {
             Insight into your store performance and operations.
           </p>
         </div>
-
         <Button size="sm">Download Report</Button>
       </header>
 
       {/* ---------- STATS CARDS ---------- */}
       <section className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-        {/* Revenue */}
         <Card className="shadow-sm border">
           <CardHeader className="flex flex-row justify-between pb-2">
             <CardTitle className="text-sm">Total Revenue</CardTitle>
             <DollarSign className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{formatCurrency(stats.totalRevenue)}</p>
-            <p className="text-xs text-muted-foreground">+20.1% from last month</p>
+            <p className="text-2xl font-bold">
+              {formatCurrency(stats.totalRevenue)}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              +20.1% from last month
+            </p>
           </CardContent>
         </Card>
 
-        {/* Orders */}
         <Card className="shadow-sm border">
           <CardHeader className="flex flex-row justify-between pb-2">
             <CardTitle className="text-sm">Orders</CardTitle>
@@ -262,11 +231,12 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{stats.totalOrders}</p>
-            <p className="text-xs text-muted-foreground">+180 since last hour</p>
+            <p className="text-xs text-muted-foreground">
+              +180 since last hour
+            </p>
           </CardContent>
         </Card>
 
-        {/* Customers */}
         <Card className="shadow-sm border">
           <CardHeader className="flex flex-row justify-between pb-2">
             <CardTitle className="text-sm">Active Customers</CardTitle>
@@ -278,7 +248,6 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Low Stock */}
         <Card className="shadow-sm border">
           <CardHeader className="flex flex-row justify-between pb-2">
             <CardTitle className="text-sm">Low Stock Items</CardTitle>
@@ -293,26 +262,34 @@ export default function DashboardPage() {
 
       {/* ---------- SALES + INVENTORY ---------- */}
       <section className="grid gap-6 lg:grid-cols-7">
-        {/* SALES CHART */}
         <Card className="shadow-sm border col-span-4">
           <CardHeader>
             <CardTitle>Sales Overview</CardTitle>
             <CardDescription>Daily revenue for this week</CardDescription>
-            
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={salesData}>
                   <defs>
-                    <linearGradient id="salesGradient" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient
+                      id="salesGradient"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
                       <stop offset="0%" stopColor="#ffaf9f" stopOpacity={0.4} />
                       <stop offset="100%" stopColor="#ffaf9f" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-
                   <CartesianGrid strokeDasharray="4 4" vertical={false} />
-                  <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
+                  <XAxis
+                    dataKey="name"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                  />
                   <YAxis
                     fontSize={12}
                     tickLine={false}
@@ -320,7 +297,6 @@ export default function DashboardPage() {
                     tickFormatter={(v) => `GH₵${v}`}
                   />
                   <Tooltip />
-
                   <Area
                     type="monotone"
                     dataKey="sales"
@@ -334,72 +310,107 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* INVENTORY ALERTS */}
         <Card className="shadow-sm border col-span-3">
-
           <CardHeader className="flex justify-between">
-          <div>
-            <CardTitle>Inventory Alerts</CardTitle>
-            <CardDescription>Products running low on stock</CardDescription>
+            <div>
+              <CardTitle>Inventory Alerts</CardTitle>
+              <CardDescription>Products running low on stock</CardDescription>
             </div>
-
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-  {stockAlerts.map((item) => (
-    <div
-      key={item._id}
-      className="flex items-center justify-between"
-    >
-      <div className="flex items-center gap-3">
-        
-        {/* PRODUCT IMAGE */}
-        <img
-          src={item?.images?.[0]}
-          alt={item.name}
-          className="h-10 w-10 rounded-md object-cover border"
-        />
-
-        <div>
-          <p className="text-sm font-semibold">{item.name}</p>
-          <p className="text-xs text-muted-foreground">
-            {item.stock === 0 ? "Out of stock" : `Only ${item.stock} left`}
-          </p>
-        </div>
-      </div>
-
-      <p className="text-sm font-medium">{formatCurrency(item.price)}</p>
-    </div>
-  ))}
-
-  {stockAlerts.length === 0 && (
-    <p className="text-muted-foreground text-sm text-center py-4">
-      Inventory looks good!
-    </p>
-  )}
-</div>
-
-
-            <Button variant="outline" className="w-full mt-5" onClick={() => router.push("/admin/inventory")}>
+              {stockAlerts.map((item) => (
+                <div
+                  key={item._id}
+                  className="flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={item?.images?.[0] || "/placeholder.png"}
+                      alt={item.name}
+                      className="h-10 w-10 rounded-md object-cover border"
+                    />
+                    <div>
+                      <p className="text-sm font-semibold">{item.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {item.stock === 0
+                          ? "Out of stock"
+                          : `Only ${item.stock} left`}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-sm font-medium">
+                    {formatCurrency(item.price)}
+                  </p>
+                </div>
+              ))}
+              {stockAlerts.length === 0 && (
+                <p className="text-muted-foreground text-sm text-center py-4">
+                  Inventory looks good!
+                </p>
+              )}
+            </div>
+            <Button
+              variant="outline"
+              className="w-full mt-5"
+              onClick={() => router.push("/admin/inventory")}
+            >
               View All Inventory
             </Button>
           </CardContent>
         </Card>
       </section>
 
-      {/* ---------- RECENT ORDERS ---------- */}
+      {/* ---------- RECENT ORDERS (WITH FILTERS) ---------- */}
       <Card className="shadow-sm border">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Recent Orders</CardTitle>
-            <CardDescription>
-              {stats.totalOrders} total orders this month
-            </CardDescription>
-          </div>
+        <CardHeader>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <CardTitle>Recent Orders</CardTitle>
+              <CardDescription>
+                {filteredOrders.length} orders match your filters
+              </CardDescription>
+            </div>
 
-          <Button variant="ghost" size="sm" className="gap-1">
-            View All <ArrowUpRight className="h-4 w-4" />
-          </Button>
+            {/* FILTERS CONTAINER */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              {/* Status Filter */}
+              <div className="w-full sm:w-[150px]">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger>
+                    <div className="flex items-center gap-2">
+                      <Filter className="h-4 w-4 text-muted-foreground" />
+                      <SelectValue placeholder="Status" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="processing">Processing</SelectItem>
+                    <SelectItem value="paid">Paid</SelectItem>
+                    <SelectItem value="in_transit">In Transit</SelectItem>
+                    <SelectItem value="delivered">Delivered</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Search Input */}
+              <div className="relative w-full sm:w-[250px]">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search name, email, ID..."
+                  className="pl-8"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+
+              {/* View All Link (Moved to end) */}
+              <Button variant="ghost" size="icon" onClick={() => router.push('/admin/orders')}>
+                <ArrowUpRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </CardHeader>
 
         <CardContent>
@@ -415,50 +426,74 @@ export default function DashboardPage() {
             </TableHeader>
 
             <TableBody>
-              {recentOrders.map((order) => (
-                <TableRow key={order._id}>
-                  {/* Customer */}
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={order.avatar} />
-                        <AvatarFallback>
-                          {order.customerName.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">{order.customerName}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {order.customerEmail}
-                        </p>
-                      </div>
+              {filteredOrders.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={5}
+                    className="h-24 text-center text-muted-foreground"
+                  >
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <XCircle className="h-8 w-8 text-gray-300" />
+                      <p>No orders found matching your filters.</p>
+                      <Button 
+                        variant="link" 
+                        onClick={() => {setSearchQuery(""); setStatusFilter("all")}}
+                      >
+                        Clear Filters
+                      </Button>
                     </div>
                   </TableCell>
-
-                  {/* Order ID */}
-                  <TableCell className="font-mono text-xs">{order._id}</TableCell>
-
-                  {/* Status */}
-                  <TableCell>
-                    <Badge
-                      variant="secondary"
-                      className={`capitalize border ${statusColor(order.status)}`}
-                    >
-                      {order.status.replace("_", " ")}
-                    </Badge>
-                  </TableCell>
-
-                  {/* Date */}
-                  <TableCell className="text-sm text-muted-foreground">
-                    {new Date(order.date).toLocaleDateString()}
-                  </TableCell>
-
-                  {/* Amount */}
-                  <TableCell className="text-right font-semibold">
-                    {formatCurrency(order.totalAmount)}
-                  </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                filteredOrders.map((order) => (
+                  <TableRow key={order._id}>
+                    {/* Customer */}
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={order.avatar} />
+                          <AvatarFallback>
+                            {order.customerName.slice(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">{order.customerName}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {order.customerEmail}
+                          </p>
+                        </div>
+                      </div>
+                    </TableCell>
+
+                    {/* Order ID */}
+                    <TableCell className="font-mono text-xs">
+                      {order._id}
+                    </TableCell>
+
+                    {/* Status */}
+                    <TableCell>
+                      <Badge
+                        variant="secondary"
+                        className={`capitalize border ${statusColor(
+                          order.status
+                        )}`}
+                      >
+                        {order.status.replace("_", " ")}
+                      </Badge>
+                    </TableCell>
+
+                    {/* Date */}
+                    <TableCell className="text-sm text-muted-foreground">
+                      {new Date(order.date).toLocaleDateString()}
+                    </TableCell>
+
+                    {/* Amount */}
+                    <TableCell className="text-right font-semibold">
+                      {formatCurrency(order.totalAmount)}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>

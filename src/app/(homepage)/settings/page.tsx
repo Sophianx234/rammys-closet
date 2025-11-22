@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useDashStore } from "@/lib/store";
 import { Lock, Mail, Upload, User } from "lucide-react";
 import { useState, useEffect } from "react";
+import { GridLoader } from "react-spinners";
 import Swal from "sweetalert2";
 import { z } from "zod";
 
@@ -63,8 +64,11 @@ export default function SettingsPage() {
   }, [user]);
 
   if (!user) {
-    return <div className="text-center py-20">Loading...</div>;
+    return <div className="h-dvh flex items-center justify-center">
+      <GridLoader size={24} color="#ffaf9f" />
+    </div>;
   }
+  
 
   /* ------------------ PROFILE IMAGE ------------------ */
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

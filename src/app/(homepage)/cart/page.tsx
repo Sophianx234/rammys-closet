@@ -9,6 +9,9 @@ import { useCart } from "@/components/cart-context";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useDashStore } from "@/lib/store";
+import { Ring2 } from 'ldrs/react'
+import 'ldrs/react/Ring2.css'
+import {GridLoader, RiseLoader} from 'react-spinners'
 
 export default function CartPage() {
   // const { items, removeItem, updateQuantity, total, clearCart } = useCart();
@@ -56,9 +59,13 @@ const handleClearCart = async () => {
 };
 
 
-  if (!isLoaded) {
-    return <div>Loading...</div>;
-  }
+if (isLoaded) {
+  return (
+    <div className="h-dvh flex items-center justify-center">
+      <GridLoader size={24} color="#ffaf9f" />
+    </div>
+  );
+}
 
   const subtotal = cartTotal();
   const delivery = cart.length > 0 ? 500 : 0;

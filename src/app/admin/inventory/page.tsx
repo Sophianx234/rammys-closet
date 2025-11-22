@@ -22,6 +22,7 @@ import {
   DropdownMenuLabel, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
+import { GridLoader } from "react-spinners";
 
 // --- Types matching your JSON Data ---
 interface Category {
@@ -96,12 +97,9 @@ export default function InventoryPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-pulse flex flex-col items-center">
-          <div className="h-12 w-12 bg-gray-200 rounded-full mb-4"></div>
-          <p className="text-gray-400">Loading inventory...</p>
-        </div>
-      </div>
+      <div className="h-dvh flex items-center justify-center">
+            <GridLoader size={24} color="#ffaf9f" />
+          </div>
     );
   }
 

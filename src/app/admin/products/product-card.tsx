@@ -14,6 +14,7 @@ import {
 import {
   Edit,
   Eye,
+  Pencil,
   Star,
   Tag,
   Trash2
@@ -110,6 +111,15 @@ export function ProductCard({ product, index }) {
                 >
                   <Eye className="w-4 h-4" />
                 </Button>
+                <Button
+  size="icon"
+  variant="ghost"
+  className="bg-black/40 hover:bg-black/60 border border-white/20 text-white hover:text-rose-400"
+  title="Edit Product"
+  onClick={() => router.push(`/products/edit/${product._id}`)}
+>
+  <Pencil className="w-4 h-4" />
+</Button>
 
                 
 
