@@ -1,423 +1,468 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { motion } from "framer-motion";
+import React, { useEffect, useState } from "react";
 import {
-  TrendingUp,
-  ShoppingBag,
-  Package,
-  Users,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+import {
   DollarSign,
-  ArrowUp,
-  ArrowDown,
-  Clock,
-  Box,
-  ChevronRight,
-  BarChart4,
+  ShoppingBag,
+  Users,
+  Package,
+  AlertCircle,
+  ArrowUpRight,
 } from "lucide-react";
 
-// Mock Components (simulating shadcn/ui)
-const Card = ({ children, className = "" }) => (
-  <div
-    className={`rounded-xl border bg-card text-card-foreground shadow-xl dark:bg-neutral-900 dark:border-neutral-800 ${className}`}
-  >
-    {children}
-  </div>
-);
-const CardHeader = ({ children, className = "" }) => (
-  <div className={`flex flex-col space-y-1.5 p-6 ${className}`}>{children}</div>
-);
-const CardTitle = ({ children, className = "" }) => (
-  <h3
-    className={`text-xl font-semibold leading-none tracking-tight text-gray-50 ${className}`}
-  >
-    {children}
-  </h3>
-);
-const CardDescription = ({ children, className = "" }) => (
-  <p className={`text-sm text-gray-400 ${className}`}>{children}</p>
-);
-const CardContent = ({ children, className = "" }) => (
-  <div className={`p-6 pt-0 ${className}`}>{children}</div>
-);
-const Badge = ({ children, variant, className = "" }) => {
-  let baseStyle =
-    "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2";
-  if (variant === "success") {
-    baseStyle += " bg-emerald-700/30 text-emerald-400";
-  } else if (variant === "info") {
-    baseStyle += " bg-blue-700/30 text-blue-400";
-  } else if (variant === "warning") {
-    baseStyle += " bg-yellow-700/30 text-yellow-400";
-  } else {
-    baseStyle += " bg-neutral-700/30 text-gray-300";
-  }
-  return <span className={`${baseStyle} ${className}`}>{children}</span>;
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+} from "recharts";
+import { useRouter } from "next/navigation";
+
+// ------------------ Types -------------------
+
+type OrderStatus =
+  | "processing"
+  | "awaiting_payment"
+  | "paid"
+  | "awaiting_pickup"
+  | "packed"
+  | "ready_for_dispatch"
+  | "dispatched"
+  | "in_transit"
+  | "arrived"
+  | "delivery_attempted"
+  | "delivered"
+  | "cancelled";
+
+interface DashboardStats {
+  totalRevenue: number;
+  totalOrders: number;
+  totalCustomers: number;
+  lowStockCount: number;
+}
+
+interface RecentOrder {
+  _id: string;
+  customerName: string;
+  customerEmail: string;
+  totalAmount: number;
+  status: OrderStatus;
+  date: string;
+  avatar?: string;
+}
+
+interface StockAlert {
+  _id: string;
+  name: string;
+  stock: number;
+  price: number;
+  images:string[]
+}
+
+const salesData = [
+  { name: "Mon", sales: 400 },
+  { name: "Tue", sales: 300 },
+  { name: "Wed", sales: 200 },
+  { name: "Thu", sales: 278 },
+  { name: "Fri", sales: 1890 },
+  { name: "Sat", sales: 2390 },
+  { name: "Sun", sales: 3490 },
+];
+
+// ------------------ Helpers -------------------
+
+const formatCurrency = (amount: number) =>
+  new Intl.NumberFormat("en-GH", {
+    style: "currency",
+    currency: "GHS",
+  }).format(amount);
+
+const statusColor = (status: OrderStatus) => {
+  const map: Record<OrderStatus, string> = {
+    delivered: "bg-emerald-100 text-emerald-800",
+    processing: "bg-blue-100 text-blue-800",
+    cancelled: "bg-red-100 text-red-800",
+    in_transit: "bg-amber-100 text-amber-800",
+    awaiting_payment: "bg-gray-100 text-gray-600",
+    awaiting_pickup: "bg-gray-100 text-gray-600",
+    packed: "bg-gray-100 text-gray-600",
+    ready_for_dispatch: "bg-gray-100 text-gray-600",
+    dispatched: "bg-gray-100 text-gray-600",
+    arrived: "bg-gray-100 text-gray-600",
+    delivery_attempted: "bg-gray-100 text-gray-600",
+    paid: "bg-gray-100 text-gray-600",
+  };
+
+  return map[status];
 };
 
-// --- MOCK DATA ---
-const mockStats = [
-  {
-    label: "Total Revenue",
-    value: "₵2.5M",
-    icon: DollarSign,
-    change: "+12%",
-    color: "text-emerald-400",
-    trend: "up",
-  },
-  {
-    label: "Orders Placed",
-    value: "156",
-    icon: ShoppingBag,
-    change: "+8%",
-    color: "text-rose-400",
-    trend: "up",
-  },
-  {
-    label: "Products in Stock",
-    value: "42",
-    icon: Package,
-    change: "+3%",
-    color: "text-blue-400",
-    trend: "up",
-  },
-  {
-    label: "New Customers",
-    value: "892",
-    icon: Users,
-    change: "-4%",
-    color: "text-red-400",
-    trend: "down",
-  },
-];
+// ------------------ Component -------------------
 
-const mockOrders = [
-  {
-    id: "RM-001",
-    customer: "Sarah M.",
-    amount: 45000,
-    status: "delivered",
-    date: "2025-10-18",
-  },
-  {
-    id: "RM-002",
-    customer: "Jennifer K.",
-    amount: 28500,
-    status: "shipped",
-    date: "2025-10-20",
-  },
-  {
-    id: "RM-003",
-    customer: "Amanda T.",
-    amount: 62000,
-    status: "processing",
-    date: "2025-10-25",
-  },
-  {
-    id: "RM-004",
-    customer: "Michael B.",
-    amount: 18900,
-    status: "delivered",
-    date: "2025-10-25",
-  },
-  {
-    id: "RM-005",
-    customer: "Jessica F.",
-    amount: 75200,
-    status: "processing",
-    date: "2025-10-26",
-  },
-];
+export default function DashboardPage() {
+  const [loading, setLoading] = useState(true);
+  const router = useRouter()
+  const [stats, setStats] = useState<DashboardStats>({
+    totalRevenue: 0,
+    totalOrders: 0,
+    totalCustomers: 0,
+    lowStockCount: 0,
+  });
 
-const mockTopProducts = [
-  {
-    id: 1,
-    name: "Velvet Luxe Lipstick",
-    sales: 85,
-    revenue: 212500,
-    category: "Lipstick",
-  },
-  {
-    id: 2,
-    name: "Opulence Eyeshadow",
-    sales: 75,
-    revenue: 262500,
-    category: "Eyeshadow",
-  },
-  {
-    id: 3,
-    name: "PerfectSkin Foundation",
-    sales: 60,
-    revenue: 168000,
-    category: "Foundation",
-  },
-  {
-    id: 4,
-    name: "HydraGlow Lip Gloss",
-    sales: 45,
-    revenue: 81000,
-    category: "Lip Gloss",
-  },
-];
+  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
+  const [stockAlerts, setStockAlerts] = useState<StockAlert[]>([]);
 
-const mockMonthlySales = [
-  { month: "Jan", sales: 120000 },
-  { month: "Feb", sales: 180000 },
-  { month: "Mar", sales: 150000 },
-  { month: "Apr", sales: 220000 },
-  { month: "May", sales: 290000 },
-  { month: "Jun", sales: 250000 },
-];
-// --- END MOCK DATA ---
 
-/**
- * Helper to determine badge style based on order status
- * @param {string} status
+  // ... inside DashboardPage component
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch("/api/admin/dashboard", {
+           cache: "no-store" // Ensure we always get fresh data
+        });
+        
+        if (!res.ok) throw new Error("Failed to fetch");
+        
+        const data = await res.json();
+
+        setStats(data.stats);
+        setRecentOrders(data.recentOrders);
+        setStockAlerts(data.stockAlerts);
+        // You will need to update your state definition to include salesData
+        // setSalesData(data.salesData); 
+        
+        // Note: You need to add `const [salesData, setSalesData] = useState(...)` 
+        // to your component state if you want the chart to be dynamic.
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+/*   useEffect(() => {
+    setTimeout(() => {
+      setStats({
+        totalRevenue: 15420.5,
+        totalOrders: 142,
+        totalCustomers: 89,
+        lowStockCount: 3,
+      });
+
+      setRecentOrders([
+        {
+          _id: "ORD-001",
+          customerName: "Abena Koranteng",
+          customerEmail: "abena@example.com",
+          totalAmount: 450,
+          status: "processing",
+          date: "2023-10-25",
+        },
+        {
+          _id: "ORD-002",
+          customerName: "Kofi Mensah",
+          customerEmail: "kofi@example.com",
+          totalAmount: 120,
+          status: "delivered",
+          date: "2023-10-24",
+        },
+        {
+          _id: "ORD-003",
+          customerName: "Sarah Doe",
+          customerEmail: "sarah@example.com",
+          totalAmount: 890,
+          status: "in_transit",
+          date: "2023-10-24",
+        },
+        {
+          _id: "ORD-004",
+          customerName: "Kwame Osei",
+          customerEmail: "kwame@example.com",
+          totalAmount: 65,
+          status: "cancelled",
+          date: "2023-10-23",
+        },
+      ]);
+
+      setStockAlerts([
+        { _id: "1", name: "Velvet Matte Lipstick - Ruby", stock: 2, price: 85 },
+        { _id: "2", name: "Hydrating Face Serum", stock: 0, price: 150 },
+        { _id: "3", name: "Rose Water Toner", stock: 4, price: 45 },
+      ]);
+
+      setLoading(false);
+    }, 1000);
+  }, []);
  */
-const getStatusBadge = (status) => {
-  switch (status.toLowerCase()) {
-    case "delivered":
-      return { text: "Delivered", variant: "success" };
-    case "shipped":
-      return { text: "Shipped", variant: "info" };
-    case "processing":
-      return { text: "Processing", variant: "warning" };
-    default:
-      return { text: "Unknown", variant: "default" };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen text-muted-foreground">
+        Loading dashboard...
+      </div>
+    );
   }
-};
-
-/**
- * Mock Chart Visualization Component (using pure CSS/Divs)
- */
-function SalesChart() {
-  // Find the max value for scaling the bars
-  const maxSales = Math.max(...mockMonthlySales.map((d) => d.sales));
-  const normalizedData = mockMonthlySales.map((d) => ({
-    ...d,
-    // Scale height to be max 100% of the container height (150px)
-    height: (d.sales / maxSales) * 100,
-  }));
 
   return (
-    <Card className="col-span-1 lg:col-span-2 h-full">
-      <CardHeader className="flex flex-row items-center justify-between">
+    <div className="flex-1 space-y-8 pb-10">
+      {/* ---------- HEADER ---------- */}
+      <header className="flex items-center justify-between">
         <div>
-          <CardTitle>Monthly Sales Performance</CardTitle>
-          <CardDescription>
-            Revenue trend over the last 6 months.
-          </CardDescription>
-        </div>
-        <Badge variant="default" className="bg-neutral-800 text-gray-300">
-          <BarChart4 className="w-3 h-3 mr-1" /> 2025
-        </Badge>
-      </CardHeader>
-      <CardContent>
-        <div className="h-[250px] flex items-end gap-4 px-2">
-          {normalizedData.map((data, i) => (
-            <div
-              key={data.month}
-              className="flex flex-col items-center flex-1 group relative"
-            >
-              {/* Bar Container */}
-              <motion.div
-                initial={{ height: 0 }}
-                animate={{ height: `${data.height}%` }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="w-full bg-rose-600/70 rounded-t-md hover:bg-rose-500 transition-colors cursor-pointer shadow-lg"
-                style={{ height: `${data.height}%` }}
-              >
-                {/* Tooltip */}
-                <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-neutral-700/90 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                  ₵{(data.sales / 1000).toFixed(1)}K
-                </div>
-              </motion.div>
-              {/* Label */}
-              <span className="text-xs text-gray-500 mt-2">{data.month}</span>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-/**
- * Stats Card Component
- */
-function StatsCard({ stat, index }) {
-  const Icon = stat.icon;
-  const TrendIcon = stat.trend === "up" ? ArrowUp : ArrowDown;
-  const trendColor = stat.trend === "up" ? "text-emerald-400" : "text-red-400";
-  const trendBg = stat.trend === "up" ? "bg-emerald-700/20" : "bg-red-700/20";
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.1 }}
-      className="h-full"
-    >
-      <Card className="p-4 sm:p-6 transition-all duration-300 hover:border-rose-600/50">
-        <div className="flex items-start justify-between">
-          <div>
-            <CardDescription>{stat.label}</CardDescription>
-            <h3 className="text-3xl font-extrabold mt-1 text-gray-50 tracking-tight">
-              {stat.value}
-            </h3>
-          </div>
-          <div
-            className={`p-3 rounded-full ${trendBg} ${stat.color} shadow-lg`}
-          >
-            <Icon className="w-5 h-5" />
-          </div>
-        </div>
-        <div className="mt-3 text-sm flex items-center">
-          <span className={`flex items-center font-bold ${trendColor} mr-2`}>
-            <TrendIcon className="w-4 h-4 mr-0.5" />
-            {stat.change}
-          </span>
-          <span className="text-gray-500">vs. last month</span>
-        </div>
-      </Card>
-    </motion.div>
-  );
-}
-
-/**
- * Main Overview Dashboard Component
- */
-export default function OverviewTab() {
-  return (
-    <div className="min-h-screen   dark:text-gray-50">
-      <section className="space-y-8 max-w-7xl mx-auto">
-        {/* ## Dashboard Header */}
-
-        {/* --- */}
-
-        {/* ## 📈 Key Metrics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {mockStats.map((stat, i) => (
-            <StatsCard key={i} stat={stat} index={i} />
-          ))}
+          <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+          <p className="text-muted-foreground">
+            Insight into your store performance and operations.
+          </p>
         </div>
 
-        {/* --- */}
+        <Button size="sm">Download Report</Button>
+      </header>
 
-        {/* ## 📊 Main Content Grid (Chart + Top Performers) */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
-          {/* Monthly Sales Chart (Span 2 columns) */}
-          <SalesChart />
-
-          {/* Top Performing Products (Span 1 column) */}
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle>Top Selling Products</CardTitle>
-              <CardDescription>
-                Highest revenue generators this period.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {mockTopProducts.slice(0, 4).map((p, i) => (
-                <motion.div
-                  key={p.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.3, delay: i * 0.15 }}
-                  className="flex items-center justify-between border-b border-neutral-800 pb-3 last:border-b-0 last:pb-0"
-                >
-                  <div className="flex items-center space-x-3">
-                    <Box className="w-4 h-4 text-rose-500 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-100">
-                        {p.name}
-                      </p>
-                      <p className="text-xs text-gray-500">{p.category}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-semibold text-gray-50">
-                      ₵{(p.revenue / 1000).toFixed(1)}K
-                    </p>
-                    <p className="text-xs text-gray-400">{p.sales} Sales</p>
-                  </div>
-                </motion.div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* --- */}
-
-        {/* ## 📋 Recent Orders Activity */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Recent Order Activity</CardTitle>
-              <CardDescription>
-                A list of the latest transactions.
-              </CardDescription>
-            </div>
-            <button className="text-rose-400 hover:underline text-sm flex items-center">
-              View All Orders <ChevronRight className="w-4 h-4 ml-1" />
-            </button>
+      {/* ---------- STATS CARDS ---------- */}
+      <section className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+        {/* Revenue */}
+        <Card className="shadow-sm border">
+          <CardHeader className="flex flex-row justify-between pb-2">
+            <CardTitle className="text-sm">Total Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-primary" />
           </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-neutral-800 text-gray-400">
-                  <tr>
-                    <th className="py-3 px-6 text-left font-medium">
-                      Order ID
-                    </th>
-                    <th className="py-3 px-6 text-left font-medium">
-                      Customer
-                    </th>
-                    <th className="py-3 px-6 text-left font-medium">Amount</th>
-                    <th className="py-3 px-6 text-left font-medium">Status</th>
-                    <th className="py-3 px-6 text-left font-medium">Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {mockOrders.map((o, i) => {
-                    const status = getStatusBadge(o.status);
-                    return (
-                      <motion.tr
-                        key={o.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, delay: 0.05 * i }}
-                        className="border-b border-neutral-800 hover:bg-neutral-800/50 transition-colors last:border-b-0"
-                      >
-                        <td className="py-3 px-6 font-semibold text-gray-100">
-                          {o.id}
-                        </td>
-                        <td className="py-3 px-6 text-gray-300">
-                          {o.customer}
-                        </td>
-                        <td className="py-3 px-6 text-gray-300">
-                          ₵{o.amount.toLocaleString()}
-                        </td>
-                        <td className="py-3 px-6">
-                          <Badge variant={status.variant}>
-                            <Clock className="w-3 h-3 mr-1" /> {status.text}
-                          </Badge>
-                        </td>
-                        <td className="py-3 px-6 text-gray-400">
-                          {new Date(o.date).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                          })}
-                        </td>
-                      </motion.tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+          <CardContent>
+            <p className="text-2xl font-bold">{formatCurrency(stats.totalRevenue)}</p>
+            <p className="text-xs text-muted-foreground">+20.1% from last month</p>
+          </CardContent>
+        </Card>
+
+        {/* Orders */}
+        <Card className="shadow-sm border">
+          <CardHeader className="flex flex-row justify-between pb-2">
+            <CardTitle className="text-sm">Orders</CardTitle>
+            <ShoppingBag className="h-4 w-4 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">{stats.totalOrders}</p>
+            <p className="text-xs text-muted-foreground">+180 since last hour</p>
+          </CardContent>
+        </Card>
+
+        {/* Customers */}
+        <Card className="shadow-sm border">
+          <CardHeader className="flex flex-row justify-between pb-2">
+            <CardTitle className="text-sm">Active Customers</CardTitle>
+            <Users className="h-4 w-4 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">{stats.totalCustomers}</p>
+            <p className="text-xs text-muted-foreground">+19% new signups</p>
+          </CardContent>
+        </Card>
+
+        {/* Low Stock */}
+        <Card className="shadow-sm border">
+          <CardHeader className="flex flex-row justify-between pb-2">
+            <CardTitle className="text-sm">Low Stock Items</CardTitle>
+            <Package className="h-4 w-4 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">{stats.lowStockCount}</p>
+            <p className="text-xs text-muted-foreground">Require attention</p>
           </CardContent>
         </Card>
       </section>
+
+      {/* ---------- SALES + INVENTORY ---------- */}
+      <section className="grid gap-6 lg:grid-cols-7">
+        {/* SALES CHART */}
+        <Card className="shadow-sm border col-span-4">
+          <CardHeader>
+            <CardTitle>Sales Overview</CardTitle>
+            <CardDescription>Daily revenue for this week</CardDescription>
+            
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={salesData}>
+                  <defs>
+                    <linearGradient id="salesGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#ffaf9f" stopOpacity={0.4} />
+                      <stop offset="100%" stopColor="#ffaf9f" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+
+                  <CartesianGrid strokeDasharray="4 4" vertical={false} />
+                  <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(v) => `GH₵${v}`}
+                  />
+                  <Tooltip />
+
+                  <Area
+                    type="monotone"
+                    dataKey="sales"
+                    stroke="#ffaf9f"
+                    fill="url(#salesGradient)"
+                    strokeWidth={2}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* INVENTORY ALERTS */}
+        <Card className="shadow-sm border col-span-3">
+
+          <CardHeader className="flex justify-between">
+          <div>
+            <CardTitle>Inventory Alerts</CardTitle>
+            <CardDescription>Products running low on stock</CardDescription>
+            </div>
+
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+  {stockAlerts.map((item) => (
+    <div
+      key={item._id}
+      className="flex items-center justify-between"
+    >
+      <div className="flex items-center gap-3">
+        
+        {/* PRODUCT IMAGE */}
+        <img
+          src={item?.images?.[0]}
+          alt={item.name}
+          className="h-10 w-10 rounded-md object-cover border"
+        />
+
+        <div>
+          <p className="text-sm font-semibold">{item.name}</p>
+          <p className="text-xs text-muted-foreground">
+            {item.stock === 0 ? "Out of stock" : `Only ${item.stock} left`}
+          </p>
+        </div>
+      </div>
+
+      <p className="text-sm font-medium">{formatCurrency(item.price)}</p>
+    </div>
+  ))}
+
+  {stockAlerts.length === 0 && (
+    <p className="text-muted-foreground text-sm text-center py-4">
+      Inventory looks good!
+    </p>
+  )}
+</div>
+
+
+            <Button variant="outline" className="w-full mt-5" onClick={() => router.push("/admin/inventory")}>
+              View All Inventory
+            </Button>
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* ---------- RECENT ORDERS ---------- */}
+      <Card className="shadow-sm border">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Recent Orders</CardTitle>
+            <CardDescription>
+              {stats.totalOrders} total orders this month
+            </CardDescription>
+          </div>
+
+          <Button variant="ghost" size="sm" className="gap-1">
+            View All <ArrowUpRight className="h-4 w-4" />
+          </Button>
+        </CardHeader>
+
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Customer</TableHead>
+                <TableHead>Order ID</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
+              </TableRow>
+            </TableHeader>
+
+            <TableBody>
+              {recentOrders.map((order) => (
+                <TableRow key={order._id}>
+                  {/* Customer */}
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={order.avatar} />
+                        <AvatarFallback>
+                          {order.customerName.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium">{order.customerName}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {order.customerEmail}
+                        </p>
+                      </div>
+                    </div>
+                  </TableCell>
+
+                  {/* Order ID */}
+                  <TableCell className="font-mono text-xs">{order._id}</TableCell>
+
+                  {/* Status */}
+                  <TableCell>
+                    <Badge
+                      variant="secondary"
+                      className={`capitalize border ${statusColor(order.status)}`}
+                    >
+                      {order.status.replace("_", " ")}
+                    </Badge>
+                  </TableCell>
+
+                  {/* Date */}
+                  <TableCell className="text-sm text-muted-foreground">
+                    {new Date(order.date).toLocaleDateString()}
+                  </TableCell>
+
+                  {/* Amount */}
+                  <TableCell className="text-right font-semibold">
+                    {formatCurrency(order.totalAmount)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }

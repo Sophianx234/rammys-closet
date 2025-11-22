@@ -32,7 +32,20 @@ interface IUser {
   role: "customer" | "admin" | "buyer" | "dispatcher";
   createdAt: string;
   wishlist: any[]; 
+  orders:number
 }
+
+import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
+
+const Toast = withReactContent(Swal).mixin({
+  toast: true,
+  position: "top-end",
+  showConfirmButton: false,
+  timer: 2000,
+  timerProgressBar: true,
+});
+
 
 // --- Helper Functions ---
 
@@ -133,22 +146,76 @@ export default function AdminUsersPage() {
         // Update local state to reflect change immediately
         setUsers(users.map(u => u._id === selectedUser._id ? { ...u, role: newRole as any } : u));
         setSelectedUser({ ...selectedUser, role: newRole as any });
-      }
-    } catch (error) {
-      console.error("Error updating role:", error);
+
+         Toast.fire({
+        icon: "success",
+        title: `Role updated to ${newRole}`,
+      });
+    } else {
+      Toast.fire({
+        icon: "error",
+        title: "Failed to update role",
+      });
     }
-  };
+  } catch (error) {
+    console.error("Error updating role:", error);
+
+    Toast.fire({
+      icon: "error",
+      title: "Something went wrong",
+    });
+  }
+};
 
   const handleDeleteUser = async (id: string) => {
-    if(!confirm("Are you sure you want to delete this user? This cannot be undone.")) return;
-    try {
-      await fetch(`/api/users/${id}`, { method: "DELETE" });
+  const result = await Swal.fire({
+    title: "Delete User?",
+    text: "Are you sure you want to delete this user? This action cannot be undone.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Yes, delete",
+    cancelButtonText: "Cancel",
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#3085d6",
+    reverseButtons: true,
+  });
+
+  if (!result.isConfirmed) {
+    Toast.fire({
+      icon: "info",
+      title: "Delete cancelled",
+    });
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/users/${id}`, { method: "DELETE" });
+
+    if (res.ok) {
       setUsers(users.filter(u => u._id !== id));
       if (selectedUser?._id === id) setIsDetailOpen(false);
-    } catch (error) {
-      console.error("Error deleting user:", error);
+
+      Toast.fire({
+        icon: "success",
+        title: "User deleted successfully",
+      });
+    } else {
+      Toast.fire({
+        icon: "error",
+        title: "Failed to delete user",
+      });
     }
-  };
+  } catch (error) {
+    console.error("Error deleting user:", error);
+
+    Toast.fire({
+      icon: "error",
+      title: "Unexpected error occurred",
+    });
+  }
+};
+
+
 
   // --- Filtering Logic ---
 
@@ -268,7 +335,7 @@ export default function AdminUsersPage() {
                             but using wishlist length as a placeholder from your original code */}
                         <span className="text-sm font-mono text-muted-foreground">
                           {/* If you want real order count, you need to aggregate it in the initial API */}
-                          - 
+                          {user.orders} 
                         </span>
                       </TableCell>
                       <TableCell className="text-right">

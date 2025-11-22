@@ -3,12 +3,44 @@ import { Order } from "@/models/Order";
 import { User } from "@/models/User";
 import { connectToDatabase } from "@/lib/connectDB";
 import "@/models/Product";
+import { Product } from "@/models/Product";
 
-export async function POST(req: Request) {
+export async function POST(req: Request) { 
   try {
     await connectToDatabase();
     const data = await req.json();
 
+    // Validate stock first BEFORE creating the order
+    for (const item of data.cart) {
+      const product = await Product.findById(item._id);
+
+      if (!product) {
+        return NextResponse.json(
+          { success: false, error: `Product not found: ${item._id}` },
+          { status: 400 }
+        );
+      }
+
+      if (product.stock < item.quantity) {
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: `Insufficient stock for ${product.name}. Only ${product.stock} left.` 
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Deduct stock
+    for (const item of data.cart) {
+      await Product.findByIdAndUpdate(item._id, {
+        $inc: { stock: -item.quantity },
+        $set: { inStock: item.stock - item.quantity > 0 }
+      });
+    }
+
+    // Create the order after successful stock deduction
     const newOrder = await Order.create({
       user: data.userId,
       customer: {
@@ -22,7 +54,6 @@ export async function POST(req: Request) {
       },
 
       items: data.cart.map((item: any) => ({
-
         product: item._id,
         quantity: item.quantity,
         price: item.price,
@@ -34,12 +65,13 @@ export async function POST(req: Request) {
       orderStatus: "processing",
     });
 
-    // 🔥 CLEAR USER CART IF LOGGED IN
+    // Clear cart
     if (data.userId) {
       await User.findByIdAndUpdate(data.userId, { cart: [] });
     }
 
     return NextResponse.json({ success: true, order: newOrder });
+
   } catch (error: any) {
     console.error("Order creation error:", error);
     return NextResponse.json(
