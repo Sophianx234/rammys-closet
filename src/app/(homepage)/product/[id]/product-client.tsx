@@ -3,18 +3,21 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Heart, Share2, Check } from "lucide-react";
+import { Heart, Share2, Check, Star } from "lucide-react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { IProduct } from "@/models/Product";
 import { IReview } from "@/models/Review";
 import { useDashStore } from "@/lib/store";
 import ProductImageSlider from "./product-images-slider";
+import withReactContent from "sweetalert2-react-content";
+import Swal from "sweetalert2";
 
 export default function ProductClient({ product }: { product: IProduct }) {
   const [isFavorite, setIsFavorite] = useState(product.isFeatured);
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
+  const [reviewMessage, setReviewMessage] = useState<{ type: 'success' | 'error' | 'warning', text: string } | null>(null);
   const { setCart } = useDashStore();
 
   // ⭐ Rating States
@@ -22,17 +25,20 @@ export default function ProductClient({ product }: { product: IProduct }) {
   const [hoverRating, setHoverRating] = useState(0);
   const finalRating = hoverRating || userRating;
   const [showReviewForm, setShowReviewForm] = useState(false);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   // ⭐ Reviews
-  const [reviews, setReviews] = useState<IReview[]>([]);
+  const [reviews, setReviews] = useState([]);
   const [reviewComment, setReviewComment] = useState("");
 
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        const res = await fetch(`/api/products/${product._id}/reviews`);
+        const res = await fetch(`/api/admin/products/reviews/${product._id}`);
         if (res.ok) {
           const data = await res.json();
+          console.log("Fetched reviews:", data);
+
           setReviews(data);
         }
       } catch (err) {
@@ -59,24 +65,46 @@ export default function ProductClient({ product }: { product: IProduct }) {
 
   // ⭐ SUBMIT REVIEW
   const handleSubmitReview = async () => {
-    if (!reviewComment.trim()) return;
+  if (!reviewComment.trim()) return;
 
-    try {
-      const res = await fetch(`/api/products/${product._id}/reviews`, {
-        method: "POST",
-        body: JSON.stringify({ rating: userRating, comment: reviewComment }),
-        headers: { "Content-Type": "application/json" },
-      });
+  setIsSubmittingReview(true);
 
-      if (res.ok) {
-        const newReview = await res.json();
-        setReviews([newReview, ...reviews]);
-        setReviewComment("");
-      }
-    } catch (err) {
-      console.error("Submit review failed", err);
+  try {
+    const res = await fetch(`/api/admin/products/reviews/${product._id}`, {
+      method: "POST",
+      body: JSON.stringify({ rating: userRating, comment: reviewComment }),
+      headers: { "Content-Type": "application/json" },
+    });
+
+     if (res.status === 409) {
+      setReviewMessage({ type: 'warning', text: 'You have already reviewed this product!. Product can only be reviewed once in a year' });
+      return;
     }
-  };
+    if (res.ok) {
+      const newReview = await res.json();
+      console.log("New review submitted:", newReview);
+      setReviews([newReview, ...reviews]);
+      setReviewComment("");
+
+      // SWEET ALERT TOAST
+      const MySwal = withReactContent(Swal);
+      MySwal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "success",
+        title: "Review submitted successfully!",
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+    }
+  } catch (err) {
+    setReviewMessage({ type: 'error', text: 'Failed to submit review. Please try again.' });
+    console.error("Submit review failed", err);
+  } finally {
+    setIsSubmittingReview(false);
+  }
+};
 
   // ⭐ HANDLE ADD TO CART
   const handleAddToCart = async () => {
@@ -164,11 +192,8 @@ export default function ProductClient({ product }: { product: IProduct }) {
                     {[1, 2, 3, 4, 5].map((value) => (
                       <span
                         key={value}
-                        onClick={() => handleRate(value)}
-                        onMouseEnter={() => setHoverRating(value)}
-                        onMouseLeave={() => setHoverRating(0)}
                         className={`cursor-pointer text-xl ${
-                          value <= finalRating ? "text-primary" : "text-muted-foreground"
+                          value <= product.rating ? "text-primary" : "text-muted-foreground"
                         }`}
                       >
                         ★
@@ -282,62 +307,134 @@ export default function ProductClient({ product }: { product: IProduct }) {
             <Card className="bg-secondary border-border p-4 mt-8">
               <h3 className="text-lg font-semibold mb-4">Customer Reviews</h3>
 
+
               {/* Review Form */}
-              <div className="mb-6 space-y-2">
-                <h4 className="font-semibold">Leave a Review</h4>
-                <div className="flex items-center gap-1 mb-2">
-                  {[1, 2, 3, 4, 5].map((value) => (
-                    <span
-                      key={value}
-                      onClick={() => setUserRating(value)}
-                      onMouseEnter={() => setHoverRating(value)}
-                      onMouseLeave={() => setHoverRating(0)}
-                      className={`cursor-pointer text-xl ${
-                        value <= finalRating ? "text-primary" : "text-muted-foreground"
-                      }`}
-                    >
-                      ★
-                    </span>
-                  ))}
-                </div>
-                <Textarea
-                  placeholder="Write your review..."
-                  value={reviewComment}
-                  onChange={(e) => setReviewComment(e.target.value)}
-                  className="w-full"
-                />
-                <Button onClick={handleSubmitReview} className="mt-2">
-                  Submit Review
-                </Button>
-              </div>
+<div className="mb-6 space-y-2">
+  <h4 className="font-semibold">Leave a Review</h4>
+
+  {/* Rating stars + number */}
+  <div className="flex items-center gap-2 mb-2">
+    <div className="flex items-center gap-1">
+      {[1, 2, 3, 4, 5].map((value) => (
+        <Star
+          key={value}
+          size={22}
+          onClick={() => setUserRating(value)}
+          onMouseEnter={() => setHoverRating(value)}
+          onMouseLeave={() => setHoverRating(0)}
+          className={`cursor-pointer transition
+            ${
+              value <= finalRating
+                ? "fill-primary text-primary"
+                : "text-muted-foreground"
+            }`}
+        />
+      ))}
+    </div>
+
+    {/* Display selected rating number */}
+    <span className="text-sm font-medium text-primary">
+      {finalRating}/5
+    </span>
+  </div>
+
+  <Textarea
+    placeholder="Write your review..."
+    value={reviewComment}
+    onChange={(e) => setReviewComment(e.target.value)}
+    className="w-full"
+  />
+
+  {/* Review message */}
+  {reviewMessage && (
+    <p
+      className={`mt-2 text-sm ${
+        reviewMessage.type === "success"
+          ? "text-green-500"
+          : reviewMessage.type === "warning"
+          ? "text-primary"
+          : "text-red-500"
+      }`}
+    >
+      {reviewMessage.text}
+    </p>
+  )}
+
+  <Button
+    onClick={handleSubmitReview}
+    className="mt-2"
+    disabled={isSubmittingReview}
+  >
+    {isSubmittingReview ? "Submitting Review..." : "Submit Review"}
+  </Button>
+</div>
+
+
 
               {/* Existing Reviews */}
               <div className="space-y-4">
-                {reviews.length ? (
-                  reviews.map((r) => (
-                    <div key={r._id} className="border-t border-border pt-2">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold">{r.user.toString()}</span>
-                        <div className="flex gap-0.5">
-                          {[1, 2, 3, 4, 5].map((v) => (
-                            <span
-                              key={v}
-                              className={`text-sm ${v <= r.rating ? "text-primary" : "text-muted-foreground"}`}
-                            >
-                              ★
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                      {r.comment && <p className="text-sm text-muted-foreground">{r.comment}</p>}
-                    </div>
-                  ))
-                ) : (
+                {!reviews.length && (
                   <p className="text-sm text-muted-foreground">No reviews yet.</p>
                 )}
               </div>
             </Card>
           </div>
+          <div className="col-span-1 md:col-span-2 space-y-6 mt-6">
+            <h1>Reviews</h1>
+  {
+reviews?.map((r) => (
+      <div
+        key={r._id}
+        className="flex flex-col md:flex-row gap-4 p-4 border rounded-lg bg-secondary border-border shadow-sm"
+      >
+        {/* User Avatar */}
+        <div className="flex-shrink-0">
+          <img
+            src={r.user.profile || `https://ui-avatars.com/api/?name=${r.user.name}&background=random`}
+            alt={r.user.name}
+            className="w-12 h-12 rounded-full object-cover"
+          />
+        </div>
+
+        {/* Review Content */}
+        <div className="flex-1 space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="font-semibold text-sm md:text-base">{r.user.name}</span>
+            <span className="text-xs text-muted-foreground">
+              {new Date(r.createdAt).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </span>
+          </div>
+
+          {/* Rating */}
+          <div className="flex items-center gap-1">
+            {[1, 2, 3, 4, 5].map((v) => (
+              <span
+                key={v}
+                className={`text-sm md:text-base ${
+                  v <= r.rating ? "text-primary" : "text-muted-foreground"
+                }`}
+              >
+                ★
+              </span>
+            ))}
+          </div>
+
+          {/* Comment */}
+          {r.comment && (
+            <p className="text-sm md:text-base text-muted-foreground mt-1 leading-relaxed">
+              {r.comment}
+            </p>
+          )}
+        </div>
+      </div>
+    ))
+  }
+</div>
+
         </div>
       </section>
     </main>

@@ -104,7 +104,7 @@ export async function GET(req: Request) {
     }
 
     const orders = await Order.find(query)
-      .populate("user")
+      .populate("user",'-password')
       .populate("items.product")
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
