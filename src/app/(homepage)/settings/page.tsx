@@ -87,7 +87,9 @@ export default function SettingsPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        Swal.fire({ toast: true, icon: "error", title: data.message || "Failed to update", position: "top-end", showConfirmButton: false, timer: 2000 });
+        
+        Swal.fire({ toast: true, icon: "error", title: data.message || "Failed to update", position: "top-end", showConfirmButton: false, timer: 2000 ,background: "#1f1f1f",
+          color: "#fff",});
         btnSetter(url.includes("profile") ? "Save Profile" : url.includes("email") ? "Update Email" : "Update Password");
         return;
       }
@@ -96,13 +98,15 @@ export default function SettingsPage() {
         setUser(data.user);
       }
 
-      Swal.fire({ toast: true, icon: "success", title: successMsg, position: "top-end", showConfirmButton: false, timer: 2000 });
+      Swal.fire({ toast: true, icon: "success", title: successMsg, position: "top-end", showConfirmButton: false, timer: 2000,background: "#1f1f1f",
+          color: "#fff", });
       btnSetter(url.includes("profile") ? "Save Profile" : url.includes("email") ? "Update Email" : "Update Password");
 
       if (url.includes("profile")) setProfile((prev) => ({ ...prev, image: data.user.profile || prev.image, name: "" }));
       if (url.includes("password")) setPasswords({ current: "", newPass: "", confirm: "" });
     } catch (err) {
-      Swal.fire({ toast: true, icon: "error", title: "Something went wrong", position: "top-end", showConfirmButton: false, timer: 2000 });
+      Swal.fire({ toast: true, icon: "error", title: "Something went wrong", position: "top-end", showConfirmButton: false, timer: 2000,background: "#1f1f1f",
+          color: "#fff", });
       btnSetter(url.includes("profile") ? "Save Profile" : url.includes("email") ? "Update Email" : "Update Password");
     }
   };
@@ -110,7 +114,8 @@ export default function SettingsPage() {
   /* ------------------ PROFILE SAVE ------------------ */
   const handleProfileSave = async () => {
     if (!profile.name && !profile.file) {
-      Swal.fire({ toast: true, icon: "warning", title: "Please provide a name or a profile picture", position: "top-end", showConfirmButton: false, timer: 2000 });
+      Swal.fire({ toast: true, icon: "warning", title: "Please provide a name or a profile picture", position: "top-end", showConfirmButton: false, timer: 2000,background: "#1f1f1f",
+          color: "#fff", });
       return;
     }
 

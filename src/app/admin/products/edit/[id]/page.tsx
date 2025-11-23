@@ -25,6 +25,7 @@ import {
   FaArrowLeft,
   FaTrash,
 } from "react-icons/fa";
+import { GridLoader } from "react-spinners";
 
 // --- Types ---
 interface ICategoryOption {
@@ -202,6 +203,7 @@ export default function EditProductPage({
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     setErrors({});
+    
 
     if (existingImages.length + newImages.length === 0) {
       return setErrors({ images: "At least 1 image is required." });
@@ -241,22 +243,25 @@ export default function EditProductPage({
       // Upload new ones
       newImages.forEach((file) => form.append("newImages", file));
 
-      const res = await fetch(`/api/products/${id}`, {
+      const res = await fetch(`/api/admin/products/${id}`, {
         method: "PUT",
         body: form,
       });
 
       if (!res.ok) throw new Error("Update failed");
 
-      Swal.fire({
-        title: "Updated!",
-        text: "Product updated successfully.",
-        icon: "success",
-        toast: true,
-        position: "top-end",
-        timer: 2000,
-        showConfirmButton: false,
-      });
+Swal.fire({
+  icon: "success",
+  title: "Product updated!",
+  toast: true,
+  position: "top-end",
+  showConfirmButton: false,
+  timer: 2000,
+  timerProgressBar: true,
+  background: "#1f1f1f",
+  color: "#fff",
+});
+
 
       router.push("/admin/products");
       router.refresh();
@@ -277,7 +282,9 @@ export default function EditProductPage({
 
   if (loadingData)
     return (
-      <div className="p-10 text-center text-gray-400">Loading product…</div>
+      <div className="h-dvh flex items-center justify-center">
+      <GridLoader size={24} color="#ffaf9f" />
+    </div>
     );
 
   // -----------------------------
