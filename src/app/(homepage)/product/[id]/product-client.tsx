@@ -2,11 +2,14 @@
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { Heart, Share2, Check } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { IProduct } from "@/models/Product";
+import { IReview } from "@/models/Review";
 import { useDashStore } from "@/lib/store";
+import ProductImageSlider from "./product-images-slider";
 
 export default function ProductClient({ product }: { product: IProduct }) {
   const [isFavorite, setIsFavorite] = useState(product.isFeatured);
@@ -18,6 +21,26 @@ export default function ProductClient({ product }: { product: IProduct }) {
   const [userRating, setUserRating] = useState(product.rating || 0);
   const [hoverRating, setHoverRating] = useState(0);
   const finalRating = hoverRating || userRating;
+  const [showReviewForm, setShowReviewForm] = useState(false);
+
+  // ⭐ Reviews
+  const [reviews, setReviews] = useState<IReview[]>([]);
+  const [reviewComment, setReviewComment] = useState("");
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const res = await fetch(`/api/products/${product._id}/reviews`);
+        if (res.ok) {
+          const data = await res.json();
+          setReviews(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch reviews", err);
+      }
+    };
+    fetchReviews();
+  }, [product._id]);
 
   // ⭐ SEND RATING
   const handleRate = async (value: number) => {
@@ -34,26 +57,39 @@ export default function ProductClient({ product }: { product: IProduct }) {
     }
   };
 
-  // ⭐ HANDLE ADD TO CART — CONNECTED TO BACKEND
+  // ⭐ SUBMIT REVIEW
+  const handleSubmitReview = async () => {
+    if (!reviewComment.trim()) return;
+
+    try {
+      const res = await fetch(`/api/products/${product._id}/reviews`, {
+        method: "POST",
+        body: JSON.stringify({ rating: userRating, comment: reviewComment }),
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (res.ok) {
+        const newReview = await res.json();
+        setReviews([newReview, ...reviews]);
+        setReviewComment("");
+      }
+    } catch (err) {
+      console.error("Submit review failed", err);
+    }
+  };
+
+  // ⭐ HANDLE ADD TO CART
   const handleAddToCart = async () => {
     try {
       const res = await fetch("/api/users/cart", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          productId: product._id,
-          quantity,
-        }),
+        body: JSON.stringify({ productId: product._id, quantity }),
       });
 
-      if (!res.ok) {
-        console.error("Cart update failed");
-        return;
-      }
+      if (!res.ok) return;
 
-      // Update local store as well
       setCart(product, quantity);
-
       setAddedToCart(true);
       setTimeout(() => setAddedToCart(false), 2000);
     } catch (err) {
@@ -61,7 +97,7 @@ export default function ProductClient({ product }: { product: IProduct }) {
     }
   };
 
-  // ⭐ HANDLE WISHLIST — CONNECTED TO BACKEND
+  // ⭐ HANDLE WISHLIST
   const handleWishlist = async () => {
     try {
       const res = await fetch("/api/users/wishlist", {
@@ -70,13 +106,10 @@ export default function ProductClient({ product }: { product: IProduct }) {
         body: JSON.stringify({ productId: product._id }),
       });
 
-      if (!res.ok) {
-        console.error("Wishlist update failed");
-        return;
-      }
+      if (!res.ok) return;
 
       const data = await res.json();
-      setIsFavorite(data.isFavorite); // backend returns true/false
+      setIsFavorite(data.isFavorite);
     } catch (err) {
       console.error("Wishlist failed:", err);
     }
@@ -88,9 +121,13 @@ export default function ProductClient({ product }: { product: IProduct }) {
       <div className="bg-secondary border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Link href="/" className="hover:text-foreground">Home</Link>
+            <Link href="/" className="hover:text-foreground">
+              Home
+            </Link>
             <span>/</span>
-            <Link href="/shop" className="hover:text-foreground">Shop</Link>
+            <Link href="/shop" className="hover:text-foreground">
+              Shop
+            </Link>
             <span>/</span>
             <span className="text-foreground">{product.category.name}</span>
           </div>
@@ -102,11 +139,8 @@ export default function ProductClient({ product }: { product: IProduct }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
           <div className="flex flex-col gap-4">
             <div className="bg-secondary rounded-lg overflow-hidden h-full flex items-center justify-center">
-              <img
-                src={product.images[0] || "/placeholder.svg"}
-                alt={product.name}
-                className="w-full h-full object-cover"
-              />
+              
+<ProductImageSlider images={product.images} />
             </div>
           </div>
 
@@ -116,13 +150,16 @@ export default function ProductClient({ product }: { product: IProduct }) {
               <p className="text-primary text-sm font-semibold uppercase tracking-wider mb-2">
                 {product.category.name}
               </p>
-              <h1 className="text-3xl md:text-4xl font-serif font-bold mb-4">{product.name}</h1>
+              <h1 className="text-3xl md:text-4xl font-serif font-bold mb-4">
+                {product.name}
+              </h1>
 
               {/* ⭐ RATING */}
               <div className="flex items-center gap-3 mb-4">
                 <div className="flex items-center gap-1">
-                  <span className="text-primary font-semibold text-lg">{userRating.toFixed(1)}</span>
-
+                  <span className="text-primary font-semibold text-lg">
+                    {userRating.toFixed(1)}
+                  </span>
                   <div className="flex gap-0.5">
                     {[1, 2, 3, 4, 5].map((value) => (
                       <span
@@ -139,7 +176,6 @@ export default function ProductClient({ product }: { product: IProduct }) {
                     ))}
                   </div>
                 </div>
-
                 <span className="text-muted-foreground text-sm">
                   {product.reviewsCount} reviews
                 </span>
@@ -197,7 +233,6 @@ export default function ProductClient({ product }: { product: IProduct }) {
                 <span className="text-sm text-muted-foreground">{product.stock} available</span>
               </div>
 
-              {/* ADD TO CART */}
               <Button
                 onClick={handleAddToCart}
                 disabled={!product.inStock}
@@ -214,16 +249,12 @@ export default function ProductClient({ product }: { product: IProduct }) {
               </Button>
 
               <div className="flex gap-3">
-                {/* WISHLIST */}
                 <Button
                   onClick={handleWishlist}
                   variant="outline"
                   className="flex-1 flex items-center justify-center gap-2"
                 >
-                  <Heart
-                    size={18}
-                    className={isFavorite ? "fill-primary text-primary" : ""}
-                  />
+                  <Heart size={18} className={isFavorite ? "fill-primary text-primary" : ""} />
                   Wishlist
                 </Button>
 
@@ -236,9 +267,7 @@ export default function ProductClient({ product }: { product: IProduct }) {
             <Card className="bg-secondary border-border p-4">
               <div className="space-y-2 text-sm">
                 <p>
-                  <span className="font-semibold">SKU:</span> RC-{product._id
-                    .toString()
-                    .slice(-3)}
+                  <span className="font-semibold">SKU:</span> RC-{product._id.toString().slice(-3)}
                 </p>
                 <p>
                   <span className="font-semibold">Availability:</span> Ships within 2–3 business days
@@ -246,6 +275,66 @@ export default function ProductClient({ product }: { product: IProduct }) {
                 <p>
                   <span className="font-semibold">Returns:</span> 30-day money-back guarantee
                 </p>
+              </div>
+            </Card>
+
+            {/* ⭐ Reviews Section */}
+            <Card className="bg-secondary border-border p-4 mt-8">
+              <h3 className="text-lg font-semibold mb-4">Customer Reviews</h3>
+
+              {/* Review Form */}
+              <div className="mb-6 space-y-2">
+                <h4 className="font-semibold">Leave a Review</h4>
+                <div className="flex items-center gap-1 mb-2">
+                  {[1, 2, 3, 4, 5].map((value) => (
+                    <span
+                      key={value}
+                      onClick={() => setUserRating(value)}
+                      onMouseEnter={() => setHoverRating(value)}
+                      onMouseLeave={() => setHoverRating(0)}
+                      className={`cursor-pointer text-xl ${
+                        value <= finalRating ? "text-primary" : "text-muted-foreground"
+                      }`}
+                    >
+                      ★
+                    </span>
+                  ))}
+                </div>
+                <Textarea
+                  placeholder="Write your review..."
+                  value={reviewComment}
+                  onChange={(e) => setReviewComment(e.target.value)}
+                  className="w-full"
+                />
+                <Button onClick={handleSubmitReview} className="mt-2">
+                  Submit Review
+                </Button>
+              </div>
+
+              {/* Existing Reviews */}
+              <div className="space-y-4">
+                {reviews.length ? (
+                  reviews.map((r) => (
+                    <div key={r._id} className="border-t border-border pt-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold">{r.user.toString()}</span>
+                        <div className="flex gap-0.5">
+                          {[1, 2, 3, 4, 5].map((v) => (
+                            <span
+                              key={v}
+                              className={`text-sm ${v <= r.rating ? "text-primary" : "text-muted-foreground"}`}
+                            >
+                              ★
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      {r.comment && <p className="text-sm text-muted-foreground">{r.comment}</p>}
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">No reviews yet.</p>
+                )}
               </div>
             </Card>
           </div>

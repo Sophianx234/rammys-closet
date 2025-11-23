@@ -121,8 +121,7 @@ export default function Header() {
     </Link>
   </DropdownMenuItem>
   <DropdownMenuSeparator />
-      </>
-  }
+     
 
 
   <DropdownMenuItem asChild>
@@ -160,7 +159,8 @@ export default function Header() {
   </DropdownMenuItem>
 
   <DropdownMenuSeparator />
-
+ </>
+  }
   <DropdownMenuItem asChild>
     <Link
       href="/login"
