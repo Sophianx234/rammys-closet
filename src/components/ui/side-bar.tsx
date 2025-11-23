@@ -17,6 +17,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useDashStore } from "@/lib/store";
 import { IUser } from "@/models/User";
+import { useRouter } from "next/navigation";
 
 interface SidebarProps {
   activeTab: string;
@@ -33,6 +34,8 @@ const navItems = [
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
    const [activeTab, setActiveTab] = useState("overview");
+   const router = useRouter()
+   const [loading, setLoading] = useState(false);
 
 
     const {setUser,user} = useDashStore()
@@ -51,6 +54,32 @@ export default function Sidebar() {
    if(!user) getMe()
     },[]) 
 
+
+    const handleLogout = async () => {
+  try {
+    setLoading(true);
+    const res = await fetch("/api/auth/logout", {
+      method: "POST",
+    });
+
+    if (!res.ok) {
+      console.error("Logout failed");
+      return;
+    }
+
+    // OPTIONAL: Clear Zustand / context state
+    
+      setUser(null);
+
+    // Next.js 15 client redirect
+    router.push("/login"); 
+  } catch (error) {
+    console.error("Logout error:", error);
+  }
+  finally {
+    setLoading(false);
+  }
+};
   return (
     <aside
       className={`h-screen flex sticky top-0 flex-col border-r border-neutral-800 bg-[#0A0A0A] text-neutral-200 transition-all duration-300 ${
@@ -122,22 +151,25 @@ export default function Sidebar() {
 
       {/* FOOTER ACTIONS */}
       <div className="border-t border-neutral-800 p-3 mt-auto space-y-1">
-        <motion.button
-          whileTap={{ scale: 0.97 }}
-          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-neutral-400 hover:text-white hover:bg-neutral-900 transition-all"
-        >
-          <Settings size={19} className="text-neutral-500" />
-          {!collapsed && "Settings"}
-        </motion.button>
+  <motion.button
+    whileTap={{ scale: 0.97 }}
+    className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-neutral-400 hover:text-white hover:bg-neutral-900 transition-all"
+  >
+    <Settings size={19} className="text-neutral-500" />
+    {!collapsed && "Settings"}
+  </motion.button>
 
-        <motion.button
-          whileTap={{ scale: 0.97 }}
-          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-rose-500 hover:text-rose-400 hover:bg-neutral-900 transition-all"
-        >
-          <LogOut size={19} className="text-rose-500" />
-          {!collapsed && "Logout"}
-        </motion.button>
-      </div>
+  <motion.button
+    whileTap={{ scale: 0.97 }}
+    onClick={handleLogout}
+    disabled={loading}
+    className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-rose-500 hover:text-rose-400 hover:bg-neutral-900 transition-all"
+  >
+    <LogOut size={19} className="text-rose-500" />
+    {!collapsed && (loading ? "Logging out..." : "Logout")}
+  </motion.button>
+</div>
+
     </aside>
   );
 }

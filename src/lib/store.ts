@@ -11,7 +11,7 @@ export type storeState = {
 
   // computed values
   cartTotal: () => number;
-  setUser: (user: IUser) => void;
+  setUser: (user: IUser|null) => void;
   setCart: (product: IProduct, qty: number) => void;
   loadCart: (cartItems: { product: IProduct; quantity: number }[]) => void;
 };
@@ -19,7 +19,7 @@ export type storeState = {
 export const useDashStore = create<storeState>((set,get) => ({
   user: null,
   cart: [],
-  setUser: (user: IUser) => set(() => ({ user })),
+  setUser: (user: IUser|null) => set(() => ({ user })),
   setCart: (product: IProduct, qty: number) =>
   set((state) => {
     const existing = state.cart.find((item) => item._id === product._id);

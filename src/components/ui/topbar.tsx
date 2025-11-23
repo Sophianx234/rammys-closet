@@ -16,16 +16,40 @@ import {
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { useDashStore } from "@/lib/store";
+import { useRouter } from "next/navigation";
 
 export default function Topbar() {
   const [notifications] = useState(2);
-  const {user,cart} = useDashStore()
+  const {user,cart,setUser} = useDashStore()
+  const [loading, setLoading] = useState(false);
+  const router = useRouter()
 
-  const handleLogout = () => {
-    // Hook to your logout logic
-    console.log("Logging out...");
-  };
-   if(!user) return 
+  const handleLogout = async () => {
+  try {
+    setLoading(true);
+    const res = await fetch("/api/logout", {
+      method: "POST",
+    });
+
+    if (!res.ok) {
+      console.error("Logout failed");
+      return;
+    }
+
+    // OPTIONAL: Clear Zustand / context state
+    
+      setUser(null);
+
+    // Next.js 15 client redirect
+    router.push("/login"); 
+  } catch (error) {
+    console.error("Logout error:", error);
+  }
+  finally {
+    setLoading(false);
+  }
+};
+   
   return (
     <motion.header
       initial={{ opacity: 0, y: -10 }}
@@ -79,23 +103,39 @@ export default function Topbar() {
 
         {/* Profile Dropdown */}
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="group flex items-center gap-3 rounded-full bg-neutral-900/70 border border-neutral-700 hover:border-neutral-600 hover:bg-neutral-800/80 transition p-1.5 pr-3">
-              <img
-                src={user?.profile||"https://i.pravatar.cc/100?img=12"}
-                alt="Admin Avatar"
-                width={36}
-                height={36}
-                className="rounded-full size-9 object-cover border border-neutral-700"
-              />
-              <div className="hidden sm:flex flex-col items-start">
-                <span className="text-sm font-semibold text-white leading-tight">
-                  Damian X
-                </span>
-                <span className="text-[11px] text-neutral-400">Admin</span>
-              </div>
-            </button>
-          </DropdownMenuTrigger>
+                {user ? (
+  <DropdownMenuTrigger asChild>
+    <button className="group flex items-center gap-3 rounded-full bg-neutral-900/70 border border-neutral-700 hover:border-neutral-600 hover:bg-neutral-800/80 transition p-1.5 pr-3">
+      <img
+        src={user?.profile || "https://i.pravatar.cc/100?img=12"}
+        alt="Admin Avatar"
+        width={36}
+        height={36}
+        className="rounded-full size-9 object-cover border border-neutral-700"
+      />
+
+      <div className="hidden sm:flex flex-col items-start">
+        <span className="text-sm font-semibold text-white leading-tight">
+          {user.name}
+        </span>
+        <span className="text-[11px] text-neutral-400">Admin</span>
+      </div>
+    </button>
+  </DropdownMenuTrigger>
+) : (
+  // SKELETON HERE
+  <div className="flex items-center gap-3 rounded-full bg-neutral-900/70 border border-neutral-700 p-1.5 pr-3 animate-pulse">
+  {/* Avatar Skeleton */}
+  <div className="size-9 rounded-full bg-neutral-700/70" />
+
+  {/* Text skeleton */}
+  <div className="hidden sm:flex flex-col items-start gap-1">
+    <div className="h-3 w-20 rounded bg-neutral-700/70" />
+    <div className="h-2.5 w-14 rounded bg-neutral-700/70" />
+  </div>
+</div>
+
+)}
 
           <DropdownMenuContent
             align="end"
@@ -112,12 +152,12 @@ export default function Topbar() {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-neutral-800" />
-            <DropdownMenuItem
+            <div
               onClick={handleLogout}
               className="text-rose-500 hover:text-rose-400 hover:bg-neutral-800"
             >
-              <LogOut className="mr-2 h-4 w-4" /> Logout
-            </DropdownMenuItem>
+              <LogOut className="mr-2 h-4 w-4" /> {loading ? "Logging out..." : "Logout"}
+            </div>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

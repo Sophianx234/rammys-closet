@@ -5,6 +5,15 @@ import { ShoppingCart, Menu, X, Search } from "lucide-react";
 import { FaUserCircle } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
+
+import {
+  FaUser,
+  FaShoppingBag,
+  FaHeart,
+  FaCog,
+  FaSignInAlt,
+  FaSignOutAlt,
+} from "react-icons/fa";
 import { useCart } from "./cart-context";
 import {
   DropdownMenu,
@@ -19,10 +28,7 @@ import { useDashStore } from "@/lib/store";
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const { items } = useCart();
-  const {user,cart} = useDashStore()
-
-
-
+  const { user, cart } = useDashStore();
 
   return (
     <header className="sticky top-0 z-50 bg-background border-b border-border">
@@ -31,7 +37,9 @@ export default function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">RC</span>
+              <span className="text-primary-foreground font-bold text-sm">
+                RC
+              </span>
             </div>
             <span className="hidden sm:inline font-semibold text-lg">
               Rammys Closet
@@ -40,13 +48,22 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <Link href="/shop" className="text-sm hover:text-primary transition-colors">
+            <Link
+              href="/shop"
+              className="text-sm hover:text-primary transition-colors"
+            >
               Shop
             </Link>
-            <Link href="/about" className="text-sm hover:text-primary transition-colors">
+            <Link
+              href="/about"
+              className="text-sm hover:text-primary transition-colors"
+            >
               About
             </Link>
-            <Link href="/contact" className="text-sm hover:text-primary transition-colors">
+            <Link
+              href="/contact"
+              className="text-sm hover:text-primary transition-colors"
+            >
               Contact
             </Link>
           </nav>
@@ -60,7 +77,11 @@ export default function Header() {
 
             {/* Cart */}
             <Link href="/cart">
-              <Button variant="outline" size="icon" className="relative bg-transparent">
+              <Button
+                variant="outline"
+                size="icon"
+                className="relative bg-transparent"
+              >
                 <ShoppingCart size={20} />
                 {cart.length > 0 && (
                   <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
@@ -72,44 +93,98 @@ export default function Header() {
 
             {/* User Dropdown */}
             <DropdownMenu>
-           <DropdownMenuTrigger asChild>
-  {!user ? (
-    <button className="p-2 hover:bg-secondary rounded-full transition-colors">
-      <FaUserCircle className="w-6 h-6 text-foreground" />
-    </button>
-  ) : (
-    <button className="w-9 h-9 rounded-full overflow-hidden border border-border hover:ring-2 hover:ring-primary transition-all">
-      <img
-        src={user?.profile}
-        alt="Profile"
-        className="w-full h-full object-cover"
-      />
-    </button>
-  )}
-</DropdownMenuTrigger>
-
-
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem asChild>
-                  <Link href="/profile">My Profile</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/orders">Orders</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/wishlist">Wishlist</Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/settings">Settings</Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <button className="w-full text-left text-red-500 hover:text-red-600">
-                    Logout
+              <DropdownMenuTrigger asChild>
+                {!user ? (
+                  <button className="p-2 hover:bg-secondary rounded-full transition-colors">
+                    <FaUserCircle className="w-6 h-6 text-foreground" />
                   </button>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
+                ) : (
+                  <button className="w-9 h-9 rounded-full overflow-hidden border border-border hover:ring-2 hover:ring-primary transition-all">
+                    <img
+                      src={user?.profile}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                )}
+              </DropdownMenuTrigger>
+
+              <DropdownMenuContent align="end" className="w-48 bg-neutral-900 border border-neutral-800 rounded-md shadow-lg">
+  {user&&<>
+  <DropdownMenuItem asChild>
+    <Link
+      href="/profile"
+      className="group flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
+      >
+      <FaUser className="text-primary/80 group-hover:text-black transition-colors" />
+      My Profile
+    </Link>
+  </DropdownMenuItem>
+  <DropdownMenuSeparator />
+      </>
+  }
+
+
+  <DropdownMenuItem asChild>
+    <Link
+      href="/orders"
+      className="group flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
+    >
+      <FaShoppingBag className="text-primary/80 group-hover:text-black transition-colors" />
+      Orders
+    </Link>
+  </DropdownMenuItem>
+
+  <DropdownMenuSeparator />
+
+  <DropdownMenuItem asChild>
+    <Link
+      href="/wishlist"
+      className="group flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
+    >
+      <FaHeart className="text-primary/80 group-hover:text-black transition-colors" />
+      Wishlist
+    </Link>
+  </DropdownMenuItem>
+
+  <DropdownMenuSeparator />
+
+  <DropdownMenuItem asChild>
+    <Link
+      href="/settings"
+      className="group flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
+    >
+      <FaCog className="text-primary/80 group-hover:text-black transition-colors" />
+      Settings
+    </Link>
+  </DropdownMenuItem>
+
+  <DropdownMenuSeparator />
+
+  <DropdownMenuItem asChild>
+    <Link
+      href="/login"
+      className="group flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
+    >
+      <FaSignInAlt className="text-primary/80 group-hover:text-black transition-colors" />
+      Login
+    </Link>
+  </DropdownMenuItem>
+
+  {user && (
+    <>
+      <DropdownMenuSeparator />
+
+      <DropdownMenuItem asChild>
+        <button className="group w-full text-left flex items-center gap-2 text-red-500 hover:text-red-600 transition-colors">
+          <FaSignOutAlt className="group-hover:text-black transition-colors" /> Logout
+        </button>
+      </DropdownMenuItem>
+    </>
+  )}
+</DropdownMenuContent>
+
+
             </DropdownMenu>
 
             {/* Mobile Menu Button */}
@@ -125,16 +200,28 @@ export default function Header() {
         {/* Mobile Navigation */}
         {isOpen && (
           <nav className="md:hidden pb-4 space-y-2">
-            <Link href="/shop" className="block px-2 py-2 hover:bg-secondary rounded-lg">
+            <Link
+              href="/shop"
+              className="block px-2 py-2 hover:bg-secondary rounded-lg"
+            >
               Shop
             </Link>
-            <Link href="/about" className="block px-2 py-2 hover:bg-secondary rounded-lg">
+            <Link
+              href="/about"
+              className="block px-2 py-2 hover:bg-secondary rounded-lg"
+            >
               About
             </Link>
-            <Link href="/contact" className="block px-2 py-2 hover:bg-secondary rounded-lg">
+            <Link
+              href="/contact"
+              className="block px-2 py-2 hover:bg-secondary rounded-lg"
+            >
               Contact
             </Link>
-            <Link href="/account" className="block px-2 py-2 hover:bg-secondary rounded-lg">
+            <Link
+              href="/account"
+              className="block px-2 py-2 hover:bg-secondary rounded-lg"
+            >
               My Account
             </Link>
           </nav>
