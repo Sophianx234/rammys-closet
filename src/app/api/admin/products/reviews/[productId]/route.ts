@@ -1,8 +1,10 @@
 import { connectToDatabase } from "@/lib/connectDB";
-import { Review } from "@/models/Review";
+import { IReview, Review } from "@/models/Review";
 import { NextRequest, NextResponse } from "next/server";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import mongoose from "mongoose";
+import { sendMail } from "@/lib/mail";
+import { reviewThankYouEmail } from "@/lib/email-templates";
 
 
 
@@ -83,8 +85,26 @@ export async function POST(
       product: params.productId,
       rating,
       comment,
-    })
-    const populatedReview = await review.populate("user", "-password");
+    });
+    
+const populatedReview: = await Review.findById(review._id)
+  .populate("user", "-password")
+  .populate("product");
+  if(!populatedReview){
+    return NextResponse.json(
+      { error: "Failed to populate review data" },
+      { status: 500 }
+    );
+  }
+     await sendMail({
+      to: populatedReview.user.email,
+      subject: `Thank you for reviewing ${populatedReview.product.name}!`,
+      html: reviewThankYouEmail(
+        populatedReview.user.name,
+        populatedReview.product.name,
+        rating
+      ),
+    });
 
     return NextResponse.json(populatedReview, { status: 201 });
   } catch (err: any) {

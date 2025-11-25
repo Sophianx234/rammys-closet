@@ -7,6 +7,8 @@ import { encryptPassword } from "@/lib/bcrypt";
 import { signToken } from "@/lib/jwtConfig";
 import { setAuthCookie } from "@/lib/setAuthCookie";
 import { uploadBufferToCloudinary } from "@/lib/cloudinary";
+import { sendMail } from "@/lib/mail";
+import { welcomeEmailTemplate } from "@/lib/email-templates";
 
 export async function POST(req: NextRequest) {
   await connectToDatabase();
@@ -46,6 +48,12 @@ export async function POST(req: NextRequest) {
       name,
       email,
       password: hashedPassword,
+    });
+
+     await sendMail({
+      to: email,
+      subject: "Welcome to Rammy's Closet!",
+      html: welcomeEmailTemplate(name),
     });
 
     const token = await signToken(user);

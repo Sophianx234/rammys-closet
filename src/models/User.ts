@@ -11,7 +11,7 @@ export interface IUser extends Document {
   email: string;
   password: string;
   profile?: string;
-  role: "customer" | "admin"| 'dispatcher'|'buyer';
+  role: "customer" | "admin" | "dispatcher" | "buyer";
   address?: {
     street?: string;
     city?: string;
@@ -22,6 +22,8 @@ export interface IUser extends Document {
   phone?: string;
   wishlist: mongoose.Types.ObjectId[];
   cart: ICartItem[];
+  resetPasswordToken: string,
+    resetPasswordExpires: number,
   createdAt: Date;
   updatedAt: Date;
 }
@@ -32,7 +34,11 @@ const userSchema = new Schema<IUser>(
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     profile: String,
-    role: { type: String, enum: ["customer", "admin","buyer"], default: "customer" },
+    role: {
+      type: String,
+      enum: ["customer", "admin", "buyer"],
+      default: "customer",
+    },
     address: {
       street: String,
       city: String,
@@ -48,6 +54,8 @@ const userSchema = new Schema<IUser>(
         quantity: { type: Number, default: 1 },
       },
     ],
+    resetPasswordToken: String,
+    resetPasswordExpires: Number,
   },
   { timestamps: true }
 );

@@ -1,3 +1,4 @@
+import { User } from "@/models/User";
 import nodemailer from "nodemailer";
 
 export const transporter = nodemailer.createTransport({
@@ -23,7 +24,7 @@ export async function sendMail({
 }) {
   try {
     const info = await transporter.sendMail({
-      from: `"WunkatHomes" <${process.env.EMAIL_USER}>`,
+      from: `"Rammy's Closet" <${process.env.EMAIL_USER}>`,
       to,
       subject,
       html,
@@ -35,5 +36,45 @@ export async function sendMail({
   } catch (error) {
     console.error("❌ Email send error:", error);
     return { success: false, error };
+  }
+}
+
+
+
+export async function sendMailToAllUsers({
+  subject,
+  html,
+  text,
+}: {
+  subject: string;
+  html: string;
+  text?: string;
+}) {
+  // Get all emails
+  const users = await User.find({}, "email");
+
+  if (!users.length) {
+    console.log("⚠️ No users found. Skipping bulk email.");
+    return;
+  }
+
+  const BATCH_SIZE = 30; // safe for SMTP servers
+  const allEmails = users.map((u) => u.email);
+
+  for (let i = 0; i < allEmails.length; i += BATCH_SIZE) {
+    const batch = allEmails.slice(i, i + BATCH_SIZE);
+
+    await Promise.all(
+      batch.map((email) =>
+        sendMail({
+          to: email,
+          subject,
+          html,
+          text,
+        })
+      )
+    );
+
+    console.log(`📩 Sent batch (${batch.length}) successfully`);
   }
 }

@@ -4,6 +4,10 @@ import { uploadBufferToCloudinary } from "@/lib/cloudinary";
 import slugify from "slugify";
 import  "@/models/Category";
 import { Product } from "@/models/Product";
+import { sendMail, sendMailToAllUsers } from "@/lib/mail";
+import { User } from "@/models/User";
+import { newProductAnnouncementEmail } from "@/lib/email-templates";
+import { Category } from "@/models/Category";
 
 export async function GET() {
   try {
@@ -109,6 +113,31 @@ export async function POST(req: NextRequest) {
       variants,
       isFeatured,
     });
+
+    const productCategory = await Category.findById(newProduct.category)
+    if(!productCategory){
+      return NextResponse.json(
+        { error: "cannot find product category" },
+        { status: 500 }
+      );
+    }
+
+   const html = newProductAnnouncementEmail({
+      name: newProduct.name,
+      description: newProduct.description,
+      price: newProduct.price,
+      image: uploadedImages[0], // first image as main product image
+      url: `${process.env.NEXT_PUBLIC_APP_URL}/products/${newProduct.slug}`,
+      category: productCategory.name,
+      features: newProduct.features || [],
+    });
+
+    await sendMailToAllUsers({
+      subject: `New Product Added: ${newProduct.name}`,
+      html,
+      text: `${newProduct.name} - ${newProduct.description}`,
+    });
+
 
     return NextResponse.json(newProduct, { status: 201 });
   } catch (err: any) {

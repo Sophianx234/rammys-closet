@@ -186,7 +186,7 @@ export default function ProductClient({ product }: { product: IProduct }) {
               <div className="flex items-center gap-3 mb-4">
                 <div className="flex items-center gap-1">
                   <span className="text-primary font-semibold text-lg">
-                    {userRating.toFixed(1)}
+                    {product.rating.toFixed(1)}
                   </span>
                   <div className="flex gap-0.5">
                     {[1, 2, 3, 4, 5].map((value) => (
