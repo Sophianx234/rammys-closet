@@ -1,121 +1,135 @@
+// app/shop/page.tsx
 "use client";
 
-import Header from "@/components/header";
-import Footer from "@/components/footer";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Heart, ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { Heart, ChevronDown, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useDashStore } from "@/lib/store";
+import ProductCard from "./product-card";
 
-const allProducts = [
-  {
-    id: 1,
-    name: "Luxury Lipstick - Crimson",
-    price: 2500,
-    category: "Lips",
-    rating: 4.8,
-    reviews: 24,
-    image: "/luxury-lipstick-crimson-red.jpg",
-  },
-  {
-    id: 2,
-    name: "Silk Eye Shadow Palette",
-    price: 3500,
-    category: "Eyes",
-    rating: 4.9,
-    reviews: 31,
-    image: "/eyeshadow-palette-luxury-cosmetics.jpg",
-  },
-  {
-    id: 3,
-    name: "Foundation - Porcelain",
-    price: 2800,
-    category: "Face",
-    rating: 4.7,
-    reviews: 19,
-    image: "/luxury-foundation-porcelain-makeup.jpg",
-  },
-  {
-    id: 4,
-    name: "Shimmer Setting Powder",
-    price: 1800,
-    category: "Face",
-    rating: 4.6,
-    reviews: 15,
-    image: "/luxury-setting-powder-shimmer.jpg",
-  },
-  {
-    id: 5,
-    name: "Velvet Matte Lipstick - Nude",
-    price: 2400,
-    category: "Lips",
-    rating: 4.8,
-    reviews: 22,
-    image: "/luxury-lipstick-crimson-red.jpg",
-  },
-  {
-    id: 6,
-    name: "Hydrating Face Primer",
-    price: 2100,
-    category: "Face",
-    rating: 4.7,
-    reviews: 18,
-    image: "/luxury-cosmetics-beauty-products.jpg",
-  },
-  {
-    id: 7,
-    name: "Liquid Eyeliner - Black",
-    price: 1500,
-    category: "Eyes",
-    rating: 4.9,
-    reviews: 28,
-    image: "/eyeshadow-palette-luxury-cosmetics.jpg",
-  },
-  {
-    id: 8,
-    name: "Glow Highlighter Stick",
-    price: 2200,
-    category: "Face",
-    rating: 4.8,
-    reviews: 20,
-    image: "/luxury-cosmetics-beauty-products.jpg",
-  },
-];
+interface Product {
+  _id: string;
+  name: string;
+  price: number;
+  category: {
+    name: string;
+    slug: string;
+  };
+  rating: number;
+  reviewsCount: number;
+  images: string[];
+  inStock: boolean;
+}
+
+interface Category {
+  _id: string;
+  name: string;
+  slug: string;
+  productCount: number;
+}
 
 export default function ShopPage() {
-  const [favorites, setFavorites] = useState<number[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [favorites, setFavorites] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState("featured");
+  const [priceRange, setPriceRange] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const {user} = useDashStore()
+  const [totalPages, setTotalPages] = useState(1);
 
-  const categories = ["Face", "Eyes", "Lips"];
+  // Fetch categories on mount
 
-  const filteredProducts = selectedCategory
-    ? allProducts.filter((p) => p.category === selectedCategory)
-    : allProducts;
 
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
-    switch (sortBy) {
-      case "price-low":
-        return a.price - b.price;
-      case "price-high":
-        return b.price - a.price;
-      case "rating":
-        return b.rating - a.rating;
-      default:
-        return 0;
+  // Fetch products when filters change
+  useEffect(() => {
+    fetchProducts();
+  }, [selectedCategory, sortBy, priceRange, page]);
+
+  useEffect(() => {
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch("/api/admin/categories");
+      if (res.ok) {
+        const data = await res.json();
+        console.log("Fetched categories:", data);
+        setCategories(data);
+      }
+    } catch (error) {
+      console.error("Error fetching categories:", error);
     }
-  });
+  }
+  fetchCategories()},[])
 
-  const toggleFavorite = (id: number) => {
-    setFavorites((prev) =>
-      prev.includes(id) ? prev.filter((fav) => fav !== id) : [...prev, id]
-    );
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        sortBy,
+        page: page.toString(),
+        limit: "12",
+      });
+
+      if (selectedCategory) {
+        params.append("category", selectedCategory);
+      }
+
+      if (priceRange) {
+        const [min, max] = priceRange.split("-");
+        if (min) params.append("minPrice", min);
+        if (max) params.append("maxPrice", max);
+      }
+
+      const res = await fetch(`/api/products?${params}`);
+      const data = await res.json();
+
+      if (data.success) {
+        setProducts(data.data.products);
+        setTotalPages(data.data.pagination.pages);
+      }
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  useEffect(() => {
+  const fetchWishlist = async () => {
+    try {
+      const res = await fetch("/api/wishlist");
+      const data = await res.json();
+      if (data.success) {
+        setFavorites(data.data.map((p: Product) => p._id));
+      }
+    } catch (error) {
+      console.error("Error fetching wishlist:", error);
+    }
+  }
+fetchWishlist()
+},[]);
+
+  
+
+  const handlePriceFilter = (range: string) => {
+    setPriceRange(range === priceRange ? null : range);
+    setPage(1);
+  };
+
+  const clearFilters = () => {
+    setSelectedCategory(null);
+    setPriceRange(null);
+    setSortBy("featured");
+    setPage(1);
   };
 
   return (
     <main>
-
       {/* Page Header */}
       <section className="bg-secondary border-b border-border py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -139,7 +153,10 @@ export default function ShopPage() {
                 <h3 className="font-semibold text-lg mb-4">Categories</h3>
                 <div className="space-y-2">
                   <button
-                    onClick={() => setSelectedCategory(null)}
+                    onClick={() => {
+                      setSelectedCategory(null);
+                      setPage(1);
+                    }}
                     className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${
                       selectedCategory === null
                         ? "bg-primary text-primary-foreground"
@@ -150,15 +167,23 @@ export default function ShopPage() {
                   </button>
                   {categories.map((cat) => (
                     <button
-                      key={cat}
-                      onClick={() => setSelectedCategory(cat)}
+                      key={cat._id}
+                      onClick={() => {
+                        setSelectedCategory(cat.slug);
+                        setPage(1);
+                      }}
                       className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${
-                        selectedCategory === cat
+                        selectedCategory === cat.slug
                           ? "bg-primary text-primary-foreground"
                           : "hover:bg-secondary"
                       }`}
                     >
-                      {cat}
+                      <div className="flex justify-between items-center">
+                        <span>{cat.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {cat.productCount}
+                        </span>
+                      </div>
                     </button>
                   ))}
                 </div>
@@ -167,26 +192,30 @@ export default function ShopPage() {
               {/* Price Range */}
               <div>
                 <h3 className="font-semibold text-lg mb-4">Price Range</h3>
-                <div className="space-y-2 text-sm text-muted-foreground">
-                  <div className="flex justify-between items-center p-2 hover:bg-secondary rounded cursor-pointer">
-                    <span>Under ₵2,000</span>
-                  </div>
-                  <div className="flex justify-between items-center p-2 hover:bg-secondary rounded cursor-pointer">
-                    <span>₵2,000 - ₵3,000</span>
-                  </div>
-                  <div className="flex justify-between items-center p-2 hover:bg-secondary rounded cursor-pointer">
-                    <span>₵3,000+</span>
-                  </div>
+                <div className="space-y-2 text-sm">
+                  {[
+                    { label: "Under ₵2,000", value: "0-2000" },
+                    { label: "₵2,000 - ₵3,000", value: "2000-3000" },
+                    { label: "₵3,000+", value: "3000-999999" },
+                  ].map((range) => (
+                    <button
+                      key={range.value}
+                      onClick={() => handlePriceFilter(range.value)}
+                      className={`w-full text-left p-2 rounded transition-colors ${
+                        priceRange === range.value
+                          ? "bg-primary text-primary-foreground"
+                          : "hover:bg-secondary text-muted-foreground"
+                      }`}
+                    >
+                      {range.label}
+                    </button>
+                  ))}
                 </div>
               </div>
 
               {/* Clear Filters */}
-              {selectedCategory && (
-                <Button
-                  onClick={() => setSelectedCategory(null)}
-                  variant="outline"
-                  className="w-full"
-                >
+              {(selectedCategory || priceRange) && (
+                <Button onClick={clearFilters} variant="outline" className="w-full">
                   Clear Filters
                 </Button>
               )}
@@ -198,18 +227,22 @@ export default function ShopPage() {
             {/* Sort */}
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-border">
               <p className="text-sm text-muted-foreground">
-                Showing {sortedProducts.length} products
+                {loading ? "Loading..." : `Showing ${products.length} products`}
               </p>
               <div className="relative">
                 <select
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
+                  onChange={(e) => {
+                    setSortBy(e.target.value);
+                    setPage(1);
+                  }}
                   className="appearance-none bg-card border border-border rounded-lg px-4 py-2 pr-10 text-sm cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary"
                 >
                   <option value="featured">Featured</option>
                   <option value="price-low">Price: Low to High</option>
                   <option value="price-high">Price: High to Low</option>
                   <option value="rating">Top Rated</option>
+                  <option value="newest">Newest</option>
                 </select>
                 <ChevronDown
                   size={16}
@@ -218,73 +251,58 @@ export default function ShopPage() {
               </div>
             </div>
 
-            {/* Products */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sortedProducts.map((product) => (
-                <Card
-                  key={product.id}
-                  className="bg-card border-border overflow-hidden hover:border-primary transition-colors group"
-                >
-                  <div className="relative overflow-hidden bg-secondary h-64">
-                    <img
-                      src={product.image || "/placeholder.svg"}
-                      alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <button
-                      onClick={() => toggleFavorite(product.id)}
-                      className="absolute top-3 right-3 p-2 bg-background/80 backdrop-blur rounded-full hover:bg-background transition-colors"
+            {/* Loading State */}
+            {loading ? (
+              <div className="flex justify-center items-center py-20">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <>
+                {/* Products */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {products.map((product) => (
+                    <ProductCard product={product} />
+                  ))}
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex justify-center gap-2 mt-8">
+                    <Button
+                      variant="outline"
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={page === 1}
                     >
-                      <Heart
-                        size={18}
-                        className={
-                          favorites.includes(product.id)
-                            ? "fill-primary text-primary"
-                            : ""
-                        }
-                      />
-                    </button>
-                  </div>
-
-                  <div className="p-4 space-y-3">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider">
-                      {product.category}
-                    </p>
-                    <h3 className="font-semibold text-sm line-clamp-2">
-                      {product.name}
-                    </h3>
-
-                    {/* Rating */}
-                    <div className="flex items-center gap-1 text-xs">
-                      <span className="text-primary font-semibold">
-                        {product.rating}
-                      </span>
-                      <span className="text-muted-foreground">
-                        ({product.reviews})
-                      </span>
+                      Previous
+                    </Button>
+                    <div className="flex items-center gap-2">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                        (p) => (
+                          <Button
+                            key={p}
+                            variant={page === p ? "default" : "outline"}
+                            onClick={() => setPage(p)}
+                            size="sm"
+                          >
+                            {p}
+                          </Button>
+                        )
+                      )}
                     </div>
-
-                    <div className="flex items-center justify-between pt-2 border-t border-border">
-                      <span className="text-primary font-semibold">
-                        ₵{product.price.toLocaleString()}
-                      </span>
-                      <Link href={`/product/${product.id}`}>
-                        <Button
-                          size="sm"
-                          className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                        >
-                          View
-                        </Button>
-                      </Link>
-                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={page === totalPages}
+                    >
+                      Next
+                    </Button>
                   </div>
-                </Card>
-              ))}
-            </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>
-
     </main>
   );
 }

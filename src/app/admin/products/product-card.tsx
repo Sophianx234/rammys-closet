@@ -14,6 +14,7 @@ import {
 import {
   Edit,
   Eye,
+  MessageCircle,
   Pencil,
   Star,
   Tag,
@@ -157,12 +158,12 @@ export function ProductCard({ product, index }) {
 
                 {product.rating > 0 && (
                   <div className="flex items-center gap-1 text-xs">
-                    <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                    <span className="font-semibold text-gray-200">
+                    <span className="font-semibold text-gray-500 ">
                       {product.rating.toFixed(1)}
                     </span>
-                    <span className="text-gray-500">
-                      ({product.reviewsCount})
+                    <Star className="w-3 h-3 text-gray-500" />
+                    <span className="text-gray-500 flex items-center gap-1">
+                      ({product.reviewsCount})<MessageCircle className="w-3 h-3" />
                     </span>
                   </div>
                 )}

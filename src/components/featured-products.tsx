@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Heart, Star } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Badge } from "./ui/badge";
+import ProductCard from "@/app/(homepage)/shop/product-card";
 
 /* const featuredProducts = [
   {
@@ -89,56 +90,7 @@ export default function FeaturedProducts() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {products.map((product) => (
-            <div
-              key={product._id}
-              className="border  rounded-md overflow-hidden hover:border-primary transition-colors "
-            >
-              <div className="relative overflow-hidden bg-secondary h-64">
-                <Badge className="absolute top-3 left-3 bg-primary text-black text-xs px-3 py-1 shadow-md">
-                <Star className="w-3 h-3 mr-1 " /> Featured
-              </Badge>
-                <img
-                  src={product.images[0] || "/placeholder.svg"}
-                  alt={product.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                <button
-                  onClick={() => toggleFavorite(product._id)}
-                  className="absolute top-3 right-3 p-2 bg-background/80 backdrop-blur rounded-full hover:bg-background transition-colors"
-                >
-                  <Heart
-                    size={18}
-                    className={
-                      favorites.includes(product._id)
-                        ? "fill-primary text-primary"
-                        : ""
-                    }
-                  />
-                </button>
-              </div>
-
-              <div className="p-4 space-y-3">
-                <p className="text-xs text-muted-foreground uppercase tracking-wider">
-                  {product.category?.name || "Uncategorized"}
-                </p>
-                <h3 className="font-semibold text-sm line-clamp-2">
-                  {product.name}
-                </h3>
-                <div className="flex items-center justify-between pt-2 border-t border-border">
-                  <span className="text-primary font-semibold">
-                    ₵{product.price.toLocaleString()}
-                  </span>
-                  <Link href={`/product/${product._id}`}>
-                    <Button
-                      size="sm"
-                      className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                    >
-                      View
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </div>
+            <ProductCard product={product}/>
           ))}
         </div>
 

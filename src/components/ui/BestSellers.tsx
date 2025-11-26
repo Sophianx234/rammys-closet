@@ -2,10 +2,11 @@
 
 import { motion } from "framer-motion";
 import { Heart } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card } from "./card";
 import { Button } from "./button";
+import ProductCard from "@/app/(homepage)/shop/product-card";
 
 const featuredProducts = [
   {
@@ -39,13 +40,29 @@ const featuredProducts = [
 ];
 
 export default function Bestsellers() {
-  const [favorites, setFavorites] = useState<number[]>([]);
+  const [products,setProducts ] = useState<number[]>([]);
+  const [loading,setLoading ] = useState(true);
 
-  const toggleFavorite = (id: number) => {
-    setFavorites((prev) =>
-      prev.includes(id) ? prev.filter((fid) => fid !== id) : [...prev, id]
-    );
-  };
+  useEffect(() => {
+    const fetchBestSellers = async()=>{
+      try{
+
+        const res = await fetch('/api/products/best-sellers');
+        const data = await res.json();
+        console.log('Best Sellers:', data);
+        // Assuming the API returns an array of product IDs
+        // setProducts(json.map((product:any)=>product._id));
+      }catch(error){
+        console.error('Error fetching best sellers:', error);
+      }finally{
+        setLoading(false);
+      }
+
+    };
+  }, []);
+
+
+  if(loading)return <>loading...</>
 
   return (
     <section className="relative bg-gradient-to-b from-black via-zinc-900 to-zinc-950 text-white py-24">
@@ -68,62 +85,8 @@ export default function Bestsellers() {
 
         {/* Product Grid */}
         <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-10">
-          {featuredProducts.map((product, i) => (
-            <motion.div
-              key={product.id}
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1, duration: 0.6 }}
-            >
-              <Card
-                key={product.id}
-                className="bg-card border-border overflow-hidden hover:border-primary transition-colors group"
-              >
-                <div className="relative overflow-hidden bg-secondary h-64">
-                  <img
-                    src={product.image || "/placeholder.svg"}
-                    alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <button
-                    onClick={() => toggleFavorite(product.id)}
-                    className="absolute top-3 right-3 p-2 bg-background/80 backdrop-blur rounded-full hover:bg-background transition-colors"
-                  >
-                    <Heart
-                      size={18}
-                      className={
-                        favorites.includes(product.id)
-                          ? "fill-primary text-primary"
-                          : ""
-                      }
-                    />
-                  </button>
-                </div>
-
-                <div className="p-4 space-y-3">
-                  <p className="text-xs text-left text-muted-foreground uppercase tracking-wider">
-                    {product.category}
-                  </p>
-                  <h3 className="font-semibold text-left text-sm line-clamp-2">
-                    {product.name}
-                  </h3>
-                  <div className="flex items-center justify-between pt-2 border-t border-border">
-                    <span className="text-primary font-semibold">
-                      ₵{product.price.toLocaleString()}
-                    </span>
-                    <Link href={`/product/${product.id}`}>
-                      <Button
-                        size="sm"
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                      >
-                        View
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
+          {products.map((product, i) => (
+           <ProductCard product={product}/>
           ))}
         </div>
       </div>
