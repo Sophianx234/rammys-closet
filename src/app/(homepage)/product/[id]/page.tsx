@@ -1,9 +1,8 @@
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import ProductClient from "./product-client";
-export default async function ProductPage(props: { params: Promise<{ id: string }> }) {
-  const { id } = await props.params;
-
+export default async function ProductPage(props: { params: { id: string } }) {
+  const { id } = props.params;
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_BASE_URL}/api/admin/products/${id}`,
     { cache: "no-store" }

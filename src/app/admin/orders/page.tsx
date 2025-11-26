@@ -121,9 +121,8 @@ export const STATUS_CONFIG: Record<
   { label: string; color: string; icon: any }
 > = {
   processing: { label: "Processing", color: "bg-blue-50 text-blue-700", icon: Clock },
-  awaiting_payment: { label: "Awaiting Payment", color: "bg-yellow-50 text-yellow-700", icon: Clock },
   paid: { label: "Paid", color: "bg-emerald-50 text-emerald-700", icon: CreditCard },
-  awaiting_pickup: { label: "Awaiting Pickup", color: "bg-indigo-50 text-indigo-700", icon: Package },
+  ready_for_pickup: { label: "Ready for Pickup", color: "bg-indigo-50 text-indigo-700", icon: Package },
   packed: { label: "Packed", color: "bg-indigo-50 text-indigo-700", icon: Package },
   ready_for_dispatch: { label: "Ready for Dispatch", color: "bg-violet-50 text-violet-700", icon: Truck },
   dispatched: { label: "Dispatched", color: "bg-purple-50 text-purple-700", icon: Truck },

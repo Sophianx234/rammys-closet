@@ -59,7 +59,7 @@ const handleClearCart = async () => {
 };
 
 
-if (isLoaded) {
+if (!isLoaded) {
   return (
     <div className="h-dvh flex items-center justify-center">
       <GridLoader size={24} color="#ffaf9f" />

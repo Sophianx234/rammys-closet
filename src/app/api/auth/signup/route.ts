@@ -1,14 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
-import { User } from "@/models/User";
-import fs from "fs";
-import path from "path";
-import { connectToDatabase } from "@/lib/connectDB";
 import { encryptPassword } from "@/lib/bcrypt";
+import { connectToDatabase } from "@/lib/connectDB";
+import { welcomeEmail } from "@/lib/email-templates";
 import { signToken } from "@/lib/jwtConfig";
-import { setAuthCookie } from "@/lib/setAuthCookie";
-import { uploadBufferToCloudinary } from "@/lib/cloudinary";
 import { sendMail } from "@/lib/mail";
-import { welcomeEmailTemplate } from "@/lib/email-templates";
+import { setAuthCookie } from "@/lib/setAuthCookie";
+import { User } from "@/models/User";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   await connectToDatabase();
@@ -53,7 +50,7 @@ export async function POST(req: NextRequest) {
      await sendMail({
       to: email,
       subject: "Welcome to Rammy's Closet!",
-      html: welcomeEmailTemplate(name),
+      html: welcomeEmail(name),
     });
 
     const token = await signToken(user);

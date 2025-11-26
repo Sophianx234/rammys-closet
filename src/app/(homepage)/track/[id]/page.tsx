@@ -1,39 +1,11 @@
+'use server'
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import TrackOrderCard from "@/components/track-order-card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-const mockTrackingData = {
-  "1": {
-    orderNumber: "RM-001",
-    total: 45000,
-    items: [
-      { name: "Luxury Lipstick - Red", quantity: 1, price: 15000 },
-      { name: "Foundation - Shade 02", quantity: 1, price: 20000 },
-      { name: "Mascara - Black", quantity: 1, price: 10000 },
-    ],
-    timeline: [
-      {
-        status: "processing" as const,
-        date: "2025-10-15T10:00:00",
-        description: "Order confirmed",
-      },
-      {
-        status: "shipped" as const,
-        date: "2025-10-17T14:30:00",
-        location: "Lagos Distribution Center",
-        description: "Package dispatched",
-      },
-      {
-        status: "delivered" as const,
-        date: "2025-10-18T16:45:00",
-        location: "Your address",
-        description: "Delivered",
-      },
-    ],
-  },
-};
+
 
 export default async function TrackOrderPage({
   params,
@@ -41,12 +13,20 @@ export default async function TrackOrderPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const order = mockTrackingData[id as keyof typeof mockTrackingData];
+
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/orders/user/${id}`, {
+    cache: "no-store",
+  });
+
+  const data = await res.json();
+  console.log("Fetched order:", data);
+  const order = data.order;
+  console.log("Order timeline details:", );
+  
 
   if (!order) {
     return (
       <main className="min-h-screen bg-background">
-        <Header />
         <div className="max-w-2xl mx-auto px-4 py-12 text-center">
           <h1 className="text-3xl font-bold mb-4">Order Not Found</h1>
           <p className="text-muted-foreground mb-6">
@@ -58,7 +38,6 @@ export default async function TrackOrderPage({
             </Button>
           </Link>
         </div>
-        <Footer />
       </main>
     );
   }
@@ -84,12 +63,17 @@ export default async function TrackOrderPage({
           <div className="bg-background rounded-lg p-6 mb-8">
             <h2 className="font-semibold mb-4">Order Timeline</h2>
             {order.timeline.map((event, index) => (
-              <TrackOrderCard key={index} {...event} />
+              <TrackOrderCard
+  key={index}
+  {...event}
+  nextStatus={order.timeline[index + 1]?.status || null}
+/>
+
             ))}
           </div>
 
           <div>
-            <h2 className="font-semibold mb-4">Order Items</h2>
+            <h2 className="font-semibold mb-4">Ordered Items</h2>
             <div className="space-y-3">
               {order.items.map((item, index) => (
                 <div

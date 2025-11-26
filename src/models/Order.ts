@@ -2,10 +2,8 @@ import mongoose, { Schema, Document, Model } from "mongoose";
 
 export type OrderStatus =
   | "processing"
-  | "awaiting_payment"
-  | "paid"
-  | "awaiting_pickup"
   | "packed"
+  |'ready_for_pickup'
   | "ready_for_dispatch"
   | "dispatched"
   | "in_transit"
@@ -92,9 +90,7 @@ const orderSchema = new Schema<IOrder>(
       type: String,
       enum: [
         "processing",
-        "awaiting_payment",
-        "paid",
-        "awaiting_pickup",
+        "ready_for_pickup",
         "packed",
         "ready_for_dispatch",
         "dispatched",

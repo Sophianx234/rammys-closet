@@ -1,38 +1,203 @@
 import next from "next";
 
-export function welcomeEmailTemplate(name: string) {
+export function welcomeEmail(name: string) {
   return `
-  <div style="font-family: Arial, sans-serif; padding: 20px; background: #f7f7f7;">
-    <div style="max-width: 600px; margin: auto; background: #ffffff; padding: 30px; border-radius: 10px;">
-      
-      <h2 style="color: #222; text-align: center;">👗 Welcome to <span style="color:#e91e63;">Rammy's Closet</span>, ${name}!</h2>
+  <div style="font-family: 'Segoe UI', Arial, sans-serif; background:#faf7f7; padding: 40px 0;">
+    <div style="
+        max-width: 600px;
+        margin: auto;
+        background: #ffffff;
+        padding: 35px 30px;
+        border-radius: 14px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      "
+    >
 
-      <p style="font-size: 15px; color: #444;">
-        We're excited to have you join our fashion community. Your account has been created successfully,
-        and you're all set to start discovering trendy outfits, exclusive deals, and the latest collections.
+      <!-- Logo -->
+      <div style="text-align: center; margin-bottom: 25px;">
+        <img 
+          src="YOUR_LOGO_URL_HERE" 
+          alt="Rammy's Closet Logo"
+          style="width: 120px; height: auto;"
+        />
+      </div>
+
+      <h2 style="color:#333; text-align:center; font-size:22px; font-weight:600;">
+        Welcome to <span style="color:#ff8a7a;">Rammy’s Closet</span>!
+      </h2>
+
+      <p style="font-size: 15px; color:#555; line-height: 1.7;">
+        Hi ${name},<br><br>
+        We're absolutely thrilled to have you join our beauty and fashion family!
+        From skincare essentials to stunning fashion pieces, you’re now part of a vibrant
+        community that loves style, self-care, and confidence.
       </p>
 
-      <div style="text-align: center; margin: 25px 0;">
-        <a href="${process.env.NEXT_PUBLIC_APP_URL}/shop" 
-           style="background:#e91e63; color:#fff; padding:12px 22px; text-decoration:none; border-radius:6px; font-weight:bold;">
+      <p style="font-size: 15px; color:#555; line-height: 1.7;">
+        As a new member, you’ll be the first to know about exclusive deals, new product drops, 
+        special discounts, and beauty tips curated just for you.
+      </p>
+
+      <!-- CTA Button -->
+      <div style="text-align:center; margin:30px 0;">
+        <a 
+          href="${process.env.NEXT_PUBLIC_APP_URL}/shop"
+          style="
+            background:#ff8a7a;
+            color:#fff;
+            padding:13px 26px;
+            border-radius:8px;
+            text-decoration:none;
+            font-weight:600;
+          "
+        >
           Start Shopping
         </a>
       </div>
 
-      <p style="font-size: 15px; color: #444;">
-        If you have any questions or need help with anything, our support team is always here for you.
+      <p style="font-size:14px; color:#777;">
+        We’re excited to be part of your beauty journey.  
+        If you ever need help, our team is one message away.  
+        <br><br>
+        With love,<br>
+        <strong>The Rammy’s Closet Team</strong>
       </p>
 
-      <p style="font-size: 15px; color: #444; margin-top: 30px;">
-        Warm regards, <br />
-        <strong>The Rammy's Closet Team</strong>
-      </p>
+      <hr style="border:none; border-top:1px solid #eee; margin: 30px 0;" />
+
+      <div style="text-align:center; color:#999; font-size:12px;">
+        <p style="margin:0;">&copy; ${new Date().getFullYear()} Rammy’s Closet. All rights reserved.</p>
+        <p style="margin:0;">You're receiving this email because you created an account on our store.</p>
+      </div>
 
     </div>
   </div>
   `;
 }
 
+
+
+export function orderConfirmationEmail({
+  name,
+  orderId,
+  items,
+  totalAmount,
+  address,
+}: {
+  name: string;
+  orderId: string;
+  items: { name: string; quantity: number; price: number }[];
+  totalAmount: number;
+  address: string;
+}) {
+  const itemsHtml = items
+    .map(
+      (item) => `
+        <tr>
+          <td style="padding: 8px 0; font-size:14px; color:#333;">${item.name}</td>
+          <td style="padding: 8px 0; font-size:14px; color:#333; text-align:center;">${item.quantity}</td>
+          <td style="padding: 8px 0; font-size:14px; color:#333; text-align:right;">GHS ${item.price}</td>
+        </tr>
+      `
+    )
+    .join("");
+
+  return `
+  <div style="font-family: 'Segoe UI', Arial, sans-serif; background:#faf7f7; padding: 40px 0;">
+    <div style="
+      max-width: 600px;
+      margin: auto;
+      background: #ffffff;
+      padding: 35px 30px;
+      border-radius: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    ">
+
+      <!-- Logo -->
+      <div style="text-align:center; margin-bottom:25px;">
+        <img 
+          src="YOUR_LOGO_URL_HERE"
+          alt="Rammy's Closet Logo"
+          style="width: 120px; height:auto;"
+        />
+      </div>
+
+      <h2 style="color:#333; text-align:center; font-size:22px; font-weight:600;">
+        Your Order is Confirmed! 🎉
+      </h2>
+
+      <p style="font-size:15px; color:#555; line-height:1.7;">
+        Hi ${name},<br><br>
+        Thank you for shopping with <strong>Rammy’s Closet</strong>!  
+        Your order has been successfully received and is now being processed.
+      </p>
+
+      <div style="
+        background:#fff7f6;
+        padding:15px 18px;
+        border-left:4px solid #ff8a7a;
+        border-radius:8px;
+        margin:22px 0;
+      ">
+        <p style="margin:0; font-size:14px; color:#444;">
+          <strong>Order ID:</strong> ${orderId}<br/>
+          <strong>Delivery Address:</strong> ${address}
+        </p>
+      </div>
+
+      <h3 style="font-size:17px; color:#333; margin-bottom:10px;">Order Summary</h3>
+
+      <table style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th style="text-align:left; padding-bottom:8px; font-size:14px; color:#999;">Item</th>
+            <th style="text-align:center; padding-bottom:8px; font-size:14px; color:#999;">Qty</th>
+            <th style="text-align:right; padding-bottom:8px; font-size:14px; color:#999;">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemsHtml}
+        </tbody>
+      </table>
+
+      <hr style="border:none; border-top:1px solid #eee; margin:20px 0;" />
+
+      <p style="font-size:16px; font-weight:600; color:#333; text-align:right;">
+        Total: GHS ${totalAmount}
+      </p>
+
+      <div style="text-align:center; margin:30px 0;">
+        <a 
+          href="${process.env.NEXT_PUBLIC_APP_URL}/orders/${orderId}"
+          style="
+            background:#ff8a7a;
+            color:#fff;
+            padding:13px 26px;
+            border-radius:8px;
+            text-decoration:none;
+            font-weight:600;
+          "
+        >
+          View Order Status
+        </a>
+      </div>
+
+      <p style="font-size:14px; color:#777;">
+        You’ll receive another update once your order is on its way.  
+        Thank you for choosing Rammy’s Closet!
+      </p>
+
+      <hr style="border:none; border-top:1px solid #eee; margin: 30px 0;" />
+
+      <div style="text-align:center; color:#999; font-size:12px;">
+        <p style="margin:0;">&copy; ${new Date().getFullYear()} Rammy’s Closet. All rights reserved.</p>
+        <p style="margin:0;">This email confirms your order from our store.</p>
+      </div>
+
+    </div>
+  </div>
+  `;
+}
 
 export function reviewThankYouEmail(name: string, productName: string, rating: number) {
   return `

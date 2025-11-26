@@ -4,7 +4,7 @@ import { connectToDatabase } from "@/lib/connectDB";
 import { encryptPassword } from "@/lib/bcrypt";
 import { sendMail } from "@/lib/mail";
 import { passwordResetConfirmationEmail } from "@/lib/email-templates";
-
+import crypto from "crypto";
 export async function POST(req: Request) {
   try {
     await connectToDatabase();
@@ -15,9 +15,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Token and password are required" }, { status: 400 });
     }
 
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
     // Find user with valid token
     const user = await User.findOne({
-      resetPasswordToken: token,
+      resetPasswordToken: hashedToken,
       resetPasswordExpires: { $gt: Date.now() }, // token not expired
     });
 

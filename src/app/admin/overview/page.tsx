@@ -386,7 +386,7 @@ export default function DashboardPage() {
                   <SelectContent>
                     <SelectItem value="all">All Statuses</SelectItem>
                     <SelectItem value="processing">Processing</SelectItem>
-                    <SelectItem value="paid">Paid</SelectItem>
+                    <SelectItem value="ready_for_pickup">Ready for Pickup</SelectItem>
                     <SelectItem value="in_transit">In Transit</SelectItem>
                     <SelectItem value="delivered">Delivered</SelectItem>
                     <SelectItem value="cancelled">Cancelled</SelectItem>

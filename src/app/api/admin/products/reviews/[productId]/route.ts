@@ -87,7 +87,7 @@ export async function POST(
       comment,
     });
     
-const populatedReview: = await Review.findById(review._id)
+const populatedReview = await Review.findById(review._id)
   .populate("user", "-password")
   .populate("product");
   if(!populatedReview){
