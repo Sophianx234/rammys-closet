@@ -41,6 +41,7 @@ const getStatusIcon = (key: string) => {
 
 export default function TrackOrderCard({ status, date, location, description,title,nextStatus }: TrackOrderCardProps) {
   console.log("Rendering TrackOrderCard with status:", { status, title }, nextStatus);
+  
   return (
     <div className="flex gap-4 pb-8 relative">
       <div className="flex flex-col items-center">

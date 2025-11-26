@@ -22,7 +22,11 @@ export default async function TrackOrderPage({
   console.log("Fetched order:", data);
   const order = data.order;
   console.log("Order timeline details:", );
-  
+  // Filter timeline events
+const filteredTimeline = order.timeline.filter(
+  (event) => !(event.title.toLowerCase() === "cancelled" && event.status === "upcoming")
+);
+
 
   if (!order) {
     return (
@@ -62,11 +66,12 @@ export default async function TrackOrderPage({
 
           <div className="bg-background rounded-lg p-6 mb-8">
             <h2 className="font-semibold mb-4">Order Timeline</h2>
-            {order.timeline.map((event, index) => (
+            {filteredTimeline.map((event, index) => (
+              
               <TrackOrderCard
   key={index}
   {...event}
-  nextStatus={order.timeline[index + 1]?.status || null}
+  nextStatus={filteredTimeline[index + 1]?.status || null}
 />
 
             ))}
