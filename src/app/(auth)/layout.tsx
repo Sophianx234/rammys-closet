@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 import { Geist, Geist_Mono } from "next/font/google"
 import type React from "react"
