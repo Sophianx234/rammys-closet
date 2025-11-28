@@ -195,9 +195,9 @@ fetchWishlist()
                 <h3 className="font-semibold text-lg mb-4">Price Range</h3>
                 <div className="space-y-2 text-sm">
                   {[
-                    { label: "Under ₵2,000", value: "0-2000" },
-                    { label: "₵2,000 - ₵3,000", value: "2000-3000" },
-                    { label: "₵3,000+", value: "3000-999999" },
+                    { label: "Under ₵50", value: "0-50" },
+                    { label: "₵100 - ₵200", value: "100-200" },
+                    { label: "₵350+", value: "350-999999" },
                   ].map((range) => (
                     <button
                       key={range.value}
