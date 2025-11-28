@@ -37,7 +37,7 @@ export default function SettingsPage() {
   const [profile, setProfile] = useState({
     name: "",
     email: "",
-    image: "/default-profile.png",
+    image: user?.profile,
     file: null as File | null,
   });
 
@@ -57,7 +57,7 @@ export default function SettingsPage() {
       setProfile({
         name: "",
         email: "",
-        image: user.profile || "/default-profile.png",
+        image: user.profile ,
         file: null,
       });
     }
@@ -165,7 +165,7 @@ export default function SettingsPage() {
 
     setErrors({});
     const form = new FormData();
-    form.append("userId", user._id);
+    form.append("userId", user?._id);
     form.append("current", passwords.current);
     form.append("newPass", passwords.newPass);
 
@@ -184,7 +184,24 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex items-center gap-6">
-              <img src={profile.image} className="w-20 h-20 rounded-full object-cover border" />
+             {profile.image ? (
+  <img
+    src={profile.image}
+    alt={user.name}
+    className="w-20 h-20 rounded-full object-cover border"
+  />
+) : (
+  <div className="w-20 h-20 flex items-center justify-center rounded-full bg-neutral-700 text-white font-semibold text-2xl border">
+    {user.name
+      ? user.name
+          .split(" ")
+          .map((n) => n[0])
+          .join("")
+          .toUpperCase()
+      : "U"}
+  </div>
+)}
+
               <div className="space-y-1">
                 <Label>Profile Picture</Label>
                 <div className="relative inline-block">

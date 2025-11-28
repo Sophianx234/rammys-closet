@@ -35,7 +35,7 @@ export default function Newsletter() {
 
           <p className="text-gray-300 text-lg max-w-md mx-auto md:mx-0 mb-10">
             Subscribe for curated trends, product drops, and insider beauty
-            tips from industry experts — designed to inspire your elegance.
+            tips from industry experts designed to inspire your elegance.
           </p>
 
           <motion.form
@@ -69,7 +69,7 @@ export default function Newsletter() {
           </motion.form>
 
           <p className="text-sm text-gray-500 pt-6">
-            No spam — just pure beauty inspiration.
+            No spam. Just pure beauty inspiration.
           </p>
         </motion.div>
 

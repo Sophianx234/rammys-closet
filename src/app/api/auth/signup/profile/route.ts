@@ -9,10 +9,10 @@ export const PATCH = async (req: NextRequest) => {
     await connectToDatabase();
 
     // 🔐 Get token from headers
-    const authHeader = req.headers.get("Authorization") || "";
-    const token = await getTokenFromRequest(authHeader.replace("Bearer ", ""));
-    if (!token?.userId) return NextResponse.json({ msg: "Unauthorized" }, { status: 401 });
-
+    const token = await getTokenFromRequest(req);
+    if (!token) {
+      return NextResponse.json({ msg: "Unauthorized" }, { status: 401 });
+    }
     // 📦 Parse FormData
     const form = await req.formData();
     const image = form.get("image") as File | null;

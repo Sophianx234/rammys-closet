@@ -29,6 +29,13 @@ export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const { items } = useCart();
   const { user, cart } = useDashStore();
+  function getInitials(name: string) {
+  if (!name) return "";
+  const parts = name.trim().split(" ");
+  const first = parts[0]?.[0] || "";
+  const last = parts[1]?.[0] || "";
+  return (first + last).toUpperCase();
+}
 
   return (
     <header className="sticky top-0 z-50 bg-background border-b border-border">
@@ -98,7 +105,9 @@ export default function Header() {
                   <button className="p-2 hover:bg-secondary rounded-full transition-colors">
                     <FaUserCircle className="w-6 h-6 text-foreground" />
                   </button>
-                ) : (
+                ) : !user.profile? <button className="w-9 h-9 flex items-center justify-center bg-secondary border border-primary text-primary rounded-full font-bold">
+      {getInitials(user.name) }
+    </button>: (
                   <button className="w-9 h-9 rounded-full overflow-hidden border border-border hover:ring-2 hover:ring-primary transition-all">
                     <img
                       src={user?.profile}

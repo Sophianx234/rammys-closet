@@ -8,41 +8,43 @@ import { motion } from "framer-motion"
 import Link from "next/link"
 import { FaFeatherAlt, FaHeart, FaLeaf } from "react-icons/fa"
 
-    const values = [
-    {
-      icon: <LucideDiamond className="text-rose-400 w-8 h-8" />,
-      title: "Uncompromising Quality",
-      desc: "Every product is crafted with precision and integrity because luxury begins with the details.",
-    },
-    {
-      icon: <LucideFeather className="text-emerald-500 w-8 h-8" />,
-      title: "Sustainably Chic",
-      desc: "We believe elegance and ethics can coexist beautifully thoughtful sourcing, minimal waste, maximum care.",
-    },
-    {
-      icon: <LucideSparkles className="text-amber-400 w-8 h-8" />,
-      title: "Inspired Radiance",
-      desc: "Your glow is our muse. We celebrate self-expression, creativity, and joy in every drop of color.",
-    },
-  ];
+const values = [
+  {
+    icon: <LucideDiamond className="text-rose-400 w-8 h-8" />,
+    title: "Luxury Ingredients",
+    desc: "Each product is made with premium, ethically sourced ingredients for flawless, lasting results.",
+  },
+  {
+    icon: <LucideFeather className="text-emerald-500 w-8 h-8" />,
+    title: "Glamorous",
+    desc: "We combine elegance and responsibility, creating beauty with minimal waste and maximum impact.",
+  },
+  {
+    icon: <LucideSparkles className="text-amber-400 w-8 h-8" />,
+    title: "Glow & Confidence",
+    desc: "Our curated cosmetics enhance your natural radiance and inspire confidence in every look you create.",
+  },
+];
 
-    const team = [
-    {
-      name: "Rammy Johnson",
-      role: "Founder & Creative Director",
-      image: "/imgs/f-2.jpg",
-    },
-    {
-      name: "Chioma Adeyemi",
-      role: "Head of Curation",
-      image: "/imgs/f-3.jpg",
-    },
-    {
-      name: "Amara Okonkwo",
-      role: "Sustainability Officer",
-      image: "/imgs/f-4.jpg",
-    },
-  ];
+
+const team = [
+  {
+    name: "Rammy Johnson",
+    role: "Founder & Creative Director",
+    image: "/imgs/f-2.jpg",
+  },
+  {
+    name: "Chioma Adeyemi",
+    role: "Head of Product Curation",
+    image: "/imgs/f-3.jpg",
+  },
+  {
+    name: "Amara Okonkwo",
+    role: "Sustainability & Beauty Expert",
+    image: "/imgs/f-4.jpg",
+  },
+];
+
 export default function AboutPage() {
   return (
     <main>
@@ -54,16 +56,15 @@ export default function AboutPage() {
             <div className="space-y-6">
               <div className="space-y-2">
                 <p className="text-primary text-sm font-semibold uppercase tracking-widest">Our Story</p>
-                <h1 className="text-4xl md:text-5xl font-serif font-bold">Rammys Closet: Where Beauty Meets Art</h1>
-              </div>
-              <p className="text-lg text-muted-foreground">
-                Founded on the belief that beauty should be accessible, ethically sourced, and artfully crafted. We
-                curate premium cosmetics from around the world to celebrate your unique beauty.
-              </p>
-              <p className="text-muted-foreground">
-                Each product in our collection is handpicked by our team of beauty experts who believe in quality over
-                quantity, sustainability over trends.
-              </p>
+
+                <h1 className="text-4xl md:text-5xl font-serif font-bold">The Journey of Rammy's Closet</h1>
+</div>
+<p className="text-lg text-muted-foreground">
+  Rammy's Closet began as a small dream to bring beauty that feels personal, luxurious, and ethical to everyone. What started as a passion for handpicking the finest cosmetics grew into a curated collection that celebrates individuality and self-expression.
+</p>
+<p className="text-muted-foreground">
+  Every product we offer has a story sourced thoughtfully, crafted with care, and chosen to inspire confidence. Our team of beauty enthusiasts works tirelessly to ensure each item reflects the quality, elegance, and sustainability that define Rammy's Closet.
+</p>
             </div>
             <div className="h-64 md:h-96 bg-primary/10 rounded-lg overflow-hidden flex items-center justify-center">
               <img src="/imgs/f-2.jpg" alt="About Rammys Closet" className="w-full h-full object-cover" />

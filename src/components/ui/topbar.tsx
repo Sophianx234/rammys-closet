@@ -102,64 +102,73 @@ export default function Topbar() {
         </Button>
 
         {/* Profile Dropdown */}
-        <DropdownMenu>
-                {user ? (
+       <DropdownMenu>
   <DropdownMenuTrigger asChild>
-    <button className="group flex items-center gap-3 rounded-full bg-neutral-900/70 border border-neutral-700 hover:border-neutral-600 hover:bg-neutral-800/80 transition p-1.5 pr-3">
-      <img
-        src={user?.profile || "https://i.pravatar.cc/100?img=12"}
-        alt="Admin Avatar"
-        width={36}
-        height={36}
-        className="rounded-full size-9 object-cover border border-neutral-700"
-      />
+    {user ? (
+      <button className="group flex items-center gap-3 rounded-full bg-neutral-900/70 border border-neutral-700 hover:border-neutral-600 hover:bg-neutral-800/80 transition p-1.5 pr-3">
+        {user.profile ? (
+          <img
+            src={user.profile}
+            alt={user.name}
+            width={36}
+            height={36}
+            className="rounded-full size-9 object-cover border border-neutral-700"
+          />
+        ) : (
+          <div className="w-9 h-9 flex items-center justify-center rounded-full bg-neutral-700 border border-neutral-700 text-white font-semibold text-sm">
+            {user.name
+              ? user.name
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")
+                  .toUpperCase()
+              : "U"}
+          </div>
+        )}
 
-      <div className="hidden sm:flex flex-col items-start">
-        <span className="text-sm font-semibold text-white leading-tight">
-          {user.name}
-        </span>
-        <span className="text-[11px] text-neutral-400">Admin</span>
+        <div className="hidden sm:flex flex-col items-start">
+          <span className="text-sm font-semibold text-white leading-tight">
+            {user.name || "Unknown"}
+          </span>
+          <span className="text-[11px] text-neutral-400">Admin</span>
+        </div>
+      </button>
+    ) : (
+      // Skeleton Loader
+      <div className="flex items-center gap-3 rounded-full bg-neutral-900/70 border border-neutral-700 p-1.5 pr-3 animate-pulse">
+        <div className="w-9 h-9 rounded-full bg-neutral-700/70" />
+        <div className="hidden sm:flex flex-col items-start gap-1">
+          <div className="h-3 w-20 rounded bg-neutral-700/70" />
+          <div className="h-2.5 w-14 rounded bg-neutral-700/70" />
+        </div>
       </div>
-    </button>
+    )}
   </DropdownMenuTrigger>
-) : (
-  // SKELETON HERE
-  <div className="flex items-center gap-3 rounded-full bg-neutral-900/70 border border-neutral-700 p-1.5 pr-3 animate-pulse">
-  {/* Avatar Skeleton */}
-  <div className="size-9 rounded-full bg-neutral-700/70" />
 
-  {/* Text skeleton */}
-  <div className="hidden sm:flex flex-col items-start gap-1">
-    <div className="h-3 w-20 rounded bg-neutral-700/70" />
-    <div className="h-2.5 w-14 rounded bg-neutral-700/70" />
-  </div>
-</div>
+  <DropdownMenuContent
+    align="end"
+    className="w-52 bg-neutral-900 border border-neutral-800 text-neutral-200"
+  >
+    <DropdownMenuLabel className="text-neutral-400 text-xs">
+      Account
+    </DropdownMenuLabel>
+    <DropdownMenuSeparator className="bg-neutral-800" />
 
-)}
+    <DropdownMenuItem className="hover:bg-neutral-800">
+      <Link href="/admin/settings" className="w-full flex items-center">
+        <Settings className="mr-2 h-4 w-4 text-neutral-400" /> Settings
+      </Link>
+    </DropdownMenuItem>
+    <DropdownMenuSeparator className="bg-neutral-800" />
+    <div
+      onClick={handleLogout}
+      className="text-rose-500 hover:text-rose-400 hover:bg-neutral-800 flex items-center px-3 py-2 cursor-pointer"
+    >
+      <LogOut className="mr-2 h-4 w-4" /> {loading ? "Logging out..." : "Logout"}
+    </div>
+  </DropdownMenuContent>
+</DropdownMenu>
 
-          <DropdownMenuContent
-            align="end"
-            className="w-52 bg-neutral-900 border border-neutral-800 text-neutral-200"
-          >
-            <DropdownMenuLabel className="text-neutral-400 text-xs">
-              Account
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator className="bg-neutral-800" />
-            
-            <DropdownMenuItem className="hover:bg-neutral-800">
-              <Link href='/admin/settings' className="w-full flex items-center">
-              <Settings className="mr-2 h-4 w-4 text-neutral-400" /> Settings
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator className="bg-neutral-800" />
-            <div
-              onClick={handleLogout}
-              className="text-rose-500 hover:text-rose-400 hover:bg-neutral-800"
-            >
-              <LogOut className="mr-2 h-4 w-4" /> {loading ? "Logging out..." : "Logout"}
-            </div>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
     </motion.header>
   );

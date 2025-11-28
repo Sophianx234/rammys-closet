@@ -28,6 +28,7 @@ export function SignupForm({
 
     const form = e.currentTarget;
     const formData = new FormData(form);
+    
 
     try {
       const res = await fetch("/api/auth/signup", {

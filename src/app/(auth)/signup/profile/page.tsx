@@ -4,17 +4,18 @@ import { useState, ChangeEvent, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface UploadProfileImageProps {
   token: string; // JWT token from signup/login
-  onComplete: (userData: any) => void;
 }
 
-export default function UploadProfileImage({ token, onComplete }: UploadProfileImageProps) {
+export default function UploadProfileImage() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -45,7 +46,6 @@ export default function UploadProfileImage({ token, onComplete }: UploadProfileI
 
   const handleUpload = async () => {
     if (!file) {
-      onComplete(null); // skip if no file
       return;
     }
 
@@ -62,8 +62,10 @@ export default function UploadProfileImage({ token, onComplete }: UploadProfileI
       const data = await res.json();
       if (!res.ok) {
         setError(data.msg || "Failed to upload image.");
-      } else {
-        onComplete(data.user); // return updated user
+      }
+      if(res.ok){
+        console.log('Profile image uploaded successfully:', data);
+        router.push('/admin/products');
       }
     } catch (err) {
       console.error(err);
