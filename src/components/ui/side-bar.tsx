@@ -33,7 +33,7 @@ const navItems = [
 
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
-   const [activeTab, setActiveTab] = useState("overview");
+   const [activeTab, setActiveTab] = useState("products");
    const router = useRouter()
    const [loading, setLoading] = useState(false);
 

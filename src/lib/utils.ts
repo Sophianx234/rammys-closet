@@ -12,3 +12,6 @@ export const toKey = (str) =>
     .replace(/[^a-z0-9\s]/g, "") // remove symbols
     .replace(/\s+/g, "_");       // spaces → underscores
 
+
+
+    

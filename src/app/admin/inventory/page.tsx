@@ -190,7 +190,7 @@ export default function InventoryPage() {
                       <div className="flex flex-col gap-2">
                         {p.isFeatured && (
                           <div className="flex items-center gap-1 text-xs text-primary font-medium">
-                            <Star className="w-3 h-3 fill-primary" /> Featured
+                             Featured
                           </div>
                         )}
                        
@@ -200,8 +200,8 @@ export default function InventoryPage() {
 
                     {/* Column 4: Ratings */}
                     <TableCell>
-                       <div className="flex items-center gap-1 text-sm">
-                          <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                       <div className="flex items-center justify-center gap-1 text-sm">
+                          <Star className="w-4 h-4  stroke-primary" />
                           <span className="font-medium">{p.rating || 0}</span>
                           <span className="text-xs text-gray-400">({p.reviewsCount})</span>
                        </div>

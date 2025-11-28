@@ -24,11 +24,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { IUser } from "@/models/User";
 import { useDashStore } from "@/lib/store";
+import { useRouter } from "next/navigation";
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { items } = useCart();
-  const { user, cart } = useDashStore();
+  const { user, cart,setUser } = useDashStore();
+  const router = useRouter()
   function getInitials(name: string) {
   if (!name) return "";
   const parts = name.trim().split(" ");
@@ -36,6 +39,32 @@ export default function Header() {
   const last = parts[1]?.[0] || "";
   return (first + last).toUpperCase();
 }
+
+    const handleLogout = async () => {
+  try {
+    setIsLoading(true);
+    const res = await fetch("/api/auth/logout", {
+      method: "POST",
+    });
+
+    if (!res.ok) {
+      console.error("Logout failed");
+      return;
+    }
+
+    // OPTIONAL: Clear Zustand / context state
+    
+      setUser(null);
+
+    // Next.js 15 client redirect
+    router.push("/login"); 
+  } catch (error) {
+    console.error("Logout error:", error);
+  }
+  finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <header className="sticky top-0 z-50 bg-background border-b border-border">
@@ -185,8 +214,8 @@ export default function Header() {
       <DropdownMenuSeparator />
 
       <DropdownMenuItem asChild>
-        <button className="group w-full text-left flex items-center gap-2 text-red-500 hover:text-red-600 transition-colors">
-          <FaSignOutAlt className="group-hover:text-black transition-colors" /> Logout
+        <button onClick={handleLogout} className="group w-full text-left flex items-center gap-2 text-red-500 hover:text-red-600 transition-colors">
+          <FaSignOutAlt className="group-hover:text-black transition-colors" /> {isLoading?"Logging out...":"Logout"}
         </button>
       </DropdownMenuItem>
     </>

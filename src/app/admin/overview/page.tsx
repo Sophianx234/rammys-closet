@@ -9,14 +9,14 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input"; // Added
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"; // Added
+} from "@/components/ui/select";
 import {
   Table,
   TableHeader,
@@ -34,9 +34,9 @@ import {
   Users,
   Package,
   ArrowUpRight,
-  Search, // Added
-  Filter, // Added
-  XCircle, // Added
+  Search,
+  Filter,
+  XCircle,
 } from "lucide-react";
 
 import {
@@ -72,6 +72,12 @@ interface DashboardStats {
   totalOrders: number;
   totalCustomers: number;
   lowStockCount: number;
+  descriptions: {
+    revenue?: string;
+    orders?: string;
+    customers?: string;
+    stock?: string;
+  };
 }
 
 interface RecentOrder {
@@ -91,16 +97,6 @@ interface StockAlert {
   price: number;
   images: string[];
 }
-
-const salesData = [
-  { name: "Mon", sales: 400 },
-  { name: "Tue", sales: 300 },
-  { name: "Wed", sales: 200 },
-  { name: "Thu", sales: 278 },
-  { name: "Fri", sales: 1890 },
-  { name: "Sat", sales: 2390 },
-  { name: "Sun", sales: 3490 },
-];
 
 // ------------------ Helpers -------------------
 
@@ -134,44 +130,67 @@ const statusColor = (status: OrderStatus) => {
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  
+
   // Data State
   const [stats, setStats] = useState<DashboardStats>({
     totalRevenue: 0,
     totalOrders: 0,
     totalCustomers: 0,
     lowStockCount: 0,
+    descriptions: {},
   });
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [stockAlerts, setStockAlerts] = useState<StockAlert[]>([]);
+  const [salesChartData, setSalesChartData] = useState([]);
 
   // Filter State
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
+  // ------------------ Fetch Data -------------------
+
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchAll = async () => {
       try {
-        const res = await fetch("/api/admin/dashboard", {
-          cache: "no-store",
+        const [statsRes, ordersRes, salesRes, stockRes] = await Promise.all([
+          fetch("/api/admin/dashboard/stats", { cache: "no-store" }),
+          fetch(
+            `/api/admin/dashboard/recent-orders?status=${statusFilter}&search=${searchQuery}`,
+            { cache: "no-store" }
+          ),
+          fetch("/api/admin/dashboard/sales", { cache: "no-store" }),
+          fetch("/api/admin/dashboard/stock-alerts", { cache: "no-store" }),
+        ]);
+
+        if (!statsRes.ok || !ordersRes.ok || !salesRes.ok || !stockRes.ok) {
+          throw new Error("One of the APIs failed");
+        }
+
+        const statsData = await statsRes.json();
+        const ordersData = await ordersRes.json();
+        const salesData = await salesRes.json();
+        const stockData = await stockRes.json();
+
+        setStats({
+          totalRevenue: statsData.totalRevenue,
+          totalOrders: statsData.totalOrders,
+          totalCustomers: statsData.totalCustomers,
+          lowStockCount: statsData.lowStockCount,
+          descriptions: statsData.descriptions,
         });
 
-        if (!res.ok) throw new Error("Failed to fetch");
-
-        const data = await res.json();
-
-        setStats(data.stats);
-        setRecentOrders(data.recentOrders);
-        setStockAlerts(data.stockAlerts);
-      } catch (error) {
-        console.error(error);
+        setRecentOrders(ordersData.orders || []);
+        setSalesChartData(salesData.salesData || []);
+        setStockAlerts(stockData.stockAlerts || []);
+      } catch (err) {
+        console.error("Dashboard fetch failed:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
-  }, []);
+    fetchAll();
+  }, [searchQuery, statusFilter]);
 
   // --- Filtering Logic ---
   const filteredOrders = recentOrders.filter((order) => {
@@ -189,10 +208,12 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="h-dvh flex items-center justify-center">
-      <GridLoader size={24} color="#ffaf9f" />
-    </div>
+        <GridLoader size={24} color="#ffaf9f" />
+      </div>
     );
   }
+
+  // ------------------ UI -------------------
 
   return (
     <div className="flex-1 space-y-8 pb-10">
@@ -215,11 +236,9 @@ export default function DashboardPage() {
             <DollarSign className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">
-              {formatCurrency(stats.totalRevenue)}
-            </p>
+            <p className="text-2xl font-bold">₵{stats.totalRevenue}</p>
             <p className="text-xs text-muted-foreground">
-              +20.1% from last month
+              {stats.descriptions?.revenue}
             </p>
           </CardContent>
         </Card>
@@ -232,7 +251,7 @@ export default function DashboardPage() {
           <CardContent>
             <p className="text-2xl font-bold">{stats.totalOrders}</p>
             <p className="text-xs text-muted-foreground">
-              +180 since last hour
+              {stats.descriptions?.orders}
             </p>
           </CardContent>
         </Card>
@@ -244,7 +263,9 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{stats.totalCustomers}</p>
-            <p className="text-xs text-muted-foreground">+19% new signups</p>
+            <p className="text-xs text-muted-foreground">
+              {stats.descriptions?.customers}
+            </p>
           </CardContent>
         </Card>
 
@@ -255,13 +276,16 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{stats.lowStockCount}</p>
-            <p className="text-xs text-muted-foreground">Require attention</p>
+            <p className="text-xs text-muted-foreground">
+              {stats.descriptions?.stock}
+            </p>
           </CardContent>
         </Card>
       </section>
 
       {/* ---------- SALES + INVENTORY ---------- */}
       <section className="grid gap-6 lg:grid-cols-7">
+        {/* SALES CHART */}
         <Card className="shadow-sm border col-span-4">
           <CardHeader>
             <CardTitle>Sales Overview</CardTitle>
@@ -270,15 +294,9 @@ export default function DashboardPage() {
           <CardContent>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={salesData}>
+                <AreaChart data={salesChartData}>
                   <defs>
-                    <linearGradient
-                      id="salesGradient"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
+                    <linearGradient id="salesGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#ffaf9f" stopOpacity={0.4} />
                       <stop offset="100%" stopColor="#ffaf9f" stopOpacity={0} />
                     </linearGradient>
@@ -294,7 +312,7 @@ export default function DashboardPage() {
                     fontSize={12}
                     tickLine={false}
                     axisLine={false}
-                    tickFormatter={(v) => `GH₵${v}`}
+                    tickFormatter={(v) => `₵${v}`}
                   />
                   <Tooltip />
                   <Area
@@ -310,6 +328,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
+        {/* INVENTORY ALERTS */}
         <Card className="shadow-sm border col-span-3">
           <CardHeader className="flex justify-between">
             <div>
@@ -320,10 +339,7 @@ export default function DashboardPage() {
           <CardContent>
             <div className="space-y-4">
               {stockAlerts.map((item) => (
-                <div
-                  key={item._id}
-                  className="flex items-center justify-between"
-                >
+                <div key={item._id} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <img
                       src={item?.images?.[0] || "/placeholder.png"}
@@ -339,17 +355,17 @@ export default function DashboardPage() {
                       </p>
                     </div>
                   </div>
-                  <p className="text-sm font-medium">
-                    {formatCurrency(item.price)}
-                  </p>
+                  <p className="text-sm font-medium">₵{item.price}</p>
                 </div>
               ))}
+
               {stockAlerts.length === 0 && (
                 <p className="text-muted-foreground text-sm text-center py-4">
                   Inventory looks good!
                 </p>
               )}
             </div>
+
             <Button
               variant="outline"
               className="w-full mt-5"
@@ -361,7 +377,7 @@ export default function DashboardPage() {
         </Card>
       </section>
 
-      {/* ---------- RECENT ORDERS (WITH FILTERS) ---------- */}
+      {/* ---------- RECENT ORDERS ---------- */}
       <Card className="shadow-sm border">
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -372,7 +388,6 @@ export default function DashboardPage() {
               </CardDescription>
             </div>
 
-            {/* FILTERS CONTAINER */}
             <div className="flex flex-col sm:flex-row gap-3">
               {/* Status Filter */}
               <div className="w-full sm:w-[150px]">
@@ -386,7 +401,12 @@ export default function DashboardPage() {
                   <SelectContent>
                     <SelectItem value="all">All Statuses</SelectItem>
                     <SelectItem value="processing">Processing</SelectItem>
-                    <SelectItem value="ready_for_pickup">Ready for Pickup</SelectItem>
+                    <SelectItem value="awaiting_payment">
+                      Awaiting Payment
+                    </SelectItem>
+                    <SelectItem value="awaiting_pickup">
+                      Awaiting Pickup
+                    </SelectItem>
                     <SelectItem value="in_transit">In Transit</SelectItem>
                     <SelectItem value="delivered">Delivered</SelectItem>
                     <SelectItem value="cancelled">Cancelled</SelectItem>
@@ -405,8 +425,12 @@ export default function DashboardPage() {
                 />
               </div>
 
-              {/* View All Link (Moved to end) */}
-              <Button variant="ghost" size="icon" onClick={() => router.push('/admin/orders')}>
+              {/* View All */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => router.push("/admin/orders")}
+              >
                 <ArrowUpRight className="h-4 w-4" />
               </Button>
             </div>
@@ -435,9 +459,12 @@ export default function DashboardPage() {
                     <div className="flex flex-col items-center justify-center gap-2">
                       <XCircle className="h-8 w-8 text-gray-300" />
                       <p>No orders found matching your filters.</p>
-                      <Button 
-                        variant="link" 
-                        onClick={() => {setSearchQuery(""); setStatusFilter("all")}}
+                      <Button
+                        variant="link"
+                        onClick={() => {
+                          setSearchQuery("");
+                          setStatusFilter("all");
+                        }}
                       >
                         Clear Filters
                       </Button>
@@ -447,7 +474,6 @@ export default function DashboardPage() {
               ) : (
                 filteredOrders.map((order) => (
                   <TableRow key={order._id}>
-                    {/* Customer */}
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10">
@@ -465,29 +491,23 @@ export default function DashboardPage() {
                       </div>
                     </TableCell>
 
-                    {/* Order ID */}
                     <TableCell className="font-mono text-xs">
                       {order._id}
                     </TableCell>
 
-                    {/* Status */}
                     <TableCell>
                       <Badge
                         variant="secondary"
-                        className={`capitalize border ${statusColor(
-                          order.status
-                        )}`}
+                        className={`capitalize border ${statusColor(order.status)}`}
                       >
                         {order.status.replace("_", " ")}
                       </Badge>
                     </TableCell>
 
-                    {/* Date */}
                     <TableCell className="text-sm text-muted-foreground">
                       {new Date(order.date).toLocaleDateString()}
                     </TableCell>
 
-                    {/* Amount */}
                     <TableCell className="text-right font-semibold">
                       {formatCurrency(order.totalAmount)}
                     </TableCell>
