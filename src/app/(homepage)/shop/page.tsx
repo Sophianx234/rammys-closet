@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useDashStore } from "@/lib/store";
 import ProductCard from "./product-card";
+import { GridLoader } from "react-spinners";
 
 interface Product {
   _id: string;
@@ -254,7 +255,7 @@ fetchWishlist()
             {/* Loading State */}
             {loading ? (
               <div className="flex justify-center items-center py-20">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <GridLoader className="h-8 w-8  text-primary" />
               </div>
             ) : (
               <>

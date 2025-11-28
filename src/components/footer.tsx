@@ -68,7 +68,7 @@ export default function Footer() {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
                 <Link
-                  href="#"
+                  href="/faqs"
                   className="hover:text-foreground transition-colors"
                 >
                   FAQ
@@ -76,7 +76,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="#"
+                  href="/delivery"
                   className="hover:text-foreground transition-colors"
                 >
                   delivery
@@ -84,7 +84,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="#"
+                  href="/returns"
                   className="hover:text-foreground transition-colors"
                 >
                   Returns
@@ -92,7 +92,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="#"
+                  href="/privacy"
                   className="hover:text-foreground transition-colors"
                 >
                   Privacy
@@ -125,7 +125,7 @@ export default function Footer() {
               </li>
               <li className="flex items-start gap-2">
                 <MapPin size={16} className="mt-0.5 flex-shrink-0" />
-                <span>Lagos, Nigeria</span>
+                <span>Accra, Legon</span>
               </li>
             </ul>
           </div>
@@ -137,18 +137,18 @@ export default function Footer() {
             © {currentYear} Rammys Closet. All rights reserved.
           </p>
           <div className="flex gap-6">
-            <a
-              href="#"
+            <Link
+              href="/terms"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Terms of Service
-            </a>
-            <a
-              href="#"
+            </Link>
+            <Link
+              href="/privacy"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Privacy Policy
-            </a>
+            </Link>
           </div>
         </div>
       </div>

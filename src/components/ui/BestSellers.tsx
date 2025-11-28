@@ -59,11 +59,12 @@ export default function Bestsellers() {
       }
 
     };
+    fetchBestSellers();
   }, []);
-
-
-  if(loading)return <>loading...</>
-
+if(loading){
+  return <div>Loading...</div>;
+}
+if(products.length>0)
   return (
     <section className="relative bg-gradient-to-b from-black via-zinc-900 to-zinc-950 text-white py-24">
       <div className="max-w-7xl mx-auto px-6 text-center">
