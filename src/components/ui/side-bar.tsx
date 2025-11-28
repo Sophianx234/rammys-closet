@@ -82,7 +82,7 @@ export default function Sidebar() {
 };
   return (
     <aside
-      className={`h-screen flex sticky top-0 flex-col border-r border-neutral-800 bg-[#0A0A0A] text-neutral-200 transition-all duration-300 ${
+      className={`h-screen hidden sm:flex sticky top-0 flex-col border-r border-neutral-800 bg-[#0A0A0A] text-neutral-200 transition-all duration-300 ${
         collapsed ? "w-20" : "w-64"
       }`}
     >

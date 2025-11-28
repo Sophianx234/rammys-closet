@@ -64,7 +64,7 @@ export default function SettingsPage() {
   }, [user]);
 
   if (!user) {
-    return <div className="h-dvh flex items-center justify-center">
+    return <div className="absolute sm:relative flex inset-0  sm:h-dvh  items-center justify-center">
       <GridLoader size={24} color="#ffaf9f" />
     </div>;
   }

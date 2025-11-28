@@ -97,7 +97,7 @@ export default function InventoryPage() {
 
   if (loading) {
     return (
-      <div className="h-dvh flex items-center justify-center">
+      <div className="absolute sm:relative flex inset-0  sm:h-dvh  items-center justify-center">
             <GridLoader size={24} color="#ffaf9f" />
           </div>
     );

@@ -4,14 +4,44 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Mail } from "lucide-react";
 import { Button } from "./ui/button";
+import ScaleLoader from "react-spinners/ScaleLoader";
 
 export default function Newsletter() {
   const [email, setEmail] = useState("");
-
-  const handleSubscribe = (e: React.FormEvent) => {
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<null | { type: "success" | "error"; text: string }>(null);
+  console.log('message',message);
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle newsletter subscription logic here
-    setEmail("");
+    setLoading(true);
+    setMessage(null);
+
+    try {
+      // simulate async API call
+     const response = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Subscription failed");
+
+      }
+      // simulation: success if email includes "@"
+      
+      const data = await response.json();
+      console.log('boruto',data);
+
+      setMessage(data);
+      setEmail("");
+    } catch (err) {
+      setMessage({ type: "error", text: 'Something went wrong' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -59,14 +89,27 @@ export default function Newsletter() {
                 className="w-full bg-zinc-800/70 border border-zinc-700 rounded-full pl-12 pr-4 py-4 focus:outline-none focus:ring-2 focus:ring-primary/80 text-white placeholder-gray-400 transition"
               />
             </div>
+
             <Button
               type="submit"
               size="lg"
-              className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-4 rounded-full text-base font-medium shadow-lg"
+              disabled={loading}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-4 rounded-full text-base font-medium shadow-lg flex items-center justify-center"
             >
-              Subscribe
+              {loading ? <ScaleLoader height={18} width={3} /> : "Subscribe"}
             </Button>
           </motion.form>
+
+          {/* Success / Error Messages */}
+          {message?.type && (
+            <p
+              className={`mt-4 text-sm  ${
+                message.type === "success" ? "text-green-400" : "text-red-400"
+              }`}
+            >
+              {message.text}
+            </p>
+          )}
 
           <p className="text-sm text-gray-500 pt-6">
             No spam. Just pure beauty inspiration.
