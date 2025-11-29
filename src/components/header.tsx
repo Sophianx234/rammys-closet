@@ -202,7 +202,7 @@ export default function Header() {
                 { name: "Shop", href: "/shop" },
                 { name: "About", href: "/about" },
                 { name: "Contact", href: "/contact" },
-                { name: "My Account", href: "/settings" },
+                { name: "Login", href: "/login" },
               ].map((item) => (
                 <motion.div
                   key={item.href}

@@ -28,7 +28,7 @@ export default function Topbar() {
   const handleLogout = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/logout", {
+      const res = await fetch("/api/auth/logout", {
         method: "POST",
       });
 
@@ -204,6 +204,13 @@ export default function Topbar() {
         >
           <UsersRound size={18} /> Customers
         </Link>
+        <div
+          
+          onClick={handleLogout}
+          className="flex items-center text-red-400 gap-3 px-4 py-2 rounded-lg  hover:bg-neutral-800"
+        >
+          <LogOut size={18} /> {loading?'logging out...':"logout"}
+        </div>
 
       </div>
     </motion.div>
