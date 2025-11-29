@@ -5,6 +5,7 @@ import Footer from "@/components/footer"
 import OrderCard from "@/components/order-card"
 import { ProtectedRoute } from "@/components/protected-route"
 import { useEffect, useState } from "react"
+import { GridLoader } from "react-spinners"
 
 export default function OrdersPage() {
     const [orders, setOrders] = useState<any[]>([]);
@@ -29,7 +30,7 @@ export default function OrdersPage() {
   if (loading) {
     return (
       <main className="min-h-screen bg-background flex justify-center items-center">
-        <p>Loading...</p>
+      <GridLoader size={24} color="#ffaf9f" />
       </main>
     );
   }
