@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Bell, Search, LogOut, Settings, User, Menu, LayoutDashboard, Package2, ShoppingCart, UsersRound } from "lucide-react";
-import Image from "next/image";
+import { useState, useRef, useEffect } from "react";
+import { Bell, Search, LogOut, Settings, Menu, LayoutDashboard, Package2, ShoppingCart, UsersRound } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,22 +24,34 @@ export default function Topbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const router = useRouter();
 
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMobileMenuOpen(false);
+      }
+    }
+
+    if (mobileMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [mobileMenuOpen]);
+
   const handleLogout = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/auth/logout", {
-        method: "POST",
-      });
-
-      if (!res.ok) {
-        console.error("Logout failed");
-        return;
-      }
-
+      const res = await fetch("/api/auth/logout", { method: "POST" });
+      if (!res.ok) return console.error("Logout failed");
       setUser(null);
       router.push("/login");
-    } catch (error) {
-      console.error("Logout error:", error);
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -53,14 +64,14 @@ export default function Topbar() {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="sticky top-0 z-50  w-dvw sm:w-full  h-16 flex items-center justify-between border-b border-border bg-gradient-to-r from-neutral-900/90 to-black/80 backdrop-blur-xl px-6 shadow-sm"
+        className="sticky top-0 z-50 w-dvw sm:w-full h-16 flex items-center justify-between border-b border-border bg-gradient-to-r from-neutral-900/90 to-black/80 backdrop-blur-xl px-6 shadow-sm"
       >
-        {/* Left: Menu button + Logo */}
+        {/* Left: Menu button */}
         <div className="flex items-center gap-3">
-          
-            <Menu onClick={() => setMobileMenuOpen((prev) => !prev)}
-            className="md:hidden text-muted-foreground hover:text-foreground" />
-          
+          <Menu
+            onClick={() => setMobileMenuOpen(prev => !prev)}
+            className="md:hidden text-muted-foreground hover:text-foreground"
+          />
         </div>
 
         {/* Center: Search bar (Desktop only) */}
@@ -161,64 +172,63 @@ export default function Topbar() {
       </motion.header>
 
       {/* ---------- MOBILE NAV DROPDOWN ---------- */}
-      {/* ---------- MOBILE NAV DROPDOWN ---------- */}
-<AnimatePresence>
-  {mobileMenuOpen && (
-    <motion.div
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      transition={{ duration: 0.25 }}
-      className="md:hidden absolute top-16 left-0 w-full z-40 bg-neutral-900 border-b border-neutral-800 shadow-xl"
-    >
-      <div className="flex flex-col p-3 space-y-2">
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            ref={menuRef}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.25 }}
+            className="md:hidden sticky top-16 left-0 w-full z-40 bg-neutral-900 border-b border-neutral-800 shadow-xl"
+          >
+            <div className="flex flex-col p-3 space-y-2">
+              {user?.role === "admin" && (
+                <>
+                  <Link
+                    href="/admin/overview"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2 rounded-lg text-neutral-300 hover:bg-neutral-800"
+                  >
+                    <LayoutDashboard size={18} /> Overview
+                  </Link>
 
-        {user?.role === "admin" &&<Link
-          href="/admin/overview"
-          onClick={() => setMobileMenuOpen(false)}
-          className="flex items-center gap-3 px-4 py-2 rounded-lg text-neutral-300 hover:bg-neutral-800"
-        >
-          <LayoutDashboard size={18} /> Overview
-        </Link>
-}
+                  <Link
+                    href="/admin/products"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2 rounded-lg text-neutral-300 hover:bg-neutral-800"
+                  >
+                    <Package2 size={18} /> Products
+                  </Link>
 
-        {user?.role === "admin" &&  <Link
-          href="/admin/products"
-          onClick={() => setMobileMenuOpen(false)}
-          className="flex items-center gap-3 px-4 py-2 rounded-lg text-neutral-300 hover:bg-neutral-800"
-        >
-          <Package2 size={18} /> Products
-        </Link>}
+                  <Link
+                    href="/admin/customers"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2 rounded-lg text-neutral-300 hover:bg-neutral-800"
+                  >
+                    <UsersRound size={18} /> Customers
+                  </Link>
+                </>
+              )}
 
-        <Link
-          href="/admin/orders"
-          onClick={() => setMobileMenuOpen(false)}
-          className="flex items-center gap-3 px-4 py-2 rounded-lg text-neutral-300 hover:bg-neutral-800"
-        >
-          <ShoppingCart size={18} /> Orders
-        </Link>
+              <Link
+                href="/admin/orders"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-4 py-2 rounded-lg text-neutral-300 hover:bg-neutral-800"
+              >
+                <ShoppingCart size={18} /> Orders
+              </Link>
 
-        {user?.role === "admin" &&<Link
-          href="/admin/customers"
-          onClick={() => setMobileMenuOpen(false)}
-          className="flex items-center gap-3 px-4 py-2 rounded-lg text-neutral-300 hover:bg-neutral-800"
-        >
-          <UsersRound size={18} /> Customers
-        </Link>
-}
-        <div
-          
-          onClick={handleLogout}
-          className="flex items-center text-red-400 gap-3 px-4 py-2 rounded-lg  hover:bg-neutral-800"
-        >
-          <LogOut size={18} /> {loading?'logging out...':"logout"}
-        </div>
-
-      </div>
-    </motion.div>
-  )}
-</AnimatePresence>
-
+              <div
+                onClick={handleLogout}
+                className="flex items-center text-red-400 gap-3 px-4 py-2 rounded-lg hover:bg-neutral-800 cursor-pointer"
+              >
+                <LogOut size={18} /> {loading ? 'logging out...' : "logout"}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

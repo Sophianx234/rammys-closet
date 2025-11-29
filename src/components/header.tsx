@@ -2,36 +2,36 @@
 
 import Link from "next/link";
 import { ShoppingCart, Menu, X, Search } from "lucide-react";
-import { FaUserCircle } from "react-icons/fa";
-import { useState } from "react";
+import { FaUserCircle, FaUser, FaShoppingBag, FaHeart, FaCog, FaSignInAlt, FaSignOutAlt } from "react-icons/fa";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "./ui/button";
-import {
-  FaUser,
-  FaShoppingBag,
-  FaHeart,
-  FaCog,
-  FaSignInAlt,
-  FaSignOutAlt,
-} from "react-icons/fa";
 import { useCart } from "./cart-context";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { useDashStore } from "@/lib/store";
 import { useRouter } from "next/navigation";
-
-// ⭐ NEW
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { user, cart,setUser } = useDashStore();
+  const { user, cart, setUser } = useDashStore();
   const router = useRouter();
+
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+
+    if (isOpen) document.addEventListener("mousedown", handleClickOutside);
+    else document.removeEventListener("mousedown", handleClickOutside);
+
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen]);
 
   function getInitials(name: string) {
     if (!name) return "";
@@ -42,19 +42,12 @@ export default function Header() {
   const handleLogout = async () => {
     try {
       setIsLoading(true);
-      const res = await fetch("/api/auth/logout", {
-        method: "POST",
-      });
-
-      if (!res.ok) {
-        console.error("Logout failed");
-        return;
-      }
-
+      const res = await fetch("/api/auth/logout", { method: "POST" });
+      if (!res.ok) return console.error("Logout failed");
       setUser(null);
       router.push("/login");
-    } catch (error) {
-      console.error("Logout error:", error);
+    } catch (err) {
+      console.error(err);
     } finally {
       setIsLoading(false);
     }
@@ -69,22 +62,14 @@ export default function Header() {
             <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
               <span className="text-primary-foreground font-bold text-sm">RC</span>
             </div>
-            <span className="hidden sm:inline font-semibold text-lg">
-              Rammys Closet
-            </span>
+            <span className="hidden sm:inline font-semibold text-lg">Rammys Closet</span>
           </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <Link href="/shop" className="hover:text-primary text-sm">
-              Shop
-            </Link>
-            <Link href="/about" className="hover:text-primary text-sm">
-              About
-            </Link>
-            <Link href="/contact" className="hover:text-primary text-sm">
-              Contact
-            </Link>
+            <Link href="/shop" className="hover:text-primary text-sm">Shop</Link>
+            <Link href="/about" className="hover:text-primary text-sm">About</Link>
+            <Link href="/contact" className="hover:text-primary text-sm">Contact</Link>
           </nav>
 
           {/* Right */}
@@ -126,49 +111,31 @@ export default function Header() {
                 {user && (
                   <>
                     <DropdownMenuItem asChild>
-                      <Link href="/profile" className="flex items-center gap-2">
-                        <FaUser /> My Profile
-                      </Link>
+                      <Link href="/profile" className="flex items-center gap-2"><FaUser /> My Profile</Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-
                     <DropdownMenuItem asChild>
-                      <Link href="/orders" className="flex items-center gap-2">
-                        <FaShoppingBag /> Orders
-                      </Link>
+                      <Link href="/orders" className="flex items-center gap-2"><FaShoppingBag /> Orders</Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-
                     <DropdownMenuItem asChild>
-                      <Link href="/wishlist" className="flex items-center gap-2">
-                        <FaHeart /> Wishlist
-                      </Link>
+                      <Link href="/wishlist" className="flex items-center gap-2"><FaHeart /> Wishlist</Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-
                     <DropdownMenuItem asChild>
-                      <Link href="/settings" className="flex items-center gap-2">
-                        <FaCog /> Settings
-                      </Link>
+                      <Link href="/settings" className="flex items-center gap-2"><FaCog /> Settings</Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                   </>
                 )}
-
                 <DropdownMenuItem asChild>
-                  <Link href="/login" className="flex items-center gap-2">
-                    <FaSignInAlt /> Login
-                  </Link>
+                  <Link href="/login" className="flex items-center gap-2"><FaSignInAlt /> Login</Link>
                 </DropdownMenuItem>
-
                 {user && (
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center gap-2 text-red-500"
-                      >
+                      <button onClick={handleLogout} className="flex items-center gap-2 text-red-500">
                         <FaSignOutAlt /> {isLoading ? "Logging out..." : "Logout"}
                       </button>
                     </DropdownMenuItem>
@@ -187,10 +154,11 @@ export default function Header() {
           </div>
         </div>
 
-        {/* ⭐ Animated Mobile Menu */}
+        {/* Animated Mobile Menu */}
         <AnimatePresence>
           {isOpen && (
             <motion.nav
+              ref={menuRef}
               key="mobile-menu"
               initial={{ opacity: 0, y: -15 }}
               animate={{ opacity: 1, y: 0 }}
