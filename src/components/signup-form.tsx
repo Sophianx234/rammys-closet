@@ -12,6 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export function SignupForm({
   className,
@@ -176,9 +177,9 @@ export function SignupForm({
           </Button>
           <FieldDescription className="px-6 text-center text-muted-foreground">
             Already have an account?{" "}
-            <a href="#" className="text-primary hover:underline">
+            <Link href="/login" className="text-primary hover:underline">
               Sign in
-            </a>
+            </Link>
           </FieldDescription>
         </Field>
       </FieldGroup>
