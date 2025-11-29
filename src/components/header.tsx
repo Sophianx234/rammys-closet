@@ -111,7 +111,7 @@ export default function Header() {
                 {user && (
                   <>
                     <DropdownMenuItem asChild>
-                      <Link href="/profile" className="flex items-center gap-2"><FaUser /> My Profile</Link>
+                      <Link href="" className="flex items-center gap-2"><FaUser /> My Profile</Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
@@ -128,16 +128,16 @@ export default function Header() {
                     <DropdownMenuSeparator />
                   </>
                 )}
-                <DropdownMenuItem asChild>
+                {!user&&<DropdownMenuItem asChild>
                   <Link href="/login" className="flex items-center gap-2"><FaSignInAlt /> Login</Link>
-                </DropdownMenuItem>
+                </DropdownMenuItem>}
                 {user && (
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
-                      <button onClick={handleLogout} className="flex items-center gap-2 text-red-500">
+                      <Link href='' onClick={handleLogout} className="flex items-center gap-2 text-red-500">
                         <FaSignOutAlt /> {isLoading ? "Logging out..." : "Logout"}
-                      </button>
+                      </Link>
                     </DropdownMenuItem>
                   </>
                 )}
