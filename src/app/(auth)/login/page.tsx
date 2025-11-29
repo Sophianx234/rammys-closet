@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
 import { IUser } from "@/models/User";
+import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -50,6 +51,9 @@ export default function LoginPage() {
         if (res.ok) {
           if ((userData.user as IUser).role === "admin") {
             router.push("/admin/products");
+          } else if((userData.user as IUser).role === "dispatcher"){
+            router.push("/admin/orders");
+
           } else {
             router.push("/");
           }
@@ -176,9 +180,9 @@ export default function LoginPage() {
 
                   <FieldDescription className="px-6 text-center text-muted-foreground">
                     Don&apos;t have an account?{" "}
-                    <a href="/signup" className="text-primary hover:underline">
+                    <Link href="/signup" className="text-primary hover:underline">
                       Create one
-                    </a>
+                    </Link>
                   </FieldDescription>
                 </Field>
               </FieldGroup>

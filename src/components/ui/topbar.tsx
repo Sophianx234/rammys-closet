@@ -173,21 +173,22 @@ export default function Topbar() {
     >
       <div className="flex flex-col p-3 space-y-2">
 
-        <Link
+        {user?.role === "admin" &&<Link
           href="/admin/overview"
           onClick={() => setMobileMenuOpen(false)}
           className="flex items-center gap-3 px-4 py-2 rounded-lg text-neutral-300 hover:bg-neutral-800"
         >
           <LayoutDashboard size={18} /> Overview
         </Link>
+}
 
-        <Link
+        {user?.role === "admin" &&  <Link
           href="/admin/products"
           onClick={() => setMobileMenuOpen(false)}
           className="flex items-center gap-3 px-4 py-2 rounded-lg text-neutral-300 hover:bg-neutral-800"
         >
           <Package2 size={18} /> Products
-        </Link>
+        </Link>}
 
         <Link
           href="/admin/orders"
@@ -197,13 +198,14 @@ export default function Topbar() {
           <ShoppingCart size={18} /> Orders
         </Link>
 
-        <Link
+        {user?.role === "admin" &&<Link
           href="/admin/customers"
           onClick={() => setMobileMenuOpen(false)}
           className="flex items-center gap-3 px-4 py-2 rounded-lg text-neutral-300 hover:bg-neutral-800"
         >
           <UsersRound size={18} /> Customers
         </Link>
+}
         <div
           
           onClick={handleLogout}

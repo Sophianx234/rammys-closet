@@ -66,6 +66,7 @@ import StatusSelector from "./status-selector";
 import PaymentBadge from "./payment-badge";
 import OrderDetailsSheetContent from "./order-details";
 import { GridLoader } from "react-spinners";
+import { useDashStore } from "@/lib/store";
 
 /* ============================
    Types & Config
@@ -163,6 +164,7 @@ export default function OrdersManagement() {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [dateFilter, setDateFilter] = useState<string>("all"); // all, today, week, month
+  const {user} = useDashStore();
   
   const [page, setPage] = useState<number>(1);
   const [selectedOrder, setSelectedOrder] = useState<ServerOrder | null>(null);
@@ -508,11 +510,11 @@ export default function OrdersManagement() {
 
                     <TableCell>
                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
+                        {user?.role === "admin" &&<DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-8 w-8">
                             <MoreVertical className="h-4 w-4" />
                           </Button>
-                        </DropdownMenuTrigger>
+                        </DropdownMenuTrigger>}
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuItem
