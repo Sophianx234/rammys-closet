@@ -38,6 +38,17 @@ export default function CheckoutPage() {
   const [error, setError] = useState<string>("");
   const router = useRouter();
 
+
+  useEffect(() => {
+  const script = document.createElement("script");
+  script.src = "https://js.paystack.co/v1/inline.js";
+  script.async = true;
+  script.onload = () => {
+    console.log("Paystack script loaded");
+  };
+  document.body.appendChild(script);
+}, []);
+
     useEffect(() => {
     const verifyPayment = async () => {
       const pendingOrder = localStorage.getItem("pendingOrder");
@@ -104,55 +115,71 @@ export default function CheckoutPage() {
     }
   };
 
-  const handlePaymentSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsProcessing(true);
-    setError("");
+const handlePaymentSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsProcessing(true);
+  setError("");
 
-    try {
-      const reference = `ORD-${Date.now()}`;
+  try {
+    const reference = `ORD-${Date.now()}`;
 
-      // Initialize Paystack payment
-      const initResponse = await fetch("/api/paystack/initialize", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: user?.email,
-          amount: finalTotal,
-          reference,
-        }),
-      });
+    // Initialize transaction (server-side)
+    const initResponse = await fetch("/api/paystack/initialize", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: user?.email,
+        amount: finalTotal,
+        reference,
+      }),
+    });
 
-      const initData = await initResponse.json();
+    const initData = await initResponse.json();
 
-      if (!initResponse.ok) {
-        throw new Error(initData.error || "Failed to initialize payment");
-      }
-
-      if (initData.authorization_url) {
-        // Save order info before redirect
-        localStorage.setItem(
-          "pendingOrder",
-          JSON.stringify({
-            userId:user._id,
-            reference: initData.reference,
-            formData,
-            cart,
-            total: finalTotal,
-          })
-        );
-
-        // Redirect using Next.js router (NO PAGE REFRESH)
-        router.push(initData.authorization_url);
-      }
-    } catch (err) {
-      console.error("[Payment error]:", err);
-      setError(err instanceof Error ? err.message : "Payment failed. Please try again.");
-      setIsProcessing(false);
+    if (!initResponse.ok) {
+      throw new Error(initData.error || "Failed to initialize payment");
     }
-  };
+
+    // SAFEGUARD — Save order data BEFORE starting payment
+    localStorage.setItem(
+      "pendingOrder",
+      JSON.stringify({
+        userId: user?._id,
+        reference,
+        formData,
+        cart,
+        total: finalTotal,
+      })
+    );
+
+    // Open Paystack Inline Window
+    const paystack = (window as any).PaystackPop.setup({
+      key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
+      email: user?.email,
+      amount: finalTotal * 100, // kobo
+      ref: reference,
+      currency: "GHS",
+
+      callback: function (response: any) {
+        // Payment finished → proceed to verification
+        router.push(`/checkout?reference=${response.reference}`);
+      },
+
+      onClose: function () {
+        setIsProcessing(false);
+        setError("Payment cancelled.");
+      }
+    });
+
+    paystack.openIframe(); // 🟩 THIS opens the popup instead of redirecting
+  } catch (err: any) {
+    console.error("[Payment Error]:", err);
+    setError(err.message || "Payment failed. Please try again.");
+    setIsProcessing(false);
+  }
+};
 
 
 

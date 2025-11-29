@@ -42,6 +42,8 @@ export default function RootLayout({
   
   return (
     <html lang="en">
+      <script src="https://js.paystack.co/v1/inline.js"></script>
+
       <body className={` ${inter.className} antialiased`}>
         <CartProvider>
           {children}
