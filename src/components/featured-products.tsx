@@ -58,7 +58,7 @@ export default function FeaturedProducts() {
         const res = await fetch("/api/admin/products");
         const data = await res.json();
         console.log('featured products', data)
-        const featured = data.filter((p: any) => p.isFeatured);
+        const featured = data.filter((p: any) => p.isFeatured).slice(0, 4);
       setProducts(featured);
       } catch (err) {
         console.error("Failed to fetch products:", err);

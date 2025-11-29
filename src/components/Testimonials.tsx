@@ -11,7 +11,7 @@ const testimonials = [
     quote:
       "I use a lot of different brands, but Rammy’s Closet genuinely surprised me. The products blend so smoothly and look amazing on every skin tone I’ve tried them on. My clients actually ask to take pictures of the products after their sessions.",
     rating: 5,
-    avatar: "/imgs/professional-woman-avatar-2.jpg",
+    avatar: "/imgs/c-7.jpg",
   },
   {
     id: 2,
@@ -20,7 +20,7 @@ const testimonials = [
     quote:
       "I love how lightweight everything feels. The lip products don’t crack, the shades are stunning, and the finish lasts way longer than I expected. It just makes getting ready so much easier.",
     rating: 5,
-    avatar: "/imgs/professional-man-avatar.jpg",
+    avatar: "/imgs/c-8.jpg",
   },
   {
     id: 3,
@@ -29,7 +29,7 @@ const testimonials = [
     quote:
       "I didn’t expect the packaging to feel this premium. The products look good on camera, but they feel even better in person. You can tell a lot of care went into how these were made.",
     rating: 5,
-    avatar: "/imgs/professional-woman-avatar.jpg",
+    avatar: "/imgs/c-9.jpg",
   },
 ];
 
