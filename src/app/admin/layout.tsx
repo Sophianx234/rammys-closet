@@ -14,11 +14,11 @@ export default function AdminPage({ children }: { children: ReactNode}) {
   return (
        <html lang="en">
 
-      <body className={`font-sans w-dvw flex  antialiased`}>
+      <body className={`font-sans    antialiased`}>
 
-    <div className="overflow-hidden  bg-muted">
+    <div className="flex   bg-muted">
       <Sidebar  />
-      <div className="flex-1 flex  flex-col">
+      <div className="flex-1 flex w-full flex-col">
         <Topbar />
         <main className=" p-2 sm:p-8">
          {children}
