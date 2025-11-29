@@ -109,6 +109,7 @@ export default function ProductClient({ product }: { product: IProduct }) {
   // ⭐ HANDLE ADD TO CART
   const handleAddToCart = async () => {
     try {
+      setCart(product, quantity);
       const res = await fetch("/api/users/cart", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -128,14 +129,15 @@ export default function ProductClient({ product }: { product: IProduct }) {
   // ⭐ HANDLE WISHLIST
   const handleWishlist = async () => {
     try {
+      setIsFavorite(isFavorite => !isFavorite);
       const res = await fetch("/api/users/wishlist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ productId: product._id }),
       });
-
+      
       if (!res.ok) return;
-
+      
       const data = await res.json();
       setIsFavorite(data.isFavorite);
     } catch (err) {
@@ -279,7 +281,7 @@ export default function ProductClient({ product }: { product: IProduct }) {
                   variant="outline"
                   className="flex-1 flex items-center justify-center gap-2"
                 >
-                  <Heart size={18} className={isFavorite ? "fill-primary text-primary" : ""} />
+                  <Heart size={18} className={isFavorite ? "fill-primary text-primary hover:text-black" : ""} />
                   Wishlist
                 </Button>
 

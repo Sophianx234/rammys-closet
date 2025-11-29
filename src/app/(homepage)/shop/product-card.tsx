@@ -36,13 +36,14 @@ export default function ProductCard({ product }: ProductCardProps) {
   const router = useRouter();
 
   console.log('product card rendered', product.isFeatured);
-
+  
   const toggleFavorite = async (id: string) => {
     if (!user) {
       router.push("/login");
       return;
     }
-
+    
+    setIsFavorite((!isFavorite));
     try {
       const res = await fetch("/api/users/wishlist", {
         method: "POST",
