@@ -124,7 +124,7 @@ const filteredProducts = products
   }
 });
 
-if(!loading) return (<div className="absolute sm:relative z-0 flex inset-0 overflow-hidden sm:h-dvh  items-center justify-center">
+if(loading) return (<div className="absolute sm:relative z-0 flex inset-0 overflow-hidden sm:h-dvh  items-center justify-center">
       <GridLoader size={24} color="#ffaf9f" />
     </div>)
 
