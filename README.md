@@ -1,36 +1,109 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🌟 rammys‑closet
 
-## Getting Started
+rammys‑closet is a modern, elegant, fashion‑focused storefront template built with **Next.js** and **TypeScript** — designed for brands that value beauty, minimalism, and clean digital experience.
 
-First, run the development server:
+---
+
+## 🖼️ Landing Page Preview
+
+![Landing Page](https://res.cloudinary.com/dtytb8qrc/image/upload/v1764886155/rammys-closet_mqfcxv.png)
+
+---
+
+## ✨ Features
+
+- 🎨 **Modern, Minimalist Design**  
+- ⚡ **Next.js + TypeScript** setup  
+- 📱 **Fully Responsive Layout**  
+- 🗂️ Clean folder structure for easy expansion  
+- 🧩 Reusable UI components  
+- 🚀 Ready for integration with APIs, databases, or a headless CMS  
+
+---
+
+## 🧰 Tech Stack
+
+- **Next.js** — App router  
+- **TypeScript**  
+- **Tailwind CSS / Modern styling setup**  
+- **PostCSS, ESLint, Next config included**
+
+---
+
+## 🚀 Getting Started
+
+Follow these steps to run the project locally:
 
 ```bash
+# Clone the repo
+git clone https://github.com/Sophianx234/rammys-closet.git
+cd rammys-closet
+
+# Install dependencies
+npm install   # or yarn / pnpm / bun
+
+# Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then open **http://localhost:3000** in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📂 Suggested Project Structure
 
-## Learn More
+```
+rammys-closet/
+ ├── app/             # Pages & routing
+ ├── components/      # UI components
+ ├── public/          # Static assets (images, fonts)
+ ├── styles/          # Global styles
+ ├── utils/           # Helper functions
+ ├── next.config.ts   # Next.js config
+ └── README.md
+```
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🎨 Customization
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+You can easily customize:
 
-## Deploy on Vercel
+- Colors, fonts, and branding  
+- Images (hero, product banners, categories)  
+- Component styling  
+- Layout sections: hero, featured products, testimonials, etc.  
+- Add new pages like **Shop**, **Product Details**, **About**, **Contact**, etc.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🛠️ Roadmap Ideas
+
+- 🛒 Add product listing + product detail pages  
+- 🧺 Add shopping cart + checkout  
+- 🔑 User authentication  
+- 🗃️ Admin dashboard for managing products  
+- 📦 Integrate real database (MongoDB, PostgreSQL, etc.)  
+- 🌐 Connect to a headless CMS: Strapi, Sanity, Shopify, etc.
+
+---
+
+## 📜 License
+
+This project is free for personal or commercial use.  
+Add a license file if you want to open-source it.
+
+---
+
+## 💎 Credits
+
+Designed & developed with passion for clean, stylish user interfaces.
+
+---
+
+## 🤝 Contributing
+
+Pull requests and improvements are welcome!  
+Feel free to fork the project and build on top of it.
+
+---
