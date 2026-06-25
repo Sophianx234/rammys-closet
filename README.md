@@ -1,7 +1,7 @@
 <div align="center">
   <h1 align="center">Rammys Closet 🛍️</h1>
   <p align="center">
-    <strong>A high-performance, minimalist e-commerce storefront architecture built for modern brands.</strong>
+    <strong>A high-performance, minimalist e-commerce storefront built for modern brands.</strong>
   </p>
   <p align="center">
     <img src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js" />
