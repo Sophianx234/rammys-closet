@@ -13,7 +13,9 @@
 <br />
 
 <div align="center">
-  <img src="https://res.cloudinary.com/dtytb8qrc/image/upload/v1764886155/rammys-closet_mqfcxv.png" alt="Rammys Closet Landing Page" width="100%" style="border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" />
+  
+  <img src="https://res.cloudinary.com/dtytb8qrc/image/upload/v1782389290/screencapture-rammys-closet-vercel-app-2026-06-25-11_59_18_2_kliulw.png" alt="Rammys Closet Landing Page" width="100%" style="border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" />
+  
 </div>
 
 <br />
