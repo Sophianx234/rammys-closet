@@ -20,7 +20,7 @@
 
 ## 📖 Overview
 
-**Rammys Closet** is an elegant, production-ready frontend architecture designed for cosmetics, fashion, and lifestyle brands. Engineered with a strict focus on minimalism and optimal user experience, this storefront provides a frictionless digital journey from product discovery to checkout preparation.
+**Rammys Closet** is an elegant, production-ready Full-stack application designed for cosmetics, fashion, and lifestyle brands. Engineered with a strict focus on minimalism and optimal user experience, this storefront provides a frictionless digital journey from product discovery to checkout preparation.
 
 Built on top of the modern Next.js App Router, the application guarantees rapid load times, excellent SEO metrics, and a highly modular component system ready for immediate headless CMS or custom API integration.
 
